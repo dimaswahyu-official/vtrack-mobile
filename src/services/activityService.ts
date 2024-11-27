@@ -23,8 +23,7 @@ class ActivityService {
             const response = await axiosInstance.get(`/schedule-plan/md/${id}`);
             return response.data
         } catch (error: any) {
-            console.error('Profile update failed:', error);
-            throw new Error('Profile update failed: ' + error.message); // Customize error message
+            throw new Error('Error: ' + error);
         }
     }
 }

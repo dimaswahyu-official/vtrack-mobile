@@ -48,6 +48,7 @@ const MainNavigator = () => (
         <Tab.Screen
             name="ActivityStack"
             component={ActivityNavigator}
+            options={{ title: 'Activity' }}
         />
         <Tab.Screen
             name="Home"
@@ -56,6 +57,7 @@ const MainNavigator = () => (
         <Tab.Screen
             name="ProfileStack"
             component={ProfileNavigator}
+            options={{ title: 'Profile' }}
         />
     </Tab.Navigator>
 );

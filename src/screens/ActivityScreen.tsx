@@ -7,6 +7,9 @@ import {
     TouchableWithoutFeedback,
     Animated,
     RefreshControl,
+    TouchableOpacity,
+    Image,
+    Linking
 } from 'react-native';
 import ActivityService from '../services/activityService';
 import { useAuthStore } from '../store/useAuthStore';
@@ -14,6 +17,13 @@ import { useLoadingStore } from '../store/useLoadingStore';
 import Colors from "../utils/Colors";
 import {createTableActivity} from "../model/activityModel";
 import {useOffline} from "../context/OfflineProvider";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import {formatDate} from "../utils/DateHelper";
+import {StackNavigationProp} from "@react-navigation/stack";
+import {ActivityStackParamList} from "../navigation/ActivityNavigator";
+import {useNavigation} from "@react-navigation/native";
+import Toast from "react-native-toast-message";
 
 interface Activity {
     id: number;
@@ -45,8 +55,9 @@ interface Activity {
         photos: []
     };
 }
-
+type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity'>;
 export default function ActivityScreen() {
+    const navigation = useNavigation<NavigationProp>();
     const { isOnline, isWifi } = useOffline();
     const [activities, setActivities] = useState<Activity[]>([]);
     const [refreshing, setRefreshing] = useState(false);
@@ -58,12 +69,11 @@ export default function ActivityScreen() {
     const fetchData = async () => {
         setRefreshing(true);
         try {
-            console.log(userId)
             const response = await ActivityService.getListingSchedule(userId);
             const data: Activity[] = await response.data;
             setActivities(data);
-        } catch (err) {
-            setError((err as Error).message);
+        } catch (err: any) {
+            setError(err.message);
         } finally {
             setRefreshing(false);
         }
@@ -76,6 +86,19 @@ export default function ActivityScreen() {
 
     const toggleSelection = (id: number) => {
         console.log(id)
+    };
+
+    const openMaps = (latitude: string, longitude: string) => {
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+        Linking.openURL(url).catch((err) => {
+            console.error("Failed to open map", err);
+            Toast.show({type: "error", text1: "Failed to open map"});
+        });
+    };
+
+    const handlePressWork = (item: any) => {
+        navigation.navigate('FormActivityNormal', { item });
+        console.log('Button pressed for', item.callPlanOutlet.brand);
     };
 
     const renderItem = ({ item }: { item: Activity }) => {
@@ -99,7 +122,7 @@ export default function ActivityScreen() {
             <TouchableWithoutFeedback
                 onPressIn={onPressIn}
                 onPressOut={onPressOut}
-                onPress={() => toggleSelection(item.id)} // Handle toggle on press
+                onPress={() => toggleSelection(item.id)}
             >
                 <Animated.View
                     style={[
@@ -111,13 +134,28 @@ export default function ActivityScreen() {
                         {/* Column 1 */}
                         <View style={styles.col1}>
                             <Text style={styles.title}>{item.code_call_plan}</Text>
+                            <View style={styles.divider} />
                             <Text style={styles.description}>{item.status.toUpperCase()}</Text>
-                            <Text style={styles.description}>{item.day_plan.toUpperCase()}</Text>
+                            <View style={styles.divider} />
+                            <Text style={styles.description}>{formatDate(item.day_plan)}</Text>
+                            <View style={styles.divider} />
                             <Text style={styles.description}>{item.notes.toUpperCase()}</Text>
                         </View>
                         {/* Column 2 */}
                         <View style={styles.col2}>
-                            <Text style={styles.description}>{item.callPlanOutlet.brand.toUpperCase()}</Text>
+                            <Image
+                                style={styles.image}
+                                source={require('../../assets/logo-nna.png')}
+                            />
+                            <Text style={styles.brand}>{item.callPlanOutlet.brand.toUpperCase()}</Text>
+                            <View style={styles.row}>
+                                <TouchableOpacity style={styles.buttonWork} onPress={() => openMaps('-6.198453', '106.802473')}>
+                                    <MaterialCommunityIcons name="google-maps" size={25} color={Colors.buttonBackground} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.buttonWork} onPress={() => handlePressWork(item)}>
+                                    <MaterialIcons name="input" size={25} color={Colors.buttonBackground} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </Animated.View>
@@ -158,7 +196,29 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
-        padding: 25,
+        padding: 15,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#ccc',
+        marginVertical: 5,
+    },
+    image: {
+        width: "70%",
+        height: 30,
+        marginTop: 5,
+        resizeMode: 'contain',
+    },
+    buttonWork: {
+        marginTop: 10,
+        backgroundColor: 'transparent',
+        padding: 9,
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: 1,
+        borderWidth: 2,
+        borderColor: Colors.buttonBackground,
     },
     header: {
         fontSize: 20,
@@ -193,12 +253,18 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         color: 'black',
-        marginBottom: 5,
     },
     description: {
         fontSize: 14,
         fontWeight: '700',
         color: 'black',
+    },
+    brand: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: 'black',
+        marginVertical: 5,
+        fontStyle: 'italic'
     },
     center: {
         flex: 1,
@@ -212,10 +278,9 @@ const styles = StyleSheet.create({
     },
     row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
     },
     col1: {
-        flex: 1,
+        flex: 2,
     },
     col2: {
         flex: 1,

@@ -3,8 +3,8 @@ import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const axiosInstance = axios.create({
-    baseURL: 'http://10.0.63.138:9001/api/v1',
-    // baseURL: 'http://192.168.0.102:9001/api/v1',
+    // baseURL: 'http://10.0.63.47:9001/api/v1',
+    baseURL: 'http://192.168.18.93:9001/api/v1',
     timeout: 10000,
 })
 
@@ -18,6 +18,7 @@ axiosInstance.interceptors.request.use(
             }
         } catch (error) {
             console.error('Error fetching token from AsyncStorage', error)
+            throw new Error('Error fetching token from AsyncStorage: ' + error);
         }
 
         return config

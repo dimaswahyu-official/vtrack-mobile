@@ -163,7 +163,7 @@ export const ActivityModel = {
         await db.runAsync('DELETE FROM Activity WHERE id = ?', id);
     },
 
-    // Sync to server (dummy example)
+    // Sync to server
     syncToServer: async (id: number): Promise<void> => {
         const db = await initDatabase();
         const activity = await db.getFirstAsync(
