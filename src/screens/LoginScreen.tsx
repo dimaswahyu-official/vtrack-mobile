@@ -1,6 +1,6 @@
 // app/auth/login.tsx
 import React, {useEffect, useState} from 'react';
-import { StyleSheet, Text, TextInput, View, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TextInput, View, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from "react-native-toast-message";
@@ -13,6 +13,8 @@ import {useThemeStore} from "../store/useThemeStore";
 import AuthServices from "../services/authService";
 import {AuthStackParamList} from "../navigation/AuthNavigator";
 import {useLoadingStore} from "../store/useLoadingStore";
+import ConstantService from '../services/constantService';
+import useConstantStore from '../store/useConstantStore';
 
 type FormData = {
     email: string;
@@ -74,12 +76,20 @@ export default function LoginScreen() {
         }
     };
 
+    const { width, height } = Dimensions.get('window'); // Get device dimensions
+
     const signInStyles = StyleSheet.create({
         headerImage: {
-            width: '70%', height: 150, resizeMode: 'contain', marginBottom: 10,
+            width: width * 0.7, // Use percentage of device width
+            height: height * 0.2, // Use percentage of device height
+            resizeMode: 'contain',
+            marginBottom: 10,
         },
         forgotPassword: {
-            color: theme === 'dark' ? '#1e90ff' : '#007aff', marginTop: 15, textAlign: 'center', fontSize: 14,
+            color: theme === 'dark' ? '#1e90ff' : '#007aff',
+            marginTop: height * 0.02, // Use percentage of device height
+            textAlign: 'center',
+            fontSize: width * 0.04, // Use percentage of device width
         },
         passwordContainer: {
             width: '94%',

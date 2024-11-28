@@ -24,6 +24,8 @@ import {StackNavigationProp} from "@react-navigation/stack";
 import {ActivityStackParamList} from "../navigation/ActivityNavigator";
 import {useNavigation} from "@react-navigation/native";
 import Toast from "react-native-toast-message";
+import { getStatusLabel } from '../constants/status';
+import { useSQLiteContext } from 'expo-sqlite';
 
 interface Activity {
     id: number;
@@ -31,7 +33,8 @@ interface Activity {
     call_plan_id: number;
     outlet_id: number;
     code_call_plan: string;
-    status: string;
+    status: number;
+    type: number;
     day_plan: string;
     notes: string;
     callPlanOutlet: {
@@ -40,7 +43,7 @@ interface Activity {
         outlet_code: string
         latitude: string
         longitude: string
-        outlet_type: string
+        sio_type: string
         region: string
         area: string
         cycle: string
@@ -57,11 +60,11 @@ interface Activity {
 }
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity'>;
 export default function ActivityScreen() {
+    const db = useSQLiteContext();
     const navigation = useNavigation<NavigationProp>();
     const { isOnline, isWifi } = useOffline();
     const [activities, setActivities] = useState<Activity[]>([]);
     const [refreshing, setRefreshing] = useState(false);
-    const { setLoading } = useLoadingStore();
     const [error, setError] = useState<string | null>(null);
     const { user } = useAuthStore();
     const userId = user?.id || '';
@@ -80,10 +83,21 @@ export default function ActivityScreen() {
     };
 
     useEffect(() => {
-        createTableActivity();
-        fetchData();
-    }, []);
+        const initializeDatabase = async () => {
+            const table = await createTableActivity(db);
+            console.log('Table Created:', table);
+            console.log('Database Path:', db.databasePath); // Log the database path
+        };
 
+        initializeDatabase(); // Execute the initialization
+    }, [db]);
+
+    if(isOnline || isWifi) {
+        useEffect(() => {
+            fetchData();
+        }, []);
+    }
+    
     const toggleSelection = (id: number) => {
         console.log(id)
     };
@@ -98,7 +112,6 @@ export default function ActivityScreen() {
 
     const handlePressWork = (item: any) => {
         navigation.navigate('FormActivityNormal', { item });
-        console.log('Button pressed for', item.callPlanOutlet.brand);
     };
 
     const renderItem = ({ item }: { item: Activity }) => {
@@ -133,13 +146,16 @@ export default function ActivityScreen() {
                     <View style={styles.row}>
                         {/* Column 1 */}
                         <View style={styles.col1}>
-                            <Text style={styles.title}>{item.code_call_plan}</Text>
+                            <Text style={[styles.title, {fontStyle: 'italic'}]}>{item.code_call_plan}</Text>
+                            <Text style={[styles.description, {fontStyle: 'italic'}]}>{item.callPlanOutlet.sio_type}</Text>
                             <View style={styles.divider} />
-                            <Text style={styles.description}>{item.status.toUpperCase()}</Text>
+                            <Text style={styles.description}>{item.type == 1 ? 'Outlet New' : 'Outlet Existing'}, {getStatusLabel(item.status as any)}</Text>
                             <View style={styles.divider} />
-                            <Text style={styles.description}>{formatDate(item.day_plan)}</Text>
+                            <Text style={styles.description}>Schedule : {formatDate(item.day_plan)}</Text>
                             <View style={styles.divider} />
-                            <Text style={styles.description}>{item.notes.toUpperCase()}</Text>
+                            <Text style={styles.description}>Cycle : {item.callPlanOutlet.cycle} - Visit Day : {item.callPlanOutlet.visit_day}</Text>
+                            <View style={styles.divider} />
+                            <Text style={styles.description}>{item.notes?.toUpperCase() || ''}</Text>
                         </View>
                         {/* Column 2 */}
                         <View style={styles.col2}>

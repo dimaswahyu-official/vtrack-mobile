@@ -10,6 +10,7 @@ import {StackNavigationProp} from "@react-navigation/stack";
 import {ProfileStackParamList} from "../navigation/ProfileNavigator";
 import {useLoadingStore} from "../store/useLoadingStore";
 import Toast from "react-native-toast-message";
+import useConstantStore from '../store/useConstantStore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ export default function ProfileScreen() {
     const { setLoading } = useLoadingStore();
     const { theme, setTheme } = useThemeStore();
     const { clearAuth, user } = useAuthStore();
+    const { clearConstants } = useConstantStore();
 
 
     useEffect(() => {
@@ -51,6 +53,7 @@ export default function ProfileScreen() {
 
         // Clear auth and show success toast
         clearAuth();
+        clearConstants();
 
         // Set a timeout to stop the loading after 2 seconds (2000ms)
         setTimeout(() => {

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "esnext",
     "strict": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "typeRoots": ["./node_modules/@types",],
+    "types": [],
     "jsx": "react-native",
     "esModuleInterop": true,
     "skipLibCheck": true,
