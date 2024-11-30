@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import Colors from './Colors'; // Import colors
+import Colors from './Colors';
 
 // Get screen dimensions
 const { width, height } = Dimensions.get('window');
@@ -13,39 +13,39 @@ const GlobalStyles = (theme: 'light' | 'dark') => {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            padding: width > 400 ? 30 : 20,  // Adjust padding for larger screens
+            padding: width > 400 ? width * 0.075 : width * 0.05,
             backgroundColor: currentColors.background,
         },
         text: {
-            fontSize: width > 400 ? 20 : 18,  // Increase font size for wider screens
+            fontSize: width > 400 ? width * 0.05 : width * 0.045,
             color: currentColors.text,
         },
         button: {
             backgroundColor: Colors.buttonBackground,
-            padding: height > 700 ? 15 : 12,  // Increase padding for taller screens
+            padding: height > 700 ? height * 0.02 : height * 0.015,
             borderRadius: 8,
-            width: width * 0.8,  // Set width to 80% of screen width
+            width: width * 0.8,
             alignItems: 'center',
             justifyContent: 'center',
         },
         buttonText: {
             color: Colors.buttonText,
-            fontSize: width > 400 ? 14 : 12,  // Adjust font size based on screen width
+            fontSize: width > 400 ? width * 0.04 : width * 0.035,
             fontWeight: 'bold',
         },
         input: {
-            height: 40,
+            height: height * 0.05,
             borderColor: currentColors.border,
             borderWidth: 1.5,
-            paddingLeft: 10,
+            paddingLeft: width * 0.025,
             borderRadius: 8,
-            width: width * 0.8,  // Set input width to 80% of screen width
-            marginBottom: 10,
+            width: width * 0.8,
+            marginBottom: height * 0.02,
             backgroundColor: currentColors.inputBackground,
             color: currentColors.inputText,
         },
         headerLeft: {
-            marginLeft: 15,
+            marginLeft: width * 0.04,
             zIndex: 100,
             padding: 5,
         },

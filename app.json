@@ -18,7 +18,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-nna.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.nna.vtrack.mobile"
     },
     "web": {
       "favicon": "./assets/logo-nna.png"
@@ -34,7 +39,9 @@
             "useSQLCipher": false
           },
           "ios": {
-            "customBuildFlags": ["-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"]
+            "customBuildFlags": [
+              "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"
+            ]
           }
         }
       ],
@@ -46,6 +53,12 @@
           "recordAudioAndroid": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "92388322-b51e-42c5-b27b-ea68763cb50d"
+      }
+    },
+    "owner": "bagasmmra"
   }
 }

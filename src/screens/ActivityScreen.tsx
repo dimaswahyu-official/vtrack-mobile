@@ -9,23 +9,27 @@ import {
     RefreshControl,
     TouchableOpacity,
     Image,
-    Linking
+    Linking,
+    Dimensions
 } from 'react-native';
 import ActivityService from '../services/activityService';
 import { useAuthStore } from '../store/useAuthStore';
-import { useLoadingStore } from '../store/useLoadingStore';
 import Colors from "../utils/Colors";
-import {createTableActivity} from "../model/activityModel";
-import {useOffline} from "../context/OfflineProvider";
+import { ActivityModel, createTableActivity } from "../model/activityModel";
+import { useOffline } from "../context/OfflineProvider";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import {formatDate} from "../utils/DateHelper";
-import {StackNavigationProp} from "@react-navigation/stack";
-import {ActivityStackParamList} from "../navigation/ActivityNavigator";
-import {useNavigation} from "@react-navigation/native";
+import { formatDate } from "../utils/DateHelper";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { ActivityStackParamList } from "../navigation/ActivityNavigator";
+import { useNavigation } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import { getStatusLabel } from '../constants/status';
 import { useSQLiteContext } from 'expo-sqlite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Get screen dimensions
+const { width, height } = Dimensions.get('window');
 
 interface Activity {
     id: number;
@@ -38,27 +42,30 @@ interface Activity {
     day_plan: string;
     notes: string;
     callPlanOutlet: {
-        name: string
-        brand: string
-        outlet_code: string
-        latitude: string
-        longitude: string
-        sio_type: string
-        region: string
-        area: string
-        cycle: string
-        visit_day: string
-        odd_even: string
-        range_health_facilities: number
-        range_work_place: number
-        range_public_transportation_facilities: number
-        range_worship_facilities: number
-        range_playground_facilities: number
-        range_educational_facilities: number
-        photos: []
+        id: number;
+        name: string;
+        brand: string;
+        outlet_code: string;
+        latitude: string;
+        longitude: string;
+        sio_type: string;
+        region: string;
+        area: string;
+        cycle: string;
+        visit_day: string;
+        odd_even: string;
+        range_health_facilities: number;
+        range_work_place: number;
+        range_public_transportation_facilities: number;
+        range_worship_facilities: number;
+        range_playground_facilities: number;
+        range_educational_facilities: number;
+        photos: [];
     };
 }
+
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity'>;
+
 export default function ActivityScreen() {
     const db = useSQLiteContext();
     const navigation = useNavigation<NavigationProp>();
@@ -72,9 +79,26 @@ export default function ActivityScreen() {
     const fetchData = async () => {
         setRefreshing(true);
         try {
+            if (!isOnline) {
+                
+                const getDataOffline = await ActivityModel.getAllActivity(db);
+                // Load data from AsyncStorage if offline
+                const storedActivities = await AsyncStorage.getItem('activities');
+                if (storedActivities) {
+                    setActivities(JSON.parse(storedActivities));
+                    Toast.show({ type: "info", text1: "Offline Mode", text2: "Showing cached data." });
+                } else {
+                    Toast.show({ type: "error", text1: "No Internet Connection", text2: "No cached data available." });
+                }
+                setRefreshing(false);
+                return;
+            }
+
             const response = await ActivityService.getListingSchedule(userId);
             const data: Activity[] = await response.data;
             setActivities(data);
+            // Store the fetched data in AsyncStorage
+            await AsyncStorage.setItem('activities', JSON.stringify(data));
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -82,31 +106,26 @@ export default function ActivityScreen() {
         }
     };
 
+    const initializeDatabase = async () => {
+        await createTableActivity(db);
+    };
     useEffect(() => {
-        const initializeDatabase = async () => {
-            const table = await createTableActivity(db);
-            console.log('Table Created:', table);
-            console.log('Database Path:', db.databasePath); // Log the database path
-        };
-
-        initializeDatabase(); // Execute the initialization
+        initializeDatabase();
     }, [db]);
 
-    if(isOnline || isWifi) {
-        useEffect(() => {
-            fetchData();
-        }, []);
-    }
-    
+    useEffect(() => {
+        fetchData();
+    }, [isOnline, isWifi]);
+
     const toggleSelection = (id: number) => {
-        console.log(id)
+        console.log(id);
     };
 
     const openMaps = (latitude: string, longitude: string) => {
         const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
         Linking.openURL(url).catch((err) => {
             console.error("Failed to open map", err);
-            Toast.show({type: "error", text1: "Failed to open map"});
+            Toast.show({ type: "error", text1: "Failed to open map" });
         });
     };
 
@@ -146,14 +165,14 @@ export default function ActivityScreen() {
                     <View style={styles.row}>
                         {/* Column 1 */}
                         <View style={styles.col1}>
-                            <Text style={[styles.title, {fontStyle: 'italic'}]}>{item.code_call_plan}</Text>
-                            <Text style={[styles.description, {fontStyle: 'italic'}]}>{item.callPlanOutlet.sio_type}</Text>
+                            <Text style={[styles.title, { fontStyle: 'italic' }]}>{item.code_call_plan}</Text>
+                            <Text style={[styles.description, { fontStyle: 'italic' }]}>{item.callPlanOutlet.sio_type}</Text>
                             <View style={styles.divider} />
-                            <Text style={styles.description}>{item.type == 1 ? 'Outlet New' : 'Outlet Existing'}, {getStatusLabel(item.status as any)}</Text>
+                            <Text style={styles.description}>{item.type === 1 ? 'Outlet New, ' : ''}{getStatusLabel(item.status as any)}</Text>
                             <View style={styles.divider} />
-                            <Text style={styles.description}>Schedule : {formatDate(item.day_plan)}</Text>
+                            <Text style={styles.description}>Schedule: {formatDate(item.day_plan)}</Text>
                             <View style={styles.divider} />
-                            <Text style={styles.description}>Cycle : {item.callPlanOutlet.cycle} - Visit Day : {item.callPlanOutlet.visit_day}</Text>
+                            <Text style={styles.description}>Cycle: {item.callPlanOutlet.cycle} - Visit Day: {item.callPlanOutlet.visit_day}</Text>
                             <View style={styles.divider} />
                             <Text style={styles.description}>{item.notes?.toUpperCase() || ''}</Text>
                         </View>
@@ -164,12 +183,12 @@ export default function ActivityScreen() {
                                 source={require('../../assets/logo-nna.png')}
                             />
                             <Text style={styles.brand}>{item.callPlanOutlet.brand.toUpperCase()}</Text>
-                            <View style={styles.row}>
+                            <View style={[styles.row, { marginTop: height * 0.01 }]}>
                                 <TouchableOpacity style={styles.buttonWork} onPress={() => openMaps('-6.198453', '106.802473')}>
-                                    <MaterialCommunityIcons name="google-maps" size={25} color={Colors.buttonBackground} />
+                                    <MaterialCommunityIcons name="google-maps" size={22} color={Colors.buttonBackground} />
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.buttonWork} onPress={() => handlePressWork(item)}>
-                                    <MaterialIcons name="input" size={25} color={Colors.buttonBackground} />
+                                    <MaterialIcons name="input" size={22} color={Colors.buttonBackground} />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -212,74 +231,70 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
-        padding: 15,
+        padding: width * 0.02,
     },
     divider: {
         height: 1,
         backgroundColor: '#ccc',
-        marginVertical: 5,
+        marginVertical: height * 0.005,
     },
     image: {
-        width: "70%",
-        height: 30,
+        width: "80%",
+        height: height * 0.05,
         marginTop: 5,
         resizeMode: 'contain',
     },
     buttonWork: {
-        marginTop: 10,
+        marginTop: height * 0.01,
         backgroundColor: 'transparent',
-        padding: 9,
+        padding: height * 0.015,
         borderRadius: 5,
         justifyContent: 'center',
         alignItems: 'center',
-        marginHorizontal: 1,
+        marginHorizontal: 3,
         borderWidth: 2,
         borderColor: Colors.buttonBackground,
     },
     header: {
-        fontSize: 20,
+        fontSize: width > 400 ? 24 : 20,
         fontWeight: 'bold',
         color: 'black',
-        marginBottom: 20,
+        marginBottom: height * 0.02,
         textAlign: 'left',
     },
     list: {
-        paddingBottom: 20,
+        paddingBottom: height * 0.02,
     },
     card: {
         backgroundColor: '#fcf6f3',
-        borderRadius: 20,
-        padding: 20,
-        marginBottom: 12,
+        borderRadius: 15,
+        padding: height * 0.02,
+        marginBottom: height * 0.02,
         shadowColor: 'rgba(150,145,145,0.75)',
-        shadowOpacity: 1.15,
-        shadowRadius: 30,
-        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 2 },
         elevation: 3,
         borderLeftWidth: 3,
         borderTopWidth: 3,
         borderLeftColor: Colors.secondaryColor,
         borderTopColor: Colors.secondaryColor,
     },
-    cardSelected: {
-        backgroundColor: '#ecf1ed',
-        borderLeftColor: Colors.secondaryColor,
-    },
     title: {
-        fontSize: 16,
+        fontSize: width > 400 ? 18 : 16,
         fontWeight: '700',
         color: 'black',
     },
     description: {
-        fontSize: 14,
-        fontWeight: '700',
+        fontSize: width > 400 ? 16 : 14,
+        fontWeight: '400',
         color: 'black',
     },
     brand: {
-        fontSize: 14,
+        fontSize: width > 400 ? 16 : 14,
         fontWeight: '800',
         color: 'black',
-        marginVertical: 5,
+        marginVertical: height * 0.01,
         fontStyle: 'italic'
     },
     center: {
@@ -294,9 +309,11 @@ const styles = StyleSheet.create({
     },
     row: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     col1: {
         flex: 2,
+        paddingRight: 10,
     },
     col2: {
         flex: 1,

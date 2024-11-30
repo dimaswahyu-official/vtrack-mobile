@@ -28,7 +28,7 @@ const OfflineIndicator = () => {
             source={animationSource}
             autoPlay
             loop
-            style={[styles.animation, { top: height * 0.01 }]} // Adjust top position based on screen height
+            style={[styles.animation, { top: height * 0.01 }]}
         />
     );
 };
@@ -36,10 +36,10 @@ const OfflineIndicator = () => {
 const styles = StyleSheet.create({
     animation: {
         position: 'absolute',
-        right: width / 9 - 20, // Center horizontally using screen width
-        width: 35,  // Set the width of the animation
-        height: 35, // Set the height of the animation
-        zIndex: 1000, // Ensure it's on top of other components
+        right: width * 0.05,
+        width: width * 0.1,
+        height: width * 0.1,
+        zIndex: 1000,
     },
 });
 

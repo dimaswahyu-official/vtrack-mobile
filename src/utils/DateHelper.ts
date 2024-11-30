@@ -16,3 +16,9 @@ export const formatDate = (inputDate: string | Date, format: string = 'dddd, DD 
     if (!inputDate) return '';
     return moment(inputDate).format(format);
 };
+
+export const formatDateWithTime = (inputDate: string | Date, format: string = 'dddd, DD MMM YYYY HH:mm'): string => {
+    // Check if inputDate is valid
+    if (!inputDate) return '';
+    return moment(inputDate).format(format);
+};

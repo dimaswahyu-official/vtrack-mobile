@@ -3,9 +3,8 @@ import {StyleSheet, TouchableOpacity, View, Text, Clipboard} from 'react-native'
 import ConstantService from '../services/constantService';
 import useConstantStore from '../store/useConstantStore';
 import { useOffline } from '../context/OfflineProvider';
-
+import * as TaskManager from 'expo-task-manager';
 import { useSQLiteContext } from 'expo-sqlite';
-import { shareDatabaseFile } from '../config/db';
 
 export default function HomeScreen() {
     const db = useSQLiteContext();
@@ -20,19 +19,19 @@ export default function HomeScreen() {
         setSio(getSio.data.data);
     }
 
-    // useEffect(() => {
-    //     if ((isOnline || isWifi) && !brands.length && !sio.length) {
-    //         fetchConstants();
-    //     }
-    // }, [isOnline, isWifi, brands, sio]);
-    
     useEffect(() => {
-        const share = async () => {
-            const data = await shareDatabaseFile();
-            console.log('Data:', data);
+        if ((isOnline || isWifi) && !brands.length && !sio.length) {
+            fetchConstants();
         }
-        share();
-    }, []);
+    }, [isOnline, isWifi, brands, sio]);
+    
+    // useEffect(() => {
+    //     const share = async () => {
+    //         const data = await shareDatabaseFile();
+    //         console.log('Data:', data);
+    //     }
+    //     share();
+    // }, []);
 
   return (
     <View style={styles.container}>
