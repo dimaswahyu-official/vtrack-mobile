@@ -9,6 +9,7 @@ import {
     ScrollView,
     Image,
     Dimensions,
+    Modal,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { RouteProp } from "@react-navigation/native";
@@ -72,14 +73,16 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
     const [sioType, setSioType] = useState<SioType | null>(null);
     const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
     const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
-    const [activitySio, setActivitySio] = useState<{ name: string; description: string; notes: string; photo: string }[]>([]);
-    const [activitySog, setActivitySog] = useState<{ name: string; description: string; notes: string }[]>([]);
+    const [activitySio, setActivitySio] = useState<{ activity_id: number; name: string; description: string; notes: string; photo: string }[]>([]);
+    const [activitySog, setActivitySog] = useState<{ activity_id: number; name: string; description: string; notes: string }[]>([]);
     const { brands, sio } = useConstantStore(); 
     const [isSioCollapsed, setIsSioCollapsed] = useState(true);
     const [isSogCollapsed, setIsSogCollapsed] = useState(true);
-    const [dataOffline, setDataOffline] = useState({});
-    const [activityPhotos, setActivityPhotos] = useState<string[]>([]);
+    const [dataOffline, setDataOffline] = useState<any>({});
+    const [activityPhotos, setActivityPhotos] = useState<Array<string>>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     const { width, height } = Dimensions.get('window');
 
@@ -100,8 +103,8 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                 setEndTime(getDataOffline.end_time || item.end_time);
                 setBrand({brand: getDataOffline.brand} as Brand);
                 setSioType({name: getDataOffline.type_sio} as SioType);
-                setActivitySio(getDataOffline.activity_sio || []);
-                setActivitySog(getDataOffline.activity_sog || []);
+                setActivitySio(getDataOffline?.activity_sio || []);
+                setActivitySog(getDataOffline?.activity_sog || []);
                 setActivityPhotos(getDataOffline.photo ? JSON.parse(getDataOffline.photo) : []);                
             } else {
                 // If getDataOffline is null, use item values as fallback
@@ -116,16 +119,15 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                 setEndTime(item.end_time);
                 setBrand(item.callPlanOutlet?.brand);
                 setSioType(item.callPlanOutlet?.sio_type);
-                setActivityPhotos(item.callPlanOutlet?.photos || []);
+                setActivityPhotos(item.photo ? JSON.parse(item.photo) : []);
                 if(brands.length > 0 && sio.length > 0) {
                     const filteredBrand = brands.filter(b => b.brand === item.callPlanOutlet.brand);
                     setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
                     const filteredSio = sio.filter(s => s.name === item.callPlanOutlet.sio_type);
                     setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
-
-                    // Initialize activitySio and activitySog based on the selected brand and sioType
                     if (filteredBrand.length > 0) {
                         setActivitySog(Array.from({ length: filteredBrand[0].sog.length }, (_, i) => ({
+                            activity_id: 0,
                             name: filteredBrand[0].sog[i],
                             description: '',
                             notes: ''
@@ -133,7 +135,8 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                     }
 
                     if (filteredSio.length > 0) {
-                        setActivitySio(Array.from({ length: filteredSio[0].component.length }, (_, i) => ({
+                        setActivitySio(Array.from({ length: filteredSio[0].component.length }, (_, i) => ({ 
+                            activity_id: 0,
                             name: filteredSio[0].component[i],
                             description: '',
                             notes: '',
@@ -147,19 +150,17 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
         initializeDatabase();
     }, [db, item?.id]);
 
-    console.log('activityPhotos', activityPhotos);
-    
-    // const handleSioChange = (index: number, field: keyof typeof activitySio[number], value: string) => {
-    //     const newActivitySio = [...activitySio];
-    //     newActivitySio[index][field] = value as never;
-    //     setActivitySio(newActivitySio);
-    // };
+    const handleSioChange = (index: number, field: keyof typeof activitySio[number], value: string) => {
+        const newActivitySio = [...activitySio];
+        newActivitySio[index][field] = value as never;
+        setActivitySio(newActivitySio);
+    };
 
-    // const handleSogChange = (index: number, field: keyof typeof activitySog[number], value: string) => {
-    //     const newActivitySog = [...activitySog];
-    //     newActivitySog[index][field] = value as never;
-    //     setActivitySog(newActivitySog);
-    // };
+    const handleSogChange = (index: number, field: keyof typeof activitySog[number], value: string) => {
+        const newActivitySog = [...activitySog];
+        newActivitySog[index][field] = value as never;
+        setActivitySog(newActivitySog);
+    };
 
     const handleTakePhoto = async (index: number) => {
         // Request camera permissions
@@ -216,9 +217,12 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
             quality: 1,
         });
 
+        console.log('result', activityPhotos);
         if (!result.canceled) {
             setActivityPhotos([...activityPhotos, result.assets[0].uri]);
         }
+
+        console.log('result2', activityPhotos);
     };
 
     const handleSubmit = async () => {
@@ -237,11 +241,12 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
             photo: JSON.stringify(activityPhotos),
             activity_sio: activitySio,
             activity_sog: activitySog,
-            is_sync: 0
+            is_sync: 0,
+            id_server: 0
         };
 
         try {
-            if(dataOffline) {
+            if(dataOffline.id) {
                 const data = await ActivityModel.update(db, dataOffline.id, activityData);
                 Alert.alert('Success', 'Activity updated successfully!');
             }else{
@@ -250,7 +255,7 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
             }
         } catch (error) {
             console.log(error);
-            Alert.alert('Error', 'Failed to save activity.');
+            Alert.alert('Error', `${error}`);
         }
     };
 
@@ -259,21 +264,13 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
         setActivityPhotos(newPhotos);
     };
 
-    const handleNext = () => {
-        if (currentIndex < activityPhotos.length - 1) {
-            setCurrentIndex(currentIndex + 1);
-        }
-    };
-
-    const handlePrev = () => {
-        if (currentIndex > 0) {
-            setCurrentIndex(currentIndex - 1);
-        }
-    };
-
     // Function to render SIO components
     const renderSioComponents = () => {
-        return activitySio.map((sio, index) => (
+        if (!Array.isArray(activitySio)) {
+            console.warn('activitySio is not an array:', activitySio);
+            return null; // or return a fallback UI
+        }
+        return activitySio?.map((sio, index) => (
             <View key={index} style={styles.activityContainer}>
                 <TextInput
                     style={styles.input}
@@ -328,6 +325,10 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
 
     // Function to render SOG components
     const renderSogComponents = () => {
+        if (!Array.isArray(activitySog)) {
+            console.warn('activitySog is not an array:', activitySog);
+            return null; // or return a fallback UI
+        }
         return activitySog.map((sog, index) => (
             <View key={index} style={styles.activityContainer}>
                 <Text style={styles.title}>SOG {index + 1}</Text>
@@ -364,6 +365,14 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
             </View>
         ));
     };
+
+    // Function to handle image press
+    const handleImagePress = (item: string) => {
+        setSelectedImage(item);
+        setIsModalVisible(true);
+    };
+
+    console.log('activityPhotos:', activityPhotos);
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -437,22 +446,27 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                     <Text style={styles.buttonText}>Photo</Text>
                 </TouchableOpacity>
             </View>
-            {activityPhotos.length > 0 && (
-                    <Carousel
-                        loop={false}
-                        width={width * 0.8}
-                        height={height * 0.22}
-                        data={activityPhotos}
-                        renderItem={({ item, index }) => (
-                            <View style={styles.imageContainer}>
-                            <Image source={{ uri: item }} style={styles.imagePreview} />
-                                <TouchableOpacity style={styles.removeButton} onPress={() => handleRemovePhoto(index)}>
-                                    <MaterialIcons name="delete" size={15} color="#fff" />
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                        pagingEnabled={true}
-                    />
+            {Array.isArray(activityPhotos) && activityPhotos.length > 0 && (
+                <Carousel
+                    loop={false}
+                    width={width * 0.8}
+                    height={height * 0.22}
+                    data={activityPhotos}
+                    renderItem={({ item, index }) => (
+                        <View style={styles.imageContainer}>
+                            <TouchableOpacity onPress={() => handleImagePress(item)}>
+                                <Image 
+                                    source={{ uri: item }} 
+                                    style={styles.imagePreview} 
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.removeButton} onPress={() => handleRemovePhoto(index)}>
+                                <MaterialIcons name="delete" size={15} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                    pagingEnabled={true}
+                />
             )}
            
             <View style={styles.collapsibleHeader}>
@@ -476,6 +490,23 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
             <TouchableOpacity style={styles.button} onPress={handleSubmit}>
                 <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
+
+            <View style={styles.modalContainer}>
+                <Modal
+                    animationType="slide"
+                    visible={isModalVisible}
+                    transparent={false}
+                    onRequestClose={() => setIsModalVisible(false)}
+                >
+                    <Image 
+                        source={{ uri: selectedImage || '' }}
+                        style={styles.fullscreenImage} 
+                    />
+                    <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
+                        <MaterialIcons name="close" size={24} color="black" />
+                    </TouchableOpacity>
+                </Modal>
+            </View>
         </ScrollView>
     );
 }
@@ -616,5 +647,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 10,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Semi-transparent background
+    },
+    fullscreenImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain', // Maintain aspect ratio
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 40,
+        right: 20,
+        backgroundColor: 'white',
+        padding: 10,
+        borderRadius: 5,
+    },
+    closeButtonText: {
+        color: 'black',
+        fontWeight: 'bold',
     },
 });

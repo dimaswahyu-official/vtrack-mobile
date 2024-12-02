@@ -24,10 +24,10 @@ type FormData = {
 type NavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 export default function LoginScreen() {
     const { setAuthenticated, setUser, setToken, user, isAuthenticated, accessToken } = useAuthStore();
-    const navigation = useNavigation<NavigationProp>();  // Add the type here
+    const navigation = useNavigation<NavigationProp>();
     const [passwordVisible, setPasswordVisible] = useState(false);
     const { control, handleSubmit, formState: { errors } } = useForm<FormData>();
-    const { theme } = useThemeStore(); // Access the theme and setter from your store
+    const { theme } = useThemeStore();
     const {  setLoading } = useLoadingStore();
 
     useEffect(() => {
@@ -66,6 +66,12 @@ export default function LoginScreen() {
             } catch (error: any) {
                 const { data } = error.response;
                 if (data.statusCode === 404){
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Error',
+                        text2: `${data.message}`,
+                    });
+                } else {
                     Toast.show({
                         type: 'error',
                         text1: 'Error',

@@ -108,6 +108,7 @@ export default function ActivityScreen() {
 
     const initializeDatabase = async () => {
         await createTableActivity(db);
+        await ActivityModel.clear(db);
     };
     useEffect(() => {
         initializeDatabase();

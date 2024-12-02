@@ -8,7 +8,6 @@ const { width, height } = Dimensions.get('window');
 
 const OfflineIndicator = () => {
     const { isOnline, isWifi } = useOffline();
-
     let animationSource: any;
     let statusColor = 'green'; // Default color (online)
 

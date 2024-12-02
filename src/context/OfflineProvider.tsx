@@ -12,7 +12,7 @@ interface OfflineProviderProps {
     children: ReactNode;
 }
 
-// Create the context
+// Create the contexts
 const OfflineContext = createContext<OfflineContextType | undefined>(undefined);
 
 // Create the provider component

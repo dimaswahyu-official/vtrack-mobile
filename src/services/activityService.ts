@@ -26,6 +26,15 @@ class ActivityService {
             throw new Error('Error: ' + error);
         }
     }
+
+    static async syncActivity(data: any): Promise<any> {
+        try {
+            const response = await axiosInstance.post(`/activity`, data);
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
 }
 
 export default ActivityService;
