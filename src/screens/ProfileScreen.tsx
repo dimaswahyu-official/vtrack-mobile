@@ -1,27 +1,28 @@
 import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions} from 'react-native';
-import { useThemeStore } from '../store/useThemeStore';
-import { useAuthStore } from '../store/useAuthStore';
+import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView} from 'react-native';
+import {useThemeStore} from '../store/useThemeStore';
+import {useAuthStore} from '../store/useAuthStore';
 import ButtonComponent from "../components/ButtonComponent";
 import GlobalStyles from "../utils/GlobalStyles";
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {StackNavigationProp} from "@react-navigation/stack";
 import {ProfileStackParamList} from "../navigation/ProfileNavigator";
 import {useLoadingStore} from "../store/useLoadingStore";
 import Toast from "react-native-toast-message";
 import useConstantStore from '../store/useConstantStore';
+import Colors from "../utils/Colors";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 type NavigationProp = StackNavigationProp<ProfileStackParamList, 'Profile'>;
 export default function ProfileScreen() {
     const navigation = useNavigation<NavigationProp>();
 
-    const { setLoading } = useLoadingStore();
-    const { theme, setTheme } = useThemeStore();
-    const { clearAuth, user } = useAuthStore();
-    const { clearConstants } = useConstantStore();
+    const {setLoading} = useLoadingStore();
+    const {theme, setTheme} = useThemeStore();
+    const {clearAuth, user} = useAuthStore();
+    const {clearConstants} = useConstantStore();
 
 
     useEffect(() => {
@@ -62,103 +63,205 @@ export default function ProfileScreen() {
     };
 
     const toUpdateProfile = () => {
-        navigation.navigate('UpdateProfile', { profile });
+        navigation.navigate('UpdateProfile', {profile});
     };
 
     const globalStyles = GlobalStyles(theme);
 
     return (
-        <View style={[styles.container]}>
-            {/* Profile Information */}
-            <View style={styles.profileContainer}>
-                <Image source={{ uri: profile.photo }} style={styles.profileImage} />
-                <View style={styles.profileDetails}>
-                    <View style={styles.profileUpdate}>
-                        <Text style={[styles.profileName, { color: theme === 'dark' ? '#fff' : '#000' }]}>
-                            {profile.name}
-                        </Text>
-                        <TouchableOpacity onPress={toUpdateProfile} style={styles.updateIcon}>
-                            <Ionicons name="create-outline" size={28} color={theme === 'dark' ? '#fff' : '#000'} />
-                        </TouchableOpacity>
-                    </View>
-                    <Text style={[styles.profileEmail, { color: theme === 'dark' ? '#aaa' : '#555' }]}>
-                        {profile.email}
+        <ScrollView>
+            <View style={[styles.container]}>
+                {/* Logout Button */}
+                <View style={styles.row}>
+                    <Text style={styles.name}>
+                        Hi {profile.name}
                     </Text>
+                    <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor} style={{alignItems:'center'}}/>
+                    <TouchableOpacity style={styles.button}>
+                        <Text style={styles.buttonText}>Unfriend</Text>
+                    </TouchableOpacity>
+                    {/*<ButtonComponent*/}
+                    {/*    title="Logout"*/}
+                    {/*    onPress={handleLogout}*/}
+                    {/*    buttonStyle={globalStyles.button}*/}
+                    {/*    textStyle={globalStyles.buttonText}*/}
+                    {/*/>*/}
                 </View>
+
+                {/*Card Container Profiles*/}
+                <View style={styles.containerCard}>
+                    <Image source={require('../../assets/cover-profile.png')} style={styles.coverPhoto}/>
+                    <Image source={require('../../assets/logo-nna-white.png')} style={styles.logo}/>
+                    <View style={styles.avatarContainer}>
+                        <Image source={{uri: profile.photo}} style={styles.avatar}/>
+                        <Text style={styles.name}>{profile.name}</Text>
+                    </View>
+                </View>
+                <View>
+                    <View style={styles.row}>
+                        <Text style={styles.email}>Email </Text>
+                        <Text style={styles.name}>{profile.email}</Text>
+                    </View>
+                    <ButtonComponent
+                        title={'Ambil Absen'}
+                        onPress={() => {
+                            toUpdateProfile();
+                        }}
+                        buttonStyle={globalStyles.button}
+                        textStyle={globalStyles.buttonText}
+                    />
+                    <View style={{ alignItems: "center", padding: 20}}>
+                        <Text style={{color: 'gray', marginVertical: 8}}>active since</Text>
+                        <Text style={{color:Colors.buttonBackground ,fontWeight:'bold'}}>28/06/2024</Text>
+                    </View>
+
+                </View>
+
             </View>
-            {/* Update Profile Button */}
-            {/* Theme Switcher */}
-            {/*<View style={styles.settingContainer}>*/}
-            {/*    <Text style={[styles.settingText, { color: theme === 'dark' ? '#fff' : '#000' }]}>*/}
-            {/*        Dark Mode*/}
-            {/*    </Text>*/}
-            {/*    <Switch*/}
-            {/*        value={theme === 'dark'}*/}
-            {/*        onValueChange={handleThemeToggle}*/}
-            {/*        thumbColor={theme === 'dark' ? '#fff' : '#000'}*/}
-            {/*        trackColor={{ false: '#767577', true: '#81b0ff' }}*/}
-            {/*    />*/}
-            {/*</View>*/}
-            {/* Logout Button */}
-            <ButtonComponent
-                title="Logout"
-                onPress={handleLogout}
-                buttonStyle={globalStyles.button}
-                textStyle={globalStyles.buttonText}
-            />
-        </View>
+        </ScrollView>
     );
 }
 
+// const styles = StyleSheet.create({
+//     container: {
+//         flex: 1,
+//         justifyContent: 'flex-start',
+//         alignItems: 'center',
+//         paddingHorizontal: 10,
+//         paddingVertical: 10,
+//     },
+//     profileContainer: {
+//         flexDirection: 'row',
+//         alignItems: 'center',
+//         marginBottom: 20,
+//         width: '100%',
+//         padding: 10,
+//         borderRadius: 8,
+//         justifyContent: 'space-between',
+//     },
+//     profileUpdate: {
+//         flexDirection: 'row',
+//         alignItems: 'center',
+//     },
+//     profileImage: {
+//         width: 80,
+//         height: 80,
+//         borderRadius: 40,
+//         marginRight: 10,
+//     },
+//     profileDetails: {
+//         flex: 1,
+//     },
+//     profileName: {
+//         fontSize: 22,
+//         fontWeight: 'bold',
+//     },
+//     profileEmail: {
+//         fontSize: 16,
+//     },
+//     settingContainer: {
+//         flexDirection: 'row',
+//         alignItems: 'center',
+//         marginBottom: 40,
+//     },
+//     settingText: {
+//         fontSize: 18,
+//         marginRight: 10,
+//     },
+//     updateIcon: {
+//         position: 'absolute',
+//         right: width / 20 - 20,
+//         top: height / 100 - 25,
+//     },
+// });
+
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-    },
-    profileContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
         width: '100%',
-        padding: 10,
-        borderRadius: 8,
-        justifyContent: 'space-between',
-    },
-    profileUpdate: {
-        flexDirection: 'row',
         alignItems: 'center',
     },
-    profileImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        marginRight: 10,
+    containerCard: {
+        width: '80%',
+        alignItems: 'center',
+        marginTop: 10,
+        marginBottom: 10,
+        borderRadius: 8,
+        borderWidth: 0.4,
     },
-    profileDetails: {
-        flex: 1,
+    coverPhoto: {
+        width: '100%',
+        height: 200,
+        resizeMode: 'cover',
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
     },
-    profileName: {
-        fontSize: 22,
+    logo: {
+        marginTop: 20,
+        alignSelf: 'center',
+        position: 'absolute',
+        zIndex: 15,
+        width: 120,
+        height: 90,
+        resizeMode: 'contain'
+    },
+    avatarContainer: {
+        alignItems: 'center',
+        marginTop: -75,
+    },
+    avatar: {
+        width: 150,
+        height: 150,
+        borderRadius: 75,
+        borderWidth: 5,
+        borderColor: 'white',
+    },
+    name: {
+        marginTop: 15,
+        fontSize: 20,
         fontWeight: 'bold',
     },
-    profileEmail: {
-        fontSize: 16,
+    email: {
+        marginTop: 15,
+        fontSize: 20,
+        color: 'gray',
     },
-    settingContainer: {
+    rowContainer: {
+        flexDirection: 'row',
+        marginTop: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    row: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 40,
+        justifyContent: 'center',
+        marginVertical: 8,
     },
-    settingText: {
-        fontSize: 18,
-        marginRight: 10,
+    box: {
+        marginTop: 10,
+        backgroundColor: 'white',
+        alignItems: 'center',
+        shadowColor: 'black',
+        shadowOpacity: 0.2,
+        shadowOffset: {
+            height: 1,
+            width: -2,
+        },
+        elevation: 2,
+        paddingTop: 10,
     },
-    updateIcon: {
-        position: 'absolute',
-        right: width / 20 - 20,
-        top: height / 100 - 25,
+    button: {
+        backgroundColor:'#fff',
+        borderWidth:1,
+        borderColor: '#2ECC71',
+        paddingVertical: 5,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    buttonText: {
+        color: '#2ECC71',
+        fontSize: 16,
     },
 });

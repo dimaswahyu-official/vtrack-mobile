@@ -11,8 +11,8 @@ const GlobalStyles = (theme: 'light' | 'dark') => {
     return StyleSheet.create({
         container: {
             flex: 1,
-            justifyContent: 'center',
             alignItems: 'center',
+            justifyContent: 'center',
             padding: width > 400 ? width * 0.075 : width * 0.05,
             backgroundColor: currentColors.background,
         },
@@ -34,12 +34,12 @@ const GlobalStyles = (theme: 'light' | 'dark') => {
             fontWeight: 'bold',
         },
         input: {
-            height: height * 0.05,
+            height: 40,
             borderColor: currentColors.border,
             borderWidth: 1.5,
             paddingLeft: width * 0.025,
             borderRadius: 8,
-            width: width * 0.8,
+            width: width - 20 ,
             marginBottom: height * 0.02,
             backgroundColor: currentColors.inputBackground,
             color: currentColors.inputText,

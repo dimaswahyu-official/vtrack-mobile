@@ -89,6 +89,7 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
     useEffect(() => {
         const initializeDatabase = async () => {
             const getDataOffline = await ActivityModel.getActivityByScheduleId(db, item?.id);
+            console.log("this",getDataOffline);
             setDataOffline(getDataOffline || {});
             // Map existing data to state
             if (getDataOffline) {

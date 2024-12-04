@@ -98,14 +98,13 @@ export default function LoginScreen() {
             fontSize: width * 0.04, // Use percentage of device width
         },
         passwordContainer: {
-            width: '94%',
-            position: 'relative',
             marginBottom: 10,
+
         },
         eyeIcon: {
             position: 'absolute',
             right: 10,
-            top: 8,
+            top: 5,
             zIndex: 1,
         },
     });
