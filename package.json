@@ -24,6 +24,7 @@
     "expo-camera": "~16.0.5",
     "expo-drizzle-studio-plugin": "^0.1.1",
     "expo-image-picker": "~16.0.2",
+    "expo-location": "^18.0.3",
     "expo-sharing": "~13.0.0",
     "expo-sqlite": "~15.0.3",
     "expo-status-bar": "~2.0.0",

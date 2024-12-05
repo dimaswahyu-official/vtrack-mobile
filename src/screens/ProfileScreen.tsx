@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView, FlatList} from 'react-native';
 import {useThemeStore} from '../store/useThemeStore';
 import {useAuthStore} from '../store/useAuthStore';
 import ButtonComponent from "../components/ButtonComponent";
@@ -62,42 +62,38 @@ export default function ProfileScreen() {
         }, 2000);
     };
 
-    const toUpdateProfile = () => {
-        navigation.navigate('UpdateProfile', {profile});
+    const toAttendanceScreen = () => {
+        navigation.navigate('Attendance', {profile});
     };
 
     const globalStyles = GlobalStyles(theme);
 
     return (
         <ScrollView>
-            <View style={[styles.container]}>
+            <View style={{justifyContent: 'center', width: '100%'}}>
                 {/* Logout Button */}
                 <View style={styles.row}>
                     <Text style={styles.name}>
                         Hi {profile.name}
+                        <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor}/>
                     </Text>
-                    <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor} style={{alignItems:'center'}}/>
-                    <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}>Unfriend</Text>
-                    </TouchableOpacity>
-                    {/*<ButtonComponent*/}
-                    {/*    title="Logout"*/}
-                    {/*    onPress={handleLogout}*/}
-                    {/*    buttonStyle={globalStyles.button}*/}
-                    {/*    textStyle={globalStyles.buttonText}*/}
-                    {/*/>*/}
-                </View>
 
-                {/*Card Container Profiles*/}
-                <View style={styles.containerCard}>
-                    <Image source={require('../../assets/cover-profile.png')} style={styles.coverPhoto}/>
-                    <Image source={require('../../assets/logo-nna-white.png')} style={styles.logo}/>
-                    <View style={styles.avatarContainer}>
-                        <Image source={{uri: profile.photo}} style={styles.avatar}/>
-                        <Text style={styles.name}>{profile.name}</Text>
-                    </View>
+                    <TouchableOpacity style={styles.button} onPress={handleLogout}>
+                        <Text style={styles.buttonText}>Logout</Text>
+                    </TouchableOpacity>
+
                 </View>
-                <View>
+                {/*Card Container Profiles*/}
+                <View style={{alignItems: 'center'}}>
+                    <View style={styles.containerCard}>
+                        <Image source={require('../../assets/cover-profile.png')} style={styles.coverPhoto}/>
+                        <Image source={require('../../assets/logo-nna-white.png')} style={styles.logo}/>
+                        <View style={styles.avatarContainer}>
+                            <Image source={{uri: profile.photo}} style={styles.avatar}/>
+                            <Text style={styles.name}>{profile.name}</Text>
+                        </View>
+                    </View>
+
                     <View style={styles.row}>
                         <Text style={styles.email}>Email </Text>
                         <Text style={styles.name}>{profile.email}</Text>
@@ -105,19 +101,18 @@ export default function ProfileScreen() {
                     <ButtonComponent
                         title={'Ambil Absen'}
                         onPress={() => {
-                            toUpdateProfile();
+                            toAttendanceScreen();
                         }}
                         buttonStyle={globalStyles.button}
                         textStyle={globalStyles.buttonText}
                     />
-                    <View style={{ alignItems: "center", padding: 20}}>
-                        <Text style={{color: 'gray', marginVertical: 8}}>active since</Text>
-                        <Text style={{color:Colors.buttonBackground ,fontWeight:'bold'}}>28/06/2024</Text>
-                    </View>
-
                 </View>
-
+                <View style={{alignItems: "center", padding: 20}}>
+                    <Text style={{color: 'gray', marginVertical: 8}}>active since</Text>
+                    <Text style={{color: Colors.buttonBackground, fontWeight: 'bold'}}>28/06/2024</Text>
+                </View>
             </View>
+
         </ScrollView>
     );
 }
@@ -234,7 +229,7 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-around',
         marginVertical: 8,
     },
     box: {
@@ -251,17 +246,15 @@ const styles = StyleSheet.create({
         paddingTop: 10,
     },
     button: {
-        backgroundColor:'#fff',
-        borderWidth:1,
-        borderColor: '#2ECC71',
+        backgroundColor: Colors.buttonBackground,
         paddingVertical: 5,
         paddingHorizontal: 20,
-        borderRadius: 5,
+        borderRadius: 8,
         alignItems: 'center',
         marginTop: 10,
     },
     buttonText: {
-        color: '#2ECC71',
+        color: 'white',
         fontSize: 16,
     },
 });

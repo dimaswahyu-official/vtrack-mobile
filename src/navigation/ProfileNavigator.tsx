@@ -5,10 +5,12 @@ import {useNavigation} from '@react-navigation/native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {MainTabParamList} from "./MainNavigator";
 import UpdateProfileForm from "../screens/Profile/UpdateProfileForm";
+import AttendanceScreen from "../screens/Attendance/AttendanceScreen";
 // Declare your param list for the Profile stack
 export type ProfileStackParamList = {
     Profile: undefined;
     UpdateProfile: { profile: { name: string; email: string; photo: string; } };
+    Attendance: { profile: { name: string; email: string; photo: string; } };
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -35,13 +37,19 @@ const ProfileNavigator = () => {
             <Stack.Screen
                 name="Profile"
                 component={ProfileScreen}
-                options={{ headerTitle: '' }}
+                options={{headerTitle: ''}}
             />
             <Stack.Screen
                 name="UpdateProfile"
                 component={UpdateProfileForm}
-                options={{ headerTitle: '' }}
+                options={{headerTitle: ''}}
             />
+            <Stack.Screen
+                name="Attendance"
+                component={AttendanceScreen}
+                options={{headerTitle: ''}}
+            />
+
         </Stack.Navigator>
     );
 };
