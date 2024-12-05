@@ -53,6 +53,7 @@ const MainNavigator = () => (
         <Tab.Screen
             name="Home"
             component={HomeScreen}
+            options={{ title: 'home' }}
         />
         <Tab.Screen
             name="ProfileStack"

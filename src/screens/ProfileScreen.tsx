@@ -117,59 +117,6 @@ export default function ProfileScreen() {
     );
 }
 
-// const styles = StyleSheet.create({
-//     container: {
-//         flex: 1,
-//         justifyContent: 'flex-start',
-//         alignItems: 'center',
-//         paddingHorizontal: 10,
-//         paddingVertical: 10,
-//     },
-//     profileContainer: {
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//         marginBottom: 20,
-//         width: '100%',
-//         padding: 10,
-//         borderRadius: 8,
-//         justifyContent: 'space-between',
-//     },
-//     profileUpdate: {
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//     },
-//     profileImage: {
-//         width: 80,
-//         height: 80,
-//         borderRadius: 40,
-//         marginRight: 10,
-//     },
-//     profileDetails: {
-//         flex: 1,
-//     },
-//     profileName: {
-//         fontSize: 22,
-//         fontWeight: 'bold',
-//     },
-//     profileEmail: {
-//         fontSize: 16,
-//     },
-//     settingContainer: {
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//         marginBottom: 40,
-//     },
-//     settingText: {
-//         fontSize: 18,
-//         marginRight: 10,
-//     },
-//     updateIcon: {
-//         position: 'absolute',
-//         right: width / 20 - 20,
-//         top: height / 100 - 25,
-//     },
-// });
-
 const styles = StyleSheet.create({
     container: {
         width: '100%',

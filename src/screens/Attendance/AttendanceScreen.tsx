@@ -280,6 +280,13 @@ export default function AttendanceScreen({route, navigation}: AttendanceScreenPr
                         </View>
                     </View>
                 </View>
+                <View style={{alignItems:'center'}}>
+                    <View style={styles.row}>
+                        <Text style={styles.email}>Email </Text>
+                        <Text style={styles.name}>{profile.email}</Text>
+                    </View>
+                </View>
+
                 {/*<TextInput*/}
                 {/*    style={globalStyles.input}*/}
                 {/*    value={email}*/}
@@ -331,6 +338,11 @@ const styles = StyleSheet.create({
         borderRadius:50,
         marginBottom:20
     },
+    email: {
+        marginTop: 15,
+        fontSize: 20,
+        color: 'gray',
+    },
     iconButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -379,7 +391,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
         paddingVertical:40,
-        marginBottom: 10,
+
         borderRadius: 8,
         borderWidth: 0.4,
     },

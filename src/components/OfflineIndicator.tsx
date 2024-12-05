@@ -1,34 +1,44 @@
 import React from 'react';
-import { StyleSheet, Dimensions } from 'react-native';
-import { useOffline } from '../context/OfflineProvider';
+import {StyleSheet, Dimensions, View, Text} from 'react-native';
+import {useOffline} from '../context/OfflineProvider';
 import LottieView from 'lottie-react-native';
 
 // Get the screen dimensions
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const OfflineIndicator = () => {
-    const { isOnline, isWifi } = useOffline();
+    const {isOnline, isWifi} = useOffline();
     let animationSource: any;
+    let statusText = 'online';
     let statusColor = 'green'; // Default color (online)
 
     if (!isOnline) {
+        // <View style={{borderWidth:1,borderColor:'red',width:'100%'}}></View>
         animationSource = require('../../assets/lottie/offline.json');
         statusColor = 'red';
+        statusText = 'offline'
     } else if (isOnline && !isWifi) {
+        // <View style={{borderWidth:1,borderColor:'green',width:'100%'}}></View>
         animationSource = require('../../assets/lottie/online.json');
         statusColor = 'orange';
     } else {
+        // <View style={{borderWidth:1,borderColor:'green',width:'100%'}}></View>
         animationSource = require('../../assets/lottie/online.json');
         statusColor = 'green';
+        statusText = 'online'
     }
 
     return (
-        <LottieView
-            source={animationSource}
-            autoPlay
-            loop
-            style={[styles.animation, { top: height * 0.01 }]}
-        />
+        <>
+            <View style={{borderWidth: 1, borderColor: statusColor, width: '100%', position:'absolute', marginTop:55, zIndex:999}}></View>
+        </>
+
+        // <LottieView
+        //     source={animationSource}
+        //     autoPlay
+        //     loop
+        //     style={[styles.animation, { top: height * 0.01 }]}
+        // />
     );
 };
 
