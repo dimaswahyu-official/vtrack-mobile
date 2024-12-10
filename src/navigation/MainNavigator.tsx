@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import ActivityNavigator from "./ActivityNavigator";
 import Colors from "../utils/Colors";
 import { View } from 'react-native';
+import DashboardNavigator from "./DashboardNavigator";
 
 export type MainTabParamList = {
     Home: undefined;
@@ -52,8 +53,8 @@ const MainNavigator = () => (
         />
         <Tab.Screen
             name="Home"
-            component={HomeScreen}
-            options={{ title: 'home' }}
+            component={DashboardNavigator}
+            options={{ title: 'Home' }}
         />
         <Tab.Screen
             name="ProfileStack"

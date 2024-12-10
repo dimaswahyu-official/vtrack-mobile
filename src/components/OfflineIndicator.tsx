@@ -30,7 +30,19 @@ const OfflineIndicator = () => {
 
     return (
         <>
-            <View style={{borderWidth: 1, borderColor: statusColor, width: '100%', position:'absolute', marginTop:55, zIndex:999}}></View>
+            <View style={styles.container}>
+                <View style={[styles.line, {backgroundColor: statusColor}]}/>
+                <Text style={[styles.text, {color: statusColor}]}>{statusText}</Text>
+                <View style={[styles.line, {backgroundColor: statusColor}]}/>
+            </View>
+            {/*<View style={{*/}
+            {/*    borderWidth: 1,*/}
+            {/*    borderColor: statusColor,*/}
+            {/*    width: '100%',*/}
+            {/*    position: 'absolute',*/}
+            {/*    marginTop: 55,*/}
+            {/*    zIndex: 1*/}
+            {/*}}></View>*/}
         </>
 
         // <LottieView
@@ -39,6 +51,7 @@ const OfflineIndicator = () => {
         //     loop
         //     style={[styles.animation, { top: height * 0.01 }]}
         // />
+
     );
 };
 
@@ -49,6 +62,23 @@ const styles = StyleSheet.create({
         width: width * 0.1,
         height: width * 0.1,
         zIndex: 1000,
+    },
+    container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 20,
+        position: 'absolute',
+        marginTop: 45,
+    },
+    line: {
+        flex: 1,
+        height: 1,
+        // backgroundColor: 'black',
+    },
+    text: {
+        paddingHorizontal: 5,
+        fontSize: 16,
+        backgroundColor: '#FFFFFF',
     },
 });
 
