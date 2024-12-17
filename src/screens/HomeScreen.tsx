@@ -115,18 +115,18 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Dashboard</Text>
-            <View style={styles.statusContainer}>
-                <Text style={styles.syncStatus}>
-                    Sync Status: {syncStatus}
-                </Text>
-                <Text style={styles.countText}>
-                    Synced Activities: {syncedCount}
-                </Text>
-                <Text style={styles.countText}>
-                    Not Synced Activities: {notSyncedCount}
-                </Text>
-            </View>
+            {/*<Text style={styles.header}>Dashboard</Text>*/}
+            {/*<View style={styles.statusContainer}>*/}
+            {/*    <Text style={styles.syncStatus}>*/}
+            {/*        Sync Status: {syncStatus}*/}
+            {/*    </Text>*/}
+            {/*    <Text style={styles.countText}>*/}
+            {/*        Synced Activities: {syncedCount}*/}
+            {/*    </Text>*/}
+            {/*    <Text style={styles.countText}>*/}
+            {/*        Not Synced Activities: {notSyncedCount}*/}
+            {/*    </Text>*/}
+            {/*</View>*/}
 
             <FlatList
                 style={styles.list}
@@ -143,14 +143,15 @@ export default function HomeScreen() {
                             <>
                                 <TouchableOpacity
                                     key={item.id}
-                                    style={[styles.card, {flexBasis: '100%', backgroundColor: item.color}]}
+                                    style={[styles.card, {flexBasis: '98%', backgroundColor: item.color}]}
                                     onPress={() => {
                                         Alert.alert(item.title)
                                     }}>
+                                    <Image style={styles.cardImage} source={{uri: item.image}}/>
                                     <View style={styles.cardHeader}>
                                         <Text style={styles.title}>{item.title}</Text>
                                     </View>
-                                    {/*<Image style={styles.cardImage} source={{uri: item.image}}/>*/}
+
                                     <View style={styles.cardFooter}>
                                         <Text style={styles.subTitle}>{item.members}</Text>
                                     </View>
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: 'white', // Light background for better contrast
-        padding: width * 0.02,
+        padding: width * 0.04,
         alignItems: 'center',
     },
     divider: {
