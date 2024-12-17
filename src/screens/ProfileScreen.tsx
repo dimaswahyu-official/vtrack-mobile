@@ -31,13 +31,15 @@ export default function ProfileScreen() {
         } else {
             setLoading(false);
         }
-        console.log(user)
+        console.log(JSON.stringify(user))
     }, [user, setLoading]);
 
     const profile = {
         name: user?.fullName || '',
         email: user?.email || '',
         photo: user?.photo || "https://via.placeholder.com/150",
+        roles: user?.roles || '',
+        username: user?.username || '',
     };
 
     const handleThemeToggle = () => {
@@ -54,7 +56,7 @@ export default function ProfileScreen() {
 
         // Clear auth and show success toast
         clearAuth();
-        clearConstants();
+        // clearConstants();
 
         // Set a timeout to stop the loading after 2 seconds (2000ms)
         setTimeout(() => {
@@ -64,6 +66,10 @@ export default function ProfileScreen() {
 
     const toAttendanceScreen = () => {
         navigation.navigate('Attendance', {profile});
+    };
+
+    const toUpdateProfileScreen = () => {
+        navigation.navigate('UpdateProfile', {profile});
     };
 
     const globalStyles = GlobalStyles(theme);
@@ -91,13 +97,45 @@ export default function ProfileScreen() {
                         <View style={styles.avatarContainer}>
                             <Image source={{uri: profile.photo}} style={styles.avatar}/>
                             <Text style={styles.name}>{profile.name}</Text>
+                            <Text style={styles.roles}>{profile.roles}</Text>
+                            <Text style={styles.username}>{profile.username}</Text>
+
+                        </View>
+                        <View style={styles.verticalView}>
+                            <Text style={styles.verticalText}>{profile.roles}</Text>
                         </View>
                     </View>
 
                     <View style={styles.row}>
-                        <Text style={styles.email}>Email </Text>
-                        <Text style={styles.name}>{profile.email}</Text>
+                        <Text style={[styles.email, {color: 'gray',}]}>Email </Text>
+                        <Text style={[styles.email, {fontWeight: 'bold',}]}>{profile.email}</Text>
                     </View>
+                    <View style={[styles.row,{width:'100%'}]}>
+                        <ButtonComponent
+                            title={'Claim BBM'}
+                            onPress={() => {
+
+                            }}
+                            buttonStyle={styles.buttonSync}
+                            textStyle={globalStyles.buttonText}
+                        />
+                        <ButtonComponent
+                            title={'Data not Sync'}
+                            onPress={() => {
+
+                            }}
+                            buttonStyle={styles.buttonSync}
+                            textStyle={globalStyles.buttonText}
+                        />
+                    </View>
+                    <ButtonComponent
+                        title={'Update Profile'}
+                        onPress={() => {
+                            toUpdateProfileScreen();
+                        }}
+                        buttonStyle={styles.buttonUpdateProfile}
+                        textStyle={globalStyles.buttonText}
+                    />
                     <ButtonComponent
                         title={'Ambil Absen'}
                         onPress={() => {
@@ -124,7 +162,6 @@ const styles = StyleSheet.create({
     },
     containerCard: {
         width: '80%',
-        alignItems: 'center',
         marginTop: 10,
         marginBottom: 10,
         borderRadius: 8,
@@ -132,18 +169,18 @@ const styles = StyleSheet.create({
     },
     coverPhoto: {
         width: '100%',
-        height: 200,
+        height: 150,
         resizeMode: 'cover',
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
     },
     logo: {
-        marginTop: 20,
+        marginTop: 5,
         alignSelf: 'center',
         position: 'absolute',
         zIndex: 15,
-        width: 120,
-        height: 90,
+        width: 90,
+        height: 80,
         resizeMode: 'contain'
     },
     avatarContainer: {
@@ -158,14 +195,25 @@ const styles = StyleSheet.create({
         borderColor: 'white',
     },
     name: {
-        marginTop: 15,
+        marginTop: 2,
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    username: {
+        marginBottom: 40,
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: Colors.buttonBackground,
+    },
+    roles: {
         fontSize: 20,
         fontWeight: 'bold',
     },
     email: {
-        marginTop: 15,
+
         fontSize: 20,
-        color: 'gray',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     rowContainer: {
         flexDirection: 'row',
@@ -176,7 +224,7 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-around',
+        justifyContent: 'space-evenly',
         marginVertical: 8,
     },
     box: {
@@ -200,8 +248,40 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
     },
+    buttonSync: {
+        backgroundColor: Colors.buttonBackground,
+        paddingVertical: 10,
+        paddingHorizontal: 25,
+        borderRadius: 8,
+        alignItems: 'center',
+        margin: 5,
+    },
+    buttonUpdateProfile: {
+        backgroundColor: Colors.secondaryColor,
+        padding: height > 700 ? height * 0.02 : height * 0.015,
+        borderRadius: 8,
+        width: width * 0.8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom:10
+    },
     buttonText: {
         color: 'white',
         fontSize: 16,
+    },
+    verticalView: {
+        justifyContent: 'flex-end',
+        alignItems: 'flex-end',
+        paddingVertical: 2
+    },
+    verticalText: {
+        transform: [{rotate: '-90deg'}], // Rotates the text
+        textAlign: 'center',
+        fontSize: 60,
+        fontWeight: 'bold',
+        color: '#d3d4d9',
+        position: 'absolute',
+        zIndex: -1,
+        paddingVertical: 14,
     },
 });
