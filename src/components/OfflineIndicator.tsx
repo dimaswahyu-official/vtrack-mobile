@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginVertical: 20,
         position: 'absolute',
-        marginTop: 45,
+        marginTop: 2,
     },
     line: {
         flex: 1,

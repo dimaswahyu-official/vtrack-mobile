@@ -1,37 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import {
-    StyleSheet,
-    View,
-    Text,
-    FlatList,
-    TouchableWithoutFeedback,
-    Animated,
-    RefreshControl,
-    TouchableOpacity,
-    Image,
-    Linking,
-    Dimensions
-} from 'react-native';
-import ActivityService from '../services/activityService';
-import { useAuthStore } from '../store/useAuthStore';
-import Colors from "../utils/Colors";
-import { ActivityModel, createTableActivity } from "../model/activityModel";
-import { useOffline } from "../context/OfflineProvider";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { formatDate } from "../utils/DateHelper";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { ActivityStackParamList } from "../navigation/ActivityNavigator";
-import { useNavigation } from "@react-navigation/native";
-import Toast from "react-native-toast-message";
-import { getStatusLabel, getStatusLabelNew } from '../constants/status';
-import { useSQLiteContext } from 'expo-sqlite';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 // Get screen dimensions
-const { width, height } = Dimensions.get('window');
+import {
+    Animated,
+    Dimensions, FlatList,
+    Image,
+    Linking, RefreshControl, StyleSheet,
+    Text,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View
+} from "react-native";
+import {StackNavigationProp} from "@react-navigation/stack";
+import {ActivityStackParamList} from "../navigation/ActivityNavigator";
+import {useSQLiteContext} from "expo-sqlite";
+import {useNavigation} from "@react-navigation/native";
+import {useOffline} from "../context/OfflineProvider";
+import React, {useEffect, useState} from "react";
+import {useAuthStore} from "../store/useAuthStore";
+import ActivityService from "../services/activityService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
+import {getStatusLabel, getStatusLabelNew} from '../constants/status';
+import {formatDate} from "../utils/DateHelper";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import Colors from "../utils/Colors";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-interface Activity {
+
+const {width, height} = Dimensions.get('window');
+
+interface Activity2 {
     id: number;
     user_id: number;
     call_plan_id: number;
@@ -64,77 +61,51 @@ interface Activity {
     } | null;
 }
 
-type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity'>;
+type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity2'>;
 
 export default function ActivityScreen() {
     const db = useSQLiteContext();
     const navigation = useNavigation<NavigationProp>();
-    const { isOnline, isWifi } = useOffline();
-    const [activities, setActivities] = useState<Activity[]>([]);
+    const {isOnline, isWifi} = useOffline();
+    const [activities, setActivities] = useState<Activity2[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { user } = useAuthStore();
+    const {user} = useAuthStore();
     const userId = user?.id || '';
 
-    const fetchData = async () => {
+
+    const fetchScedule = async () => {
         setRefreshing(true);
         try {
-            if (!isOnline) {
-                
-                const getDataOffline = await ActivityModel.getAllActivity(db);
-                // Load data from AsyncStorage if offline
-                const storedActivities = await AsyncStorage.getItem('activities');
-                if (storedActivities) {
-                    setActivities(JSON.parse(storedActivities));
-                    Toast.show({ type: "info", text1: "Offline Mode", text2: "Showing cached data." });
-                } else {
-                    Toast.show({ type: "error", text1: "No Internet Connection", text2: "No cached data available." });
-                }
-                setRefreshing(false);
-                return;
-            }
-
             const response = await ActivityService.getListingSchedule(userId);
-            const data: Activity[] = await response.data;
+            const data: Activity2[] = await response.data;
             setActivities(data);
             // Store the fetched data in AsyncStorage
             await AsyncStorage.setItem('activities', JSON.stringify(data));
-        } catch (err: any) {
-            setError(err.message);
+        } catch (e: any) {
+            setError(e.message);
         } finally {
             setRefreshing(false);
         }
-    };
-
-    const initializeDatabase = async () => {
-        await createTableActivity(db);
-        // await ActivityModel.clear(db);
-    };
-    useEffect(() => {
-        initializeDatabase();
-    }, [db]);
+    }
 
     useEffect(() => {
-        fetchData();
-    }, [isOnline, isWifi]);
-
-    const toggleSelection = (id: number) => {
-        console.log(id);
-    };
+        fetchScedule();
+    }, []);
 
     const openMaps = (latitude: string, longitude: string) => {
         const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
         Linking.openURL(url).catch((err) => {
             console.error("Failed to open map", err);
-            Toast.show({ type: "error", text1: "Failed to open map" });
+            Toast.show({type: "error", text1: "Failed to open map"});
         });
     };
-
     const handlePressWork = (item: any) => {
-        navigation.navigate('FormActivityNormal', { item });
+        navigation.navigate('FormDetailActivity', {item});
+        // navigation.navigate('FormActivityNormal', {item});
     };
 
-    const renderItem = ({ item }: { item: Activity }) => {
+    const renderItem = ({item}: { item: Activity2 }) => {
         const scaleAnim = new Animated.Value(1);
 
         const onPressIn = () => {
@@ -155,43 +126,43 @@ export default function ActivityScreen() {
             <TouchableWithoutFeedback
                 onPressIn={onPressIn}
                 onPressOut={onPressOut}
-                onPress={() => toggleSelection(item.id)}
+                // onPress={() => toggleSelection(item.id)}
             >
                 <Animated.View
                     style={[
                         styles.card,
-                        { transform: [{ scale: scaleAnim }] },
+                        {transform: [{scale: scaleAnim}]},
                     ]}
                 >
                     <View style={styles.row}>
                         {/* Column 1 */}
                         <View style={styles.col1}>
-                            <Text style={[styles.title, { fontStyle: 'italic' }]}>{item.code_call_plan}</Text>
-                            <Text style={[styles.description, { fontStyle: 'italic' }]}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : ''}</Text>
-                            <View style={styles.divider} />
-                            <Text style={styles.description}>{item.type === 1 ? 'Outlet New, ' : ''}{getStatusLabel(item.status as any)}</Text>
-                            <View style={styles.divider} />
+                            <Text style={[styles.title, {fontStyle: 'italic', marginBottom:20}]}>{item.callPlanOutlet?.name}</Text>
+
+                            <Text style={[styles.description, {fontStyle: 'italic'}]}>{item.code_call_plan}</Text>
+                            <View style={styles.divider}/>
+                            <Text style={styles.description}>{item.callPlanOutlet?.brand}</Text>
+                            <View style={styles.divider}/>
+                            <Text style={[styles.description]}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : ''}</Text>
+                            <View style={styles.divider}/>
                             <Text style={styles.description}>Schedule: {formatDate(item.day_plan)}</Text>
-                            <View style={styles.divider} />
-                            <Text style={styles.description}>Cycle: {item.callPlanOutlet ? item.callPlanOutlet.cycle : ''} - Visit Day: {item.callPlanOutlet ? item.callPlanOutlet.visit_day : ''}</Text>
-                            <View style={styles.divider} />
-                            <Text style={styles.description}>{item.notes?.toUpperCase() || ''}</Text>
+                            <View style={styles.divider}/>
+                            <Text style={styles.description}>Visit Day: {item.callPlanOutlet?.visit_day || ''}</Text>
                         </View>
                         {/* Column 2 */}
                         <View style={styles.col2}>
-                            <Image
-                                style={styles.image}
-                                source={require('../../assets/logo-nna.png')}
-                            />
-                            <Text style={styles.brand}>{item.callPlanOutlet ? item.callPlanOutlet.brand.toUpperCase() : ''}</Text>
-                            <View style={[styles.row, { marginTop: height * 0.01 , alignItems:'center'}]}>
-                                <TouchableOpacity style={styles.buttonWork} onPress={() => item.callPlanOutlet?.latitude ? openMaps(item.callPlanOutlet?.latitude,item.callPlanOutlet?.longitude) : openMaps('-6.198453', '106.802473')}>
-                                    <MaterialCommunityIcons name="google-maps" size={22} color={Colors.buttonBackground} />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.buttonWork} onPress={() => handlePressWork(item)}>
-                                    <MaterialIcons name="input" size={22} color={Colors.buttonBackground} />
-                                </TouchableOpacity>
-                            </View>
+                            <Text
+                                style={[styles.brand, {textAlign: 'right', color:item.status===400 ?'red':'green' }]}>{item.type === 1 ? 'Outlet New, ' : ''}{getStatusLabel(item.status as any)}</Text>
+                            {/*<View style={[styles.row, {marginTop: height * 0.01, alignItems: 'center'}]}>*/}
+                            <TouchableOpacity style={styles.buttonWork}
+                                              onPress={() => openMaps('-6.198453', '106.802473')}>
+                                <MaterialCommunityIcons name="google-maps" size={22}
+                                                        color={Colors.buttonBackground}/>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.buttonWork} onPress={() => handlePressWork(item)}>
+                                <MaterialIcons name="input" size={22} color={Colors.buttonBackground}/>
+                            </TouchableOpacity>
+                            {/*</View>*/}
                         </View>
                     </View>
                 </Animated.View>
@@ -201,7 +172,7 @@ export default function ActivityScreen() {
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await fetchData();
+        await fetchScedule();
     };
 
     if (error) {
@@ -221,7 +192,7 @@ export default function ActivityScreen() {
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={styles.list}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
                 }
             />
         </View>
@@ -274,14 +245,10 @@ const styles = StyleSheet.create({
         shadowColor: 'rgba(150,145,145,0.75)',
         shadowOpacity: 0.5,
         shadowRadius: 10,
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         elevation: 3,
-        borderLeftWidth: 3,
-        borderTopWidth: 3,
-        borderBottomWidth: 3,
-        borderLeftColor: Colors.secondaryColor,
-        borderTopColor: Colors.secondaryColor,
-        borderBottomColor: Colors.secondaryColor,
+        borderWidth:3,
+        borderColor: Colors.secondaryColor,
     },
     title: {
         fontSize: width > 400 ? 18 : 16,
@@ -312,7 +279,7 @@ const styles = StyleSheet.create({
     },
     row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'space-around',
     },
     col1: {
         flex: 2,
@@ -321,5 +288,6 @@ const styles = StyleSheet.create({
     col2: {
         flex: 1,
         alignItems: 'flex-end',
+        justifyContent: "center"
     },
 });

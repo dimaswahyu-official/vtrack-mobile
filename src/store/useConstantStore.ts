@@ -4,19 +4,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface ConstantState {
     brands: any[];
     sio: any[];
+    sog: any[];
     setBrands: (brands: any[]) => void;
     setSio: (sio: any[]) => void;
+    setSog: (sog: any[]) => void;
     getBrands: () => void;
     getSio: () => void;
+    getSog: () => void;
     clearConstants: () => void;
 }
 
 const useConstantStore = create<ConstantState>((set) => ({
     brands: [],
     sio: [],
+    sog:[],
     setBrands: async (brands: any[]) => {
         await AsyncStorage.setItem('brands', JSON.stringify(brands));
         set({ brands });
+    },
+    setSog: async (sog: any[]) => {
+        await AsyncStorage.setItem('sog', JSON.stringify(sog));
+        set({ sog });
     },
     setSio: async (sio: any[]) => {
         await AsyncStorage.setItem('sio', JSON.stringify(sio));
@@ -29,6 +37,10 @@ const useConstantStore = create<ConstantState>((set) => ({
     getSio: async () => {
         const storedSio = await AsyncStorage.getItem('sio');
         set({ sio: storedSio ? JSON.parse(storedSio) : [] });
+    },
+    getSog: async () => {
+        const storedSog = await AsyncStorage.getItem('sog');
+        set({ sog: storedSog ? JSON.parse(storedSog) : [] });
     },
     clearConstants: async () => {
         await AsyncStorage.removeItem('brands');
