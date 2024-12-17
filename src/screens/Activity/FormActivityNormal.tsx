@@ -17,7 +17,8 @@ import { ActivityStackParamList } from "../../navigation/ActivityNavigator";
 import useConstantStore from '../../store/useConstantStore';
 import { ActivityModel } from '../../model/activityModel';
 import * as ImagePicker from 'expo-image-picker';
-import { getStatusLabel, STATUS_ACTIVITY_MD_1, STATUS_ACTIVITY_MD_21, STATUS_ACTIVITY_MD_22, STATUS_ACTIVITY_MD_23 } from '../../constants/status';
+// import { getStatusLabel, STATUS_ACTIVITY_MD_1, STATUS_ACTIVITY_MD_21, STATUS_ACTIVITY_MD_22, STATUS_ACTIVITY_MD_23 } from '../../constants/status';
+import { getStatusLabel, } from '../../constants/status';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import Colors from '../../utils/Colors';
@@ -54,7 +55,7 @@ type SioType = {
     deleted_at: string | null;
     deleted_by: string | null;
     id: number;
-    name: string;
+    name: string | null;
     updated_at: string;
     updated_by: string | null;
 };
@@ -276,7 +277,7 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                 <TextInput
                     style={styles.input}
                     placeholder="SIO Name"
-                    value={sio.name}
+                    value={sio.name ?? ''}
                     onChangeText={(text) => {
                         const newActivitySio = [...activitySio];
                         newActivitySio[index].name = text;
@@ -336,7 +337,7 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                 <TextInput
                     style={styles.input}
                     placeholder="SOG Name"
-                    value={sog.name}
+                    value={sog.name??''}
                     onChangeText={(text) => {
                         const newActivitySog = [...activitySog];
                         newActivitySog[index].name = text;
@@ -399,10 +400,10 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                         }
                     }}>
                     <Picker.Item label="Pilih Status Outlet" value={0} />
-                    <Picker.Item label={getStatusLabel(STATUS_ACTIVITY_MD_1)} value={STATUS_ACTIVITY_MD_1} />
-                    <Picker.Item label={getStatusLabel(STATUS_ACTIVITY_MD_21)} value={STATUS_ACTIVITY_MD_21} />
-                    <Picker.Item label={getStatusLabel(STATUS_ACTIVITY_MD_22)} value={STATUS_ACTIVITY_MD_22} />
-                    <Picker.Item label={getStatusLabel(STATUS_ACTIVITY_MD_23)} value={STATUS_ACTIVITY_MD_23} />
+                    <Picker.Item label="{getStatusLabel(STATUS_ACTIVITY_MD_1)}" value={"STATUS_ACTIVITY_MD_1"} />
+                    <Picker.Item label={"getStatusLabel(STATUS_ACTIVITY_MD_21)"} value={"STATUS_ACTIVITY_MD_21"} />
+                    <Picker.Item label={"getStatusLabel(STATUS_ACTIVITY_MD_22)"} value={"STATUS_ACTIVITY_MD_22"} />
+                    <Picker.Item label={"getStatusLabel(STATUS_ACTIVITY_MD_23)"} value={"STATUS_ACTIVITY_MD_23"} />
                 </Picker>
             </View>
             <View style={styles.row}>
@@ -410,7 +411,7 @@ export default function FormActivityNormal({ route }: FormActivityProps) {
                     <Text style={styles.titleForm}>Outlet</Text>
                     <TextInput
                         style={styles.input}
-                        value={item.callPlanOutlet.name}
+                        value={item.callPlanOutlet.name ?? ''}
                     />
                     <Text style={styles.titleForm}>Area</Text>
                     <TextInput
