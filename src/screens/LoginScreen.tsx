@@ -55,6 +55,8 @@ export default function LoginScreen() {
                         email: response.data.user.email,
                         fullName: response.data.user.fullname,
                         photo: response.data.user.photo,
+                        roles: response.data.user.roles,
+                        username: response.data.user.username,
                     });
                     setAuthenticated(true)
                     Toast.show({
