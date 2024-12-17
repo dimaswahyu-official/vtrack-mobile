@@ -1,36 +1,51 @@
-export const STATUS_ACTIVITY_MD_1 = 1;
-export const STATUS_ACTIVITY_MD_2 = 2;
-export const STATUS_ACTIVITY_MD_21 = 211;
-export const STATUS_ACTIVITY_MD_22 = 212;
-export const STATUS_ACTIVITY_MD_23 = 213;
-export const STATUS_ACTIVITY_MD_3 = 3;
-export const STATUS_ACTIVITY_MD_31 = 311;
-export const STATUS_ACTIVITY_MD_32 = 312;
-export const STATUS_ACTIVITY_MD_33 = 313;
-export const STATUS_INACTIVE = 0;
+export const STATUS_PROCESSING = 100;
+export const STATUS_HO_PROCESSING = 101;
 
-export const STATUS_ACTIVITY_SURVEY_12 = 12;
-export const STATUS_ACTIVITY_SURVEY_21 = 21;
-export const STATUS_ACTIVITY_SURVEY_31 = 31;
-export const STATUS_ACTIVITY_SURVEY_32 = 32;
-export const STATUS_ACTIVITY_SURVEY_41 = 41;
-export const STATUS_ACTIVITY_SURVEY_51 = 51;
+export const STATUS_NOT_VISITED = 400;
+export const STATUS_TEMP_CLOSED = 401;
+export const STATUS_PERM_CLOSED = 402;
+export const STATUS_NOT_FOUND = 403;
+export const STATUS_REJECTED = 404;
+export const STATUS_CANCELLED = 405;
+export const STATUS_PIC_REJECTED = 406;
+export const STATUS_HO_REJECTED = 407;
 
-export const STATUS_LABELS = {
-  [STATUS_INACTIVE]: 'TIDAK AKTIF',
-  [STATUS_ACTIVITY_MD_1]: 'Proses Dikunjungi',
-  [STATUS_ACTIVITY_MD_2]: 'Belum Dikunjungi',
-  [STATUS_ACTIVITY_MD_21]: 'Outlet Tutup Sementara',
-  [STATUS_ACTIVITY_MD_22]: 'Outlet Tutup Permanen',
-  [STATUS_ACTIVITY_MD_23]: 'Outlet Tidak Ditemukan',
-  [STATUS_ACTIVITY_MD_3]: 'Sudah Dikunjungi',
-  [STATUS_ACTIVITY_SURVEY_12]: 'Approved Survey',
-  [STATUS_ACTIVITY_SURVEY_21]: 'Outlet Tidak Setuju',
-  [STATUS_ACTIVITY_SURVEY_31]: 'Ditolak PIC',
-  [STATUS_ACTIVITY_SURVEY_41]: 'Proses HO',
-  [STATUS_ACTIVITY_SURVEY_32]: 'Ditolak HO',
+export const STATUS_VISITED = 200;
+export const STATUS_COMPLETED = 201;
+export const STATUS_OUTLET_AGREED = 202;
+export const STATUS_APPROVED = 203;
+
+// MD Activity Status Codes
+export const EXISTING_SURVEY_STATUS = {
+  [STATUS_PROCESSING]: 'Proses Dikunjungi',
+  [STATUS_NOT_VISITED]: 'Belum Dikunjungi',
+  [STATUS_TEMP_CLOSED]: 'Outlet Tutup Sementara',
+  [STATUS_PERM_CLOSED]: 'Outlet Tutup Permanen',
+  [STATUS_NOT_FOUND]: 'Outlet Tidak Ditemukan',
+  [STATUS_CANCELLED]: 'Schedule Dibatalkan',
+  [STATUS_VISITED]: 'Sudah Dikunjungi',
+  [STATUS_COMPLETED]: 'Selesai',
 };
 
-export const getStatusLabel = (statusNumber: keyof typeof STATUS_LABELS) => {
-  return STATUS_LABELS[statusNumber] || 'Unknown Status';
+// Survey Activity Status Codes
+export const NEW_SURVEY_STATUS = {
+  [STATUS_PROCESSING]: 'Proses Dikunjungi',
+  [STATUS_NOT_VISITED]: 'Belum Dikunjungi',
+  [STATUS_OUTLET_AGREED]: 'Outlet Setuju',
+  [STATUS_TEMP_CLOSED]: 'Outlet Tutup Sementara',
+  [STATUS_PERM_CLOSED]: 'Outlet Tutup Permanen',
+  [STATUS_NOT_FOUND]: 'Outlet Tidak Ditemukan',
+  [STATUS_REJECTED]: 'Outlet Menolak',
+  [STATUS_PIC_REJECTED]: 'Ditolak PIC',
+  [STATUS_HO_PROCESSING]: 'Proses HO',
+  [STATUS_HO_REJECTED]: 'Ditolak HO',
+  [STATUS_APPROVED]: 'Disetujui HO',
+};
+
+export const getStatusLabel = (statusNumber: keyof typeof EXISTING_SURVEY_STATUS) => {
+  return EXISTING_SURVEY_STATUS[statusNumber] || 'Unknown Status';
+};
+
+export const getStatusLabelNew = (statusNumber: keyof typeof NEW_SURVEY_STATUS) => {
+  return NEW_SURVEY_STATUS[statusNumber] || 'Unknown Status';
 };
