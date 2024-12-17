@@ -65,10 +65,12 @@ export default function AttendanceScreen({route, navigation}: AttendanceScreenPr
         setIsDisabled(!hasChanges); // Disable button if no changes
     }, [name, email, photoExist, profile]);
 
-    const handleSave = async () => {
+    const handleAttendance = async () => {
         setLoading(true);
         try {
             const id = user?.id || '';
+            const roles = user?.roles || '';
+            const username = user?.username || '';
             const formData = new FormData();
             formData.append('name', name);
             formData.append('email', email);
@@ -101,6 +103,8 @@ export default function AttendanceScreen({route, navigation}: AttendanceScreenPr
                     fullName: response.data.fullname,
                     email: response.data.email,
                     photo: response.data.photo,
+                    roles,
+                    username
                 });
                 // Optionally navigate back or refresh the profile
                 // navigation.goBack();
@@ -126,28 +130,6 @@ export default function AttendanceScreen({route, navigation}: AttendanceScreenPr
         }
     };
 
-    const handleChoosePhoto = async () => {
-        const permissionResult =
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permissionResult.granted) {
-            Alert.alert(
-                'Permission required',
-                'Please grant permission to access the photo library.'
-            );
-            return;
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 1,
-        });
-
-        if (!result.canceled) {
-            setPhoto(result.assets[0]);
-            setPhotoExist(result.assets[0].uri); // Use the captured image URI
-        }
-    };
     const handleLogout = () => {
         setLoading(true);
         Toast.show({
@@ -186,10 +168,6 @@ export default function AttendanceScreen({route, navigation}: AttendanceScreenPr
             setPhotoExist(result.assets[0].uri);
         }
     };
-
-    const globalStyles = GlobalStyles(theme);
-
-    // getLoction
 
     useEffect(() => {
         checkIfLocationEnabled();
@@ -236,13 +214,13 @@ export default function AttendanceScreen({route, navigation}: AttendanceScreenPr
             setDisplayLongLat(`${latitude},${longitude}`);
 
             //provide lat and long to get the the actual address
-            let responce = await Location.reverseGeocodeAsync({
+            let response = await Location.reverseGeocodeAsync({
                 latitude,
                 longitude
             });
-            console.log(responce);
+            console.log(response);
             //loop on the responce to get the actual result
-            for (let item of responce) {
+            for (let item of response) {
                 let address = `${item.city} ${item.postalCode}`
                 setDisplayCurrentAddress(address)
             }
