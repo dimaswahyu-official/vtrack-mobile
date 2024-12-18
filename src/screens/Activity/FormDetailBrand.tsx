@@ -78,7 +78,7 @@ export default function FormDetailBrand({route}: FormActivityProps) {
     }, [item.id]);
 
     const goToSog = () => {
-        // navigation.navigate('FormDetailSio', {item});
+        navigation.navigate('FormDetailSog', {item});
         // setIsFullActivity(true); // Set state to true when button is clicked
     };
     const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse

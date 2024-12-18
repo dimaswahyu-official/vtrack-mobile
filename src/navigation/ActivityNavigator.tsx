@@ -6,6 +6,8 @@ import FormActivityNormal from "../screens/Activity/FormActivityNormal";
 import FormDetailActivity from "../screens/Activity/FormDetailActivity";
 import FormDetailSio from "../screens/Activity/FormDetailSio";
 import FormDetailBrand from "../screens/Activity/FormDetailBrand";
+import FormDetailSog from "../screens/Activity/FormDetailSog";
+import FormDetailOutlet from "../screens/Activity/FormDetailOutlet";
 
 export type ActivityStackParamList = {
     Activity2: undefined;
@@ -15,6 +17,7 @@ export type ActivityStackParamList = {
     FormDetailSio: { item: any };
     FormDetailBrand: { item: any };
     FormDetailSog: { item: any };
+    FormDetailOutlet: { item: any };
 };
 
 const Stack = createNativeStackNavigator<ActivityStackParamList>();
@@ -51,6 +54,16 @@ const ActivityNavigator = () => {
             <Stack.Screen
                 name="FormDetailBrand"
                 component={FormDetailBrand}
+                options={{ headerTitle: '' }}
+            />
+            <Stack.Screen
+                name="FormDetailSog"
+                component={FormDetailSog}
+                options={{ headerTitle: '' }}
+            />
+            <Stack.Screen
+                name="FormDetailOutlet"
+                component={FormDetailOutlet}
                 options={{ headerTitle: '' }}
             />
         </Stack.Navigator>

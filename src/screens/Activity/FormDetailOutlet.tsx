@@ -1,0 +1,133 @@
+import {Dimensions, FlatList, ScrollView, Text, TouchableOpacity, View} from "react-native";
+import {StackNavigationProp} from "@react-navigation/stack";
+import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
+import {RouteProp, useNavigation} from "@react-navigation/native";
+import ActivityStyles from "../../utils/ActivityStyles";
+import {useSQLiteContext} from "expo-sqlite";
+import React, {useEffect, useState} from "react";
+import useConstantStore from "../../store/useConstantStore";
+import Colors from "../../utils/Colors";
+
+const {width, height} = Dimensions.get('window');
+type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailOutlet'>;
+type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailOutlet'>;
+type FormActivityProps = {
+    route: FormActivityRouteProp;
+};
+const activityStyles = ActivityStyles();
+
+export default function FormDetailOutlet({route}: FormActivityProps) {
+    const db = useSQLiteContext();
+    const {item} = route.params || {};
+    const navigation = useNavigation<NavigationProp>();
+    const [isFullActivity, setIsFullActivity] = useState(false);
+    const [userId, setUserId] = useState(1);
+    const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
+    const [callPlanId, setCallPlanId] = useState(1);
+    const [outletId, setOutletId] = useState(1);
+    const [status, setStatus] = useState(0);
+    const [area, setArea] = useState('Area A');
+    const [region, setRegion] = useState('Region X');
+    const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
+    const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
+    type Outlet = {
+        label: string;
+        value: string;
+    };
+    useEffect(() => {
+        setUserId(item.user_id);
+        setCallPlanScheduleId(item.id);
+        setCallPlanId(item.call_plan_id);
+        setOutletId(item.outlet_id);
+        setStatus(item.status);
+        setArea(item.callPlanOutlet?.area);
+        setRegion(item.callPlanOutlet?.region);
+        setStartTime(item.start_time);
+        setEndTime(item.end_time);
+
+    }, [item.id]);
+    const checkOutData = () => {
+        // navigation.navigate('FormDetailSio', {item});
+        // setIsFullActivity(true); // Set state to true when button is clicked
+    };
+
+    //NEW CUSTOM CHECKBOX
+    const CustomCheckbox = ({isChecked, onPress}: { isChecked: any, onPress: any }) => (
+        <TouchableOpacity
+            style={[
+                activityStyles.customCheckbox,
+                {backgroundColor: isChecked ? '#007bff' : '#fff'},
+            ]}
+            onPress={onPress}
+        >
+            {isChecked && <View style={activityStyles.checkmark}/>}
+        </TouchableOpacity>
+    );
+    const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+    const [selectedValues, setSelectedValues] = useState<string[]>([]);
+    const outlet: Outlet[] = [
+        {label: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)', value: 'option1'},
+        {label: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)', value: 'option2'},
+        {label: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)', value: 'option3'},
+        {label: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)', value: 'option4'},
+        {label: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)', value: 'option5'},
+        {label: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)', value: 'option6'},
+    ];
+    const toggleSelection = (value: any) => {
+        setSelectedValues((prev: any) =>
+            prev.includes(value)
+                ? prev.filter((item: any) => item !== value)
+                : [...prev, value]
+        );
+    }
+    const renderOption = ({item}: { item: any }) => (
+        <TouchableOpacity
+            style={activityStyles.optionContainer}
+            onPress={() => toggleSelection(item.value)}
+        >
+            <CustomCheckbox
+                isChecked={selectedValues.includes(item.value)}
+                onPress={() => toggleSelection(item.value)}
+            />
+            <Text style={[activityStyles.optionLabel,{paddingRight:6}]}>{item.label}</Text>
+        </TouchableOpacity>
+    );
+    return (
+        <ScrollView contentContainerStyle={activityStyles.container}>
+            <View style={activityStyles.cardContainer}>
+                <View style={activityStyles.card}>
+                    <View style={{padding: 6, justifyContent: "flex-start", alignItems: "flex-start"}}>
+                        <Text style={[activityStyles.label, {marginBottom: 6}]}>Pastikan Outlet berada di jarak aman
+                            dari jarak
+                            berikut
+                            :</Text>
+                        <TouchableOpacity
+                            style={activityStyles.dropdownButton}
+                            onPress={() => setIsDropdownVisible((prev) => !prev)}
+                        >
+                            <Text style={activityStyles.buttonText}>
+                                {selectedValues.length > 0
+                                    ? `Area yang dipilih : ${selectedValues.length} Area`
+                                    : 'Pilihan Area'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {isDropdownVisible && (
+                            <View style={activityStyles.dropdown}>
+                                <FlatList
+                                    scrollEnabled={false}
+                                    data={outlet}
+                                    keyExtractor={(item) => item.value}
+                                    renderItem={renderOption}
+                                />
+                            </View>
+                        )}
+                    </View>
+                    <TouchableOpacity style={activityStyles.button} onPress={checkOutData}>
+                        <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>Check Out</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </ScrollView>
+    )
+}
