@@ -1,5 +1,5 @@
 import {Alert, Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
-import {RouteProp} from "@react-navigation/native";
+import {RouteProp, useNavigation} from "@react-navigation/native";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
 import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useState} from "react";
@@ -32,6 +32,7 @@ type SioType = {
 export default function FormDetailSio({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const {item} = route.params || {};
+    const navigation = useNavigation<NavigationProp>();
     const [isFullActivity, setIsFullActivity] = useState(false);
     const [userId, setUserId] = useState(1);
     const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
@@ -41,7 +42,6 @@ export default function FormDetailSio({route}: FormActivityProps) {
     const [area, setArea] = useState('Area A');
     const [region, setRegion] = useState('Region X');
     const [sioType, setSioType] = useState<SioType | null>(null);
-
     const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
     const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
     const [activitySio, setActivitySio] = useState<{
@@ -103,7 +103,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
     };
 
     const goToBrand = () => {
-        // navigation.navigate('FormDetailSio', {item});
+        navigation.navigate('FormDetailBrand', {item});
         //
         // setIsFullActivity(true); // Set state to true when button is clicked
     };

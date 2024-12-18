@@ -515,7 +515,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const brandContent = renderBrandComponent();
     const sogContent = renderSogComponent();
     const outletContent = outletMultiSelect();
-    const checkinContent = addPhotoCheckInComponent();
+    // const checkinContent = addPhotoCheckInComponent();
     return (
         <ScrollView contentContainerStyle={styles.container}>
             {/* Full-Width Image */}
