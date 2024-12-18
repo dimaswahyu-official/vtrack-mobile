@@ -10,7 +10,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import {RouteProp} from "@react-navigation/native";
+import {RouteProp, useNavigation} from "@react-navigation/native";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
 import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useRef, useState} from "react";
@@ -22,10 +22,11 @@ import Carousel from "react-native-reanimated-carousel";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Colors from "../../utils/Colors";
 import * as ImagePicker from "expo-image-picker";
+import {StackNavigationProp} from "@react-navigation/stack";
 
 const {width, height} = Dimensions.get('window');
 
-
+type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailActivity'>;
 
 type FormActivityProps = {
@@ -58,6 +59,8 @@ type SioType = {
 export default function FormDetailActivity({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const {item} = route.params || {};
+    const navigation = useNavigation<NavigationProp>();
+    const [isFullActivity, setIsFullActivity] = useState(false);
     const [userId, setUserId] = useState(1);
     const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
     const [callPlanId, setCallPlanId] = useState(1);
@@ -80,6 +83,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const [activityBrand, setActivityBrand] = useState<{
         activity_id: number;
         name: string;
+        value: string;
         description: string;
         notes: string
     }[]>([]);
@@ -87,6 +91,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         activity_id: number;
         name: string;
         description: string;
+        value: string;
         notes: string
     }[]>([]);
 
@@ -94,6 +99,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         label: string;
         value: string;
     };
+
 
     const {brands, sio} = useConstantStore();
     const [dataOffline, setDataOffline] = useState<any>({});
@@ -123,12 +129,14 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
                     activity_id: filteredBrand[0].id,
                     name: filteredBrand[0].branch,
+                    value: '',
                     description: '',
                     notes: ''
                 })));
                 setActivitySog(Array.from({length: filteredBrand[0].sog.length}, (_, i) => ({
                     activity_id: filteredBrand[0].id,
                     name: filteredBrand[0].sog[i],
+                    value: '',
                     description: '',
                     notes: ''
                 })));
@@ -145,6 +153,12 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         }
     }, [item.id]);
 
+    const handleCheckIn = () => {
+        navigation.navigate('FormDetailSio', {item});
+
+        // setIsFullActivity(true); // Set state to true when button is clicked
+    };
+
     // HANDLE SUBMIT
     const handleSubmit = async () => {
         const activityData = {
@@ -152,8 +166,8 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             call_plan_schedule_id: callPlanScheduleId,
             call_plan_id: callPlanId,
             outlet_id: outletId,
-            survey_outlet_id:"", //NEW
-            program_id:"" , //NEW
+            survey_outlet_id: "", //NEW
+            program_id: "", //NEW
             status: status,
             area: area,
             region: region,
@@ -170,579 +184,644 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             is_sync: 0,
             id_server: 0
         };
+        console.log("SUBMIT DATAA" + JSON.stringify(activityData));
     }
 
-        // NEW RENDER SIO>>>
-        const renderSioComponent = () => {
-            const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
+    // NEW RENDER SIO>>>
+    const renderSioComponent = () => {
+        const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
 
-            if (!Array.isArray(activitySio)) {
-                console.warn('activitySio is not an array:', activitySio);
-                return null; // or return a fallback UI
-            }
-            return activitySio?.map((sio, index) => (
-                <View style={styles.cardContainer} key={index}>
-                    <View style={styles.card}>
-                        {/* Toggle Button as Icon */}
-                        <Text style={styles.toggleText}>
-                            {sio.name}
-                        </Text>
-                        <TouchableOpacity
-                            onPress={() => setIsCollapsed(!isCollapsed)}
-                            style={styles.iconButton}
-                        >
-                            <MaterialIcons
-                                name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
-                                size={24}
-                                color="#333"
-                            />
-                        </TouchableOpacity>
-                        {!isCollapsed && (
-                            <View style={styles.cardContent}>
-                                {sio.photo === '' ? (
-                                    <TouchableOpacity style={styles.photoButton} onPress={() => handleTakePhoto(index)}>
-                                        <MaterialIcons name="camera-alt" size={24} color="#fff"/>
-                                        <Text style={[styles.label, {color: 'white'}]}>Take new photo</Text>
-                                    </TouchableOpacity>
-                                ) : (
-                                    // Show Clear Photo button if a photo exists
-                                    <View style={styles.imageContainer}>
-                                        <Image
-                                            source={{uri: sio.photo}}
-                                            style={styles.imagePreview}
-                                        />
-                                        <TouchableOpacity style={styles.clearButton}
-                                                          onPress={() => handleClearPhoto(index)}>
-                                            <MaterialIcons name="delete" size={15} color="#fff"/>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
-                                {/* Text Fields */}
-                                <View style={styles.row}>
-                                    <Text style={[styles.label, {alignItems: 'flex-end'}]}>Notes :</Text>
-                                    <TextInput
-                                        style={[styles.input, {flex: 1}]}
-                                        placeholder="SIO Notes"
-                                        value={sio.notes}
-                                        onChangeText={(text) => {
-                                            const newActivitySio = [...activitySio];
-                                            newActivitySio[index].notes = text;
-                                            setActivitySio(newActivitySio);
-                                        }}
-                                    />
-                                </View>
-                                <Text style={[styles.value, {fontSize: 10}]}>* Tolong isi catatan jika Komponen SIO
-                                    Tidak
-                                    Ada, Rusak atau Bermasalah</Text>
-                            </View>
-                        )}
-                    </View>
-                </View>
-            ));
-        };
-
-        //NEW RENDER BRANDS COMPONENTS
-        const renderBrandComponent = () => {
-            const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
-
-            if (!Array.isArray(activityBrand)) {
-                console.warn('activityBrand is not an array:', activityBrand);
-                return null; // or return a fallback UI
-            }
-            return activityBrand?.map((brand, index) => (
-                <View style={styles.cardContainer} key={index}>
-                    <View style={styles.card}>
-                        {/* Toggle Button as Icon */}
-                        <Text style={styles.toggleText}>
-                            {brand.name}
-                        </Text>
-                        <TouchableOpacity
-                            onPress={() => setIsCollapsed(!isCollapsed)}
-                            style={styles.iconButton}
-                        >
-                            <MaterialIcons
-                                name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
-                                size={24}
-                                color="#333"
-                            />
-                        </TouchableOpacity>
-                        {!isCollapsed && (
-                            <View style={styles.cardContent}>
-                                {/* Text Fields */}
-                                <View>
-                                    <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>Total
-                                        (/Bungkus)
-                                        :</Text>
-                                    <TextInput
-                                        style={[styles.input, {flex: 1}]}
-                                        placeholder="Stock (/Bungkus)"
-                                        value={brand.notes}
-                                        onChangeText={(text) => {
-                                            const newActivityBrand = [...activityBrand];
-                                            newActivityBrand[index].notes = text;
-                                            setActivityBrand(newActivityBrand);
-                                        }}
-                                    />
-                                </View>
-                            </View>
-                        )}
-                    </View>
-                </View>
-            ));
-        };
-
-        //NEW RENDER SOG COMPONENTS
-        const renderSogComponent = () => {
-            const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
-
-            if (!Array.isArray(activitySog)) {
-                console.warn('activitySog is not an array:', activitySog);
-                return null; // or return a fallback UI
-            }
-            return activitySog?.map((sog, index) => (
-                <View style={styles.cardContainer} key={index}>
-                    <View style={styles.card}>
-                        {/* Toggle Button as Icon */}
-                        <Text style={styles.toggleText}>
-                            {sog.name}
-                        </Text>
-                        <TouchableOpacity
-                            onPress={() => setIsCollapsed(!isCollapsed)}
-                            style={styles.iconButton}
-                        >
-                            <MaterialIcons
-                                name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
-                                size={24}
-                                color="#333"
-                            />
-                        </TouchableOpacity>
-                        {!isCollapsed && (
-                            <View style={styles.cardContent}>
-                                {/* Text Fields */}
-                                <View>
-                                    <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>Total
-                                        (/Bungkus)
-                                        :</Text>
-                                    <TextInput
-                                        style={[styles.input, {flex: 1}]}
-                                        placeholder="Stock (/Bungkus)"
-                                        value={sog.notes}
-                                        onChangeText={(text) => {
-                                            const newActivitySog = [...activitySog];
-                                            newActivitySog[index].notes = text;
-                                            setActivitySog(newActivitySog);
-                                        }}
-                                    />
-                                </View>
-                            </View>
-                        )}
-                    </View>
-                </View>
-            ));
-        };
-
-        //NEW CUSTOM CHECKBOX
-        const CustomCheckbox = ({isChecked, onPress}: { isChecked: any, onPress: any }) => (
-            <TouchableOpacity
-                style={[
-                    styles.customCheckbox,
-                    {backgroundColor: isChecked ? '#007bff' : '#fff'},
-                ]}
-                onPress={onPress}
-            >
-                {isChecked && <View style={styles.checkmark}/>}
-            </TouchableOpacity>
-        );
-
-        //NEW OUTLET RADIUS
-        const outletMultiSelect = () => {
-            const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-            const [selectedValues, setSelectedValues] = useState<string[]>([]);
-            const options: Option[] = [
-                {label: '<500m FASKES (RS,PUSKESMAS,KLINIK)', value: 'option1'},
-                {label: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)', value: 'option2'},
-                {label: '<200m TEMPAT BERMAIN ANAK (TAMAN,PLAYGROUND)', value: 'option3'},
-                {label: '<500m TEMPAT IBADAH (MESJID,MUSHOLA,PURA,VIHARA,GEREJA,PESANTREN)', value: 'option4'},
-                {label: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)', value: 'option5'},
-                {label: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)', value: 'option6'},
-            ];
-
-            const toggleSelection = (value: any) => {
-                setSelectedValues((prev: any) =>
-                    prev.includes(value)
-                        ? prev.filter((item: any) => item !== value)
-                        : [...prev, value]
-                );
-            };
-
-            const renderOption = ({item}: { item: any }) => (
-                <TouchableOpacity
-                    style={styles.optionContainer}
-                    onPress={() => toggleSelection(item.value)}
-                >
-                    <CustomCheckbox
-                        isChecked={selectedValues.includes(item.value)}
-                        onPress={() => toggleSelection(item.value)}
-                    />
-                    <Text style={styles.optionLabel}>{item.label}</Text>
-                </TouchableOpacity>
-            );
-
-            return (
-                <View style={[styles.containerDropdown, {backgroundColor: 'white'}]}>
-                    <Text style={[styles.label, {marginBottom: 6}]}>Pastikan Outlet berada di jarak aman dari jarak
-                        berikut
-                        :</Text>
+        if (!Array.isArray(activitySio)) {
+            console.warn('activitySio is not an array:', activitySio);
+            return null; // or return a fallback UI
+        }
+        return activitySio?.map((sio, index) => (
+            <View style={styles.cardContainer} key={index}>
+                <View style={styles.card}>
+                    {/* Toggle Button as Icon */}
+                    <Text style={styles.toggleText}>
+                        {sio.name}
+                    </Text>
                     <TouchableOpacity
-                        style={styles.dropdownButton}
-                        onPress={() => setIsDropdownVisible((prev) => !prev)}
+                        onPress={() => setIsCollapsed(!isCollapsed)}
+                        style={styles.iconButton}
                     >
-                        <Text style={styles.buttonText}>
-                            {selectedValues.length > 0
-                                ? `Selected: ${selectedValues.length} item(s)`
-                                : 'Choose options'}
-                        </Text>
+                        <MaterialIcons
+                            name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
+                            size={24}
+                            color="#333"
+                        />
                     </TouchableOpacity>
-
-                    {isDropdownVisible && (
-                        <View style={styles.dropdown}>
-                            <FlatList
-                                scrollEnabled={false}
-                                data={options}
-                                keyExtractor={(item) => item.value}
-                                renderItem={renderOption}
-                            />
+                    {!isCollapsed && (
+                        <View style={styles.cardContent}>
+                            {sio.photo === '' ? (
+                                <TouchableOpacity style={styles.photoButton} onPress={() => handleTakePhoto(index)}>
+                                    <MaterialIcons name="camera-alt" size={24} color="#fff"/>
+                                    <Text style={[styles.label, {color: 'white'}]}>Take new photo</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                // Show Clear Photo button if a photo exists
+                                <View style={styles.imageContainer}>
+                                    <Image
+                                        source={{uri: sio.photo}}
+                                        style={styles.imagePreview}
+                                    />
+                                    <TouchableOpacity style={styles.clearButton}
+                                                      onPress={() => handleClearPhoto(index)}>
+                                        <MaterialIcons name="delete" size={15} color="#fff"/>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                            {/* Text Fields */}
+                            <View style={styles.row}>
+                                <Text style={[styles.label, {alignItems: 'flex-end'}]}>Notes :</Text>
+                                <TextInput
+                                    style={[styles.input, {flex: 1}]}
+                                    placeholder="SIO Notes"
+                                    value={sio.notes}
+                                    onChangeText={(text) => {
+                                        const newActivitySio = [...activitySio];
+                                        newActivitySio[index].notes = text;
+                                        setActivitySio(newActivitySio);
+                                    }}
+                                />
+                            </View>
+                            <Text style={[styles.value, {fontSize: 10}]}>* Tolong isi catatan jika Komponen SIO
+                                Tidak
+                                Ada, Rusak atau Bermasalah</Text>
                         </View>
                     )}
                 </View>
+            </View>
+        ));
+    };
+
+    //NEW RENDER BRANDS COMPONENTS
+    const renderBrandComponent = () => {
+        const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
+
+        if (!Array.isArray(activityBrand)) {
+            console.warn('activityBrand is not an array:', activityBrand);
+            return null; // or return a fallback UI
+        }
+        return activityBrand?.map((brand, index) => (
+            <View style={styles.cardContainer} key={index}>
+                <View style={styles.card}>
+                    {/* Toggle Button as Icon */}
+                    <Text style={styles.toggleText}>
+                        {brand.name}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => setIsCollapsed(!isCollapsed)}
+                        style={styles.iconButton}
+                    >
+                        <MaterialIcons
+                            name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
+                            size={24}
+                            color="#333"
+                        />
+                    </TouchableOpacity>
+                    {!isCollapsed && (
+                        <View style={styles.cardContent}>
+                            {/* Text Fields */}
+                            <View>
+                                <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>Total
+                                    (/Bungkus)
+                                    :</Text>
+                                <TextInput
+                                    style={[styles.input, {flex: 1}]}
+                                    placeholder="Stock (/Bungkus)"
+                                    value={brand.value}
+                                    onChangeText={(text) => {
+                                        const newActivityBrand = [...activityBrand];
+                                        newActivityBrand[index].value = text;
+                                        setActivityBrand(newActivityBrand);
+                                    }}
+                                />
+                            </View>
+                        </View>
+                    )}
+                </View>
+            </View>
+        ));
+    };
+
+    //NEW ADD PHOTO CHECKIN
+    const addPhotoCheckInComponent = () => {
+        <View style={styles.cardContainer}>
+            <View style={styles.card}>
+                <View style={styles.cardContent}>
+                    <Image
+                        source={{uri: item.callPlanOutlet.photos[0]}} // Replace with your image URL
+                        style={styles.image}
+                        resizeMode="cover"
+                    />
+                </View>
+            </View>
+        </View>
+    }
+
+    //NEW RENDER SOG COMPONENTS
+    const renderSogComponent = () => {
+        const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
+
+        if (!Array.isArray(activitySog)) {
+            console.warn('activitySog is not an array:', activitySog);
+            return null; // or return a fallback UI
+        }
+        return activitySog?.map((sog, index) => (
+            <View style={styles.cardContainer} key={index}>
+                <View style={styles.card}>
+                    {/* Toggle Button as Icon */}
+                    <Text style={styles.toggleText}>
+                        {sog.name}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => setIsCollapsed(!isCollapsed)}
+                        style={styles.iconButton}
+                    >
+                        <MaterialIcons
+                            name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
+                            size={24}
+                            color="#333"
+                        />
+                    </TouchableOpacity>
+                    {!isCollapsed && (
+                        <View style={styles.cardContent}>
+                            {/* Text Fields */}
+                            <View>
+                                <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>Total
+                                    (/Bungkus)
+                                    :</Text>
+                                <TextInput
+                                    style={[styles.input, {flex: 1}]}
+                                    placeholder="Stock (/Bungkus)"
+                                    value={sog.notes}
+                                    onChangeText={(text) => {
+                                        const newActivitySog = [...activitySog];
+                                        newActivitySog[index].notes = text;
+                                        setActivitySog(newActivitySog);
+                                    }}
+                                />
+                            </View>
+                        </View>
+                    )}
+                </View>
+            </View>
+        ));
+    };
+
+    //NEW CUSTOM CHECKBOX
+    const CustomCheckbox = ({isChecked, onPress}: { isChecked: any, onPress: any }) => (
+        <TouchableOpacity
+            style={[
+                styles.customCheckbox,
+                {backgroundColor: isChecked ? '#007bff' : '#fff'},
+            ]}
+            onPress={onPress}
+        >
+            {isChecked && <View style={styles.checkmark}/>}
+        </TouchableOpacity>
+    );
+
+    //NEW OUTLET RADIUS
+    const outletMultiSelect = () => {
+        const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+        const [selectedValues, setSelectedValues] = useState<string[]>([]);
+        const options: Option[] = [
+            {label: '<500m FASKES (RS,PUSKESMAS,KLINIK)', value: 'option1'},
+            {label: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)', value: 'option2'},
+            {label: '<200m TEMPAT BERMAIN ANAK (TAMAN,PLAYGROUND)', value: 'option3'},
+            {label: '<500m TEMPAT IBADAH (MESJID,MUSHOLA,PURA,VIHARA,GEREJA,PESANTREN)', value: 'option4'},
+            {label: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)', value: 'option5'},
+            {label: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)', value: 'option6'},
+        ];
+
+        const toggleSelection = (value: any) => {
+            setSelectedValues((prev: any) =>
+                prev.includes(value)
+                    ? prev.filter((item: any) => item !== value)
+                    : [...prev, value]
             );
         };
 
-        // Function to handle image press
-        const handleImagePress = (item: string) => {
-            setSelectedImage(item);
-            setIsModalVisible(true);
-        };
-        const handleRemovePhoto = (index: number) => {
-            const newPhotos = activityPhotos.filter((_, i) => i !== index);
-            setActivityPhotos(newPhotos);
-        };
-
-        const handleTakePhoto = async (index: number) => {
-            // Request camera permissions
-            const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-            if (!permissionResult.granted) {
-                Alert.alert('Permission required', 'Please grant permission to access the camera.');
-                return;
-            }
-
-            // Launch the camera
-            const result = await ImagePicker.launchCameraAsync({
-                allowsEditing: true,
-                quality: 1,
-            });
-
-            if (!result.canceled) {
-                const newActivitySio = [...activitySio];
-                newActivitySio[index].photo = result.assets[0].uri;
-                setActivitySio(newActivitySio);
-            }
-        };
-
-        const handleClearPhoto = (index: number) => {
-            const newActivitySio = [...activitySio];
-            newActivitySio[index].photo = '';
-            setActivitySio(newActivitySio);
-        };
-
-        const handleTakePhotoMany = async () => {
-            // Request camera permissions
-            const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-            if (!permissionResult.granted) {
-                Alert.alert('Permission required', 'Please grant permission to access the camera.');
-                return;
-            }
-
-            // Launch the camera
-            const result = await ImagePicker.launchCameraAsync({
-                allowsEditing: true,
-                quality: 1,
-            });
-
-            console.log('result', activityPhotos);
-            if (!result.canceled) {
-                setActivityPhotos([...activityPhotos, result.assets[0].uri]);
-            }
-
-            console.log('result2', activityPhotos);
-        };
-
-        console.log('activityPhotos:', activityPhotos);
-        // console.log('activitySio:', activitySio);
-        // console.log('activityBrand:', activityBrand);
-        console.log('activitySOG:', activitySog);
-
-        return (
-            <ScrollView contentContainerStyle={styles.container}>
-                {/* Full-Width Image */}
-                <Image
-                    source={{uri: item.callPlanOutlet.photos[0]}} // Replace with your image URL
-                    style={styles.image}
-                    resizeMode="cover"
+        const renderOption = ({item}: { item: any }) => (
+            <TouchableOpacity
+                style={styles.optionContainer}
+                onPress={() => toggleSelection(item.value)}
+            >
+                <CustomCheckbox
+                    isChecked={selectedValues.includes(item.value)}
+                    onPress={() => toggleSelection(item.value)}
                 />
-
-                {/* OUTLET INFORMATION */}
-                <Text style={styles.title}>Outlet Information</Text>
-                <View style={styles.cardContainer}>
-                    <View style={styles.card}>
-                        <View style={styles.cardContent}>
-                            {/* Text Fields */}
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Shop Name :</Text>
-                                <Text style={styles.value}>{item.callPlanOutlet.name}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Kode Outlet :</Text>
-                                <Text style={styles.value}>{item.callPlanOutlet.outlet_code}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Address :</Text>
-                                <Text style={[styles.value, {
-                                    flexShrink: 1,
-                                    textAlign: 'right'
-                                }]}>{item.callPlanOutlet.address_line}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Brand :</Text>
-                                <Text style={styles.value}>{item.callPlanOutlet.brand}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Tipe Outlet :</Text>
-                                <Text style={styles.value}>{item.callPlanOutlet.sio_type}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Regional :</Text>
-                                <Text style={styles.value}>{item.callPlanOutlet.region}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Area :</Text>
-                                <Text style={styles.value}>{item.callPlanOutlet.area}</Text>
-                            </View>
-                        </View>
-
-                    </View>
-                </View>
-                <Text style={styles.title}>Materi Branding SIO</Text>
-
-                {renderSioComponent()}
-                <Text style={styles.title}>Penjualan Brand</Text>
-                {renderBrandComponent()}
-
-                <Text style={styles.title}>Selling Of Goods (SOG)</Text>
-                {renderSogComponent()}
-
-                <Text style={styles.title}>Program</Text>
-                <View style={styles.cardContainer}>
-                    <View style={styles.card}>
-                        <View style={styles.cardContent}>
-                            <View>
-                                <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>JUDUL
-                                    PROGRAM</Text>
-                                <Text style={styles.value}>Isi Program : ajkbsdkjandkjnaskdnan kjasnndajkndkjas
-                                    ajsnjasdnkandjkan</Text>
-
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-                <Text style={styles.title}>Outlet Radius</Text>
-                <View style={styles.cardContainer}>
-                    <View style={styles.card}>
-                        <View style={styles.cardContent}>
-                            {outletMultiSelect()}
-                        </View>
-                    </View>
-                </View>
-                <TouchableOpacity style={{alignItems:'center', justifyContent:'center', backgroundColor:Colors.buttonBackground, borderRadius:10,padding:6, marginHorizontal:15, marginVertical:10}} onPress={handleSubmit}>
-                    <Text style={{color:Colors.buttonText, fontWeight:'bold', fontSize:20}}>Submit</Text>
+                <Text style={styles.optionLabel}>{item.label}</Text>
+            </TouchableOpacity>
+        );
+        return (
+            <View style={[styles.containerDropdown, {backgroundColor: 'white'}]}>
+                <Text style={[styles.label, {marginBottom: 6}]}>Pastikan Outlet berada di jarak aman dari jarak
+                    berikut
+                    :</Text>
+                <TouchableOpacity
+                    style={styles.dropdownButton}
+                    onPress={() => setIsDropdownVisible((prev) => !prev)}
+                >
+                    <Text style={styles.buttonText}>
+                        {selectedValues.length > 0
+                            ? `Selected: ${selectedValues.length} item(s)`
+                            : 'Choose options'}
+                    </Text>
                 </TouchableOpacity>
-            </ScrollView>
+
+                {isDropdownVisible && (
+                    <View style={styles.dropdown}>
+                        <FlatList
+                            scrollEnabled={false}
+                            data={options}
+                            keyExtractor={(item) => item.value}
+                            renderItem={renderOption}
+                        />
+                    </View>
+                )}
+            </View>
         );
     };
 
-    const styles = StyleSheet.create({
-        container: {
-            flexGrow: 1,
-            backgroundColor: '#f5f5f5',
-        },
-        image: {
-            width: Dimensions.get('window').width, // Full width of the screen
-            height: 200, // Adjust height as needed
-        },
-        title: {
-            fontSize: 20,
-            fontWeight: 'bold',
-            marginHorizontal: 16,
-            marginTop: 16,
-            marginBottom: 8,
-            textAlign: 'center',
-        },
-        cardContainer: {
-            marginHorizontal: 16,
-            marginTop: 8,
-        },
-        toggleText: {
-            fontSize: 14,
-            color: '#333',
-            marginRight: 4, // Space between text and icon
-        },
-        card: {
-            width: width - 40,
-            backgroundColor: '#fff',
-            borderRadius: 8,
-            padding: 16,
-            elevation: 4, // Shadow for Android
-            shadowColor: '#000', // Shadow for iOS
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            position: 'relative', // Required for positioning the icon
-        },
-        iconButton: {
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            zIndex: 1,
-        },
-        cardContent: {
-            marginTop: 8, // Space below the toggle button
-        },
-        row: {
-            width: '100%',
-            flexDirection: 'row',
+    // Function to handle image press
+    const handleImagePress = (item: string) => {
+        setSelectedImage(item);
+        setIsModalVisible(true);
+    };
+    const handleRemovePhoto = (index: number) => {
+        const newPhotos = activityPhotos.filter((_, i) => i !== index);
+        setActivityPhotos(newPhotos);
+    };
 
-            marginBottom: 12,
-            justifyContent: "space-between"
-        },
-        label: {
-            fontSize: 16,
-            fontWeight: 'bold',
-            color: '#333',
-            marginRight: 8,
-            textTransform: 'capitalize', // Capitalize keys like "name", "age"
-        },
-        value: {
-            fontSize: 16,
-            color: '#555',
-        },
-        input: {
-            height: height * 0.05,
-            borderWidth: 1,
-            borderColor: '#ccc',
-            borderRadius: 5,
-            paddingHorizontal: width * 0.02,
-            marginBottom: height * 0.015,
-            backgroundColor: '#fff',
-        },
-        imageContainer: {
-            flex: 1,
-            position: 'relative',
-            alignItems: 'center',
-            backgroundColor: '#ddd',
-            borderRadius: 10,
-            margin: 10,
-        },
-        clearButton: {
-            marginTop: height * 0.01,
-            backgroundColor: 'red',
-            padding: height * 0.01,
-            borderRadius: 5,
-        },
-        imagePreview: {
-            width: width * 0.25,
-            height: width * 0.25,
-            marginTop: height * 0.014,
-            borderRadius: 5,
-        },
-        photoButton: {
-            width: '100%',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: Colors.secondaryColor,
-            padding: 4,
-            borderRadius: 5,
-            margin: 4,
-        },
-        containerDropdown: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            padding: 10,
-            backgroundColor: '#f9f9f9',
-        },
-        // label: {
-        //     fontSize: 16,
-        //     marginBottom: 10,
-        //     color: '#333',
-        // },
-        dropdownButton: {
-            padding: 15,
-            borderRadius: 8,
-            borderWidth: 1,
-            borderColor: '#ccc',
-            backgroundColor: '#fff',
-            width: '100%',
-            alignItems: 'center',
-        },
-        buttonText: {
-            fontSize: 16,
-            color: '#555',
-        },
-        dropdown: {
-            marginTop: 10,
-            borderWidth: 1,
-            borderColor: '#ccc',
-            borderRadius: 8,
-            backgroundColor: '#fff',
-            width: '100%',
-        },
-        optionContainer: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: 10,
-            borderBottomWidth: 1,
-            borderBottomColor: '#eee',
-        },
-        optionLabel: {
-            marginLeft: 10,
-            fontSize: 16,
-            color: '#333',
-        },
-        customCheckbox: {
-            width: 20,
-            height: 20,
-            borderRadius: 4,
-            borderWidth: 2,
-            borderColor: '#007bff',
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        checkmark: {
-            width: 10,
-            height: 10,
-            backgroundColor: '#fff',
-            borderRadius: 2,
-        },
-        button: {
-            width: '80%',
-            textAlign:"center",
-            height: height * 0.06,
-            backgroundColor: Colors.buttonBackground,
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 5,
-            margin: 20,
-        },
-    });
+    const handleTakePhoto = async (index: number) => {
+        // Request camera permissions
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permissionResult.granted) {
+            Alert.alert('Permission required', 'Please grant permission to access the camera.');
+            return;
+        }
+
+        // Launch the camera
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            const newActivitySio = [...activitySio];
+            newActivitySio[index].photo = result.assets[0].uri;
+            setActivitySio(newActivitySio);
+        }
+    };
+
+    const handleClearPhoto = (index: number) => {
+        const newActivitySio = [...activitySio];
+        newActivitySio[index].photo = '';
+        setActivitySio(newActivitySio);
+    };
+
+    const handleTakePhotoMany = async () => {
+        // Request camera permissions
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permissionResult.granted) {
+            Alert.alert('Permission required', 'Please grant permission to access the camera.');
+            return;
+        }
+
+        // Launch the camera
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 1,
+        });
+
+        console.log('result', activityPhotos);
+        if (!result.canceled) {
+            setActivityPhotos([...activityPhotos, result.assets[0].uri]);
+        }
+
+        console.log('result2', activityPhotos);
+    };
+
+    console.log('activityPhotos:', activityPhotos);
+    console.log('activitySio:', activitySio);
+    console.log('activityBrand:', activityBrand);
+    console.log('activitySOG:', activitySog);
+
+    const sioContent = renderSioComponent();
+    const brandContent = renderBrandComponent();
+    const sogContent = renderSogComponent();
+    const outletContent = outletMultiSelect();
+    const checkinContent = addPhotoCheckInComponent();
+    return (
+        <ScrollView contentContainerStyle={styles.container}>
+            {/* Full-Width Image */}
+            <Image
+                source={{uri: item.callPlanOutlet.photos[0]}} // Replace with your image URL
+                style={styles.image}
+                resizeMode="cover"
+            />
+
+            {/* OUTLET INFORMATION */}
+            <Text style={styles.title}>Outlet Information</Text>
+            <View style={styles.cardContainer}>
+                <View style={styles.card}>
+                    <View style={styles.cardContent}>
+                        {/* Text Fields */}
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Shop Name :</Text>
+                            <Text style={styles.value}>{item.callPlanOutlet.name}</Text>
+                        </View>
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Kode Outlet :</Text>
+                            <Text style={styles.value}>{item.callPlanOutlet.outlet_code}</Text>
+                        </View>
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Address :</Text>
+                            <Text style={[styles.value, {
+                                flexShrink: 1,
+                                textAlign: 'right'
+                            }]}>{item.callPlanOutlet.address_line}</Text>
+                        </View>
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Brand :</Text>
+                            <Text style={styles.value}>{item.callPlanOutlet.brand}</Text>
+                        </View>
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Tipe Outlet :</Text>
+                            <Text style={styles.value}>{item.callPlanOutlet.sio_type}</Text>
+                        </View>
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Regional :</Text>
+                            <Text style={styles.value}>{item.callPlanOutlet.region}</Text>
+                        </View>
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Area :</Text>
+                            <Text style={styles.value}>{item.callPlanOutlet.area}</Text>
+                        </View>
+                    </View>
+
+                </View>
+            </View>
+            <Text style={styles.title}>Program</Text>
+            <View style={styles.cardContainer}>
+                <View style={styles.card}>
+                    <View style={styles.cardContent}>
+                        <View>
+                            <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>JUDUL
+                                PROGRAM</Text>
+                            <Text style={styles.value}>Isi Program : ajkbsdkjandkjnaskdnan kjasnndajkndkjas
+                                ajsnjasdnkandjkan</Text>
+
+                        </View>
+                    </View>
+                </View>
+            </View>
+            <View style={styles.cardContainer}>
+                <View style={styles.card}>
+                    <View style={styles.cardContent}>
+                        <View>
+                            <Text style={[styles.label, {marginBottom: 8}]}>Status Outlet</Text>
+                            <View style={styles.pickerContainer}>
+                                <Picker
+                                    selectedValue={status}
+                                    onValueChange={(itemValue) => {
+                                        setStatus(itemValue);
+                                        if (itemValue !== 0) {
+                                            setStartTime(new Date().toISOString());
+                                        }
+                                    }}>
+                                    <Picker.Item label="Pilih Status Outlet" value={0}/>
+                                    <Picker.Item label="{getStatusLabel(STATUS_ACTIVITY_MD_1)}"
+                                                 value={"STATUS_ACTIVITY_MD_1"}/>
+                                    <Picker.Item label={"getStatusLabel(STATUS_ACTIVITY_MD_21)"}
+                                                 value={"STATUS_ACTIVITY_MD_21"}/>
+                                    <Picker.Item label={"getStatusLabel(STATUS_ACTIVITY_MD_22)"}
+                                                 value={"STATUS_ACTIVITY_MD_22"}/>
+                                    <Picker.Item label={"getStatusLabel(STATUS_ACTIVITY_MD_23)"}
+                                                 value={"STATUS_ACTIVITY_MD_23"}/>
+                                </Picker>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </View>
+            {!isFullActivity && (
+                <TouchableOpacity style={styles.button} onPress={handleCheckIn}>
+                    <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>Checkin</Text>
+                </TouchableOpacity>
+            )}
+            {isFullActivity && (
+                (<View>
+                    <Text style={styles.title}>Materi Branding SIO</Text>
+                    {sioContent}
+                    <Text style={styles.title}>Penjualan Brand</Text>
+                    {brandContent}
+                    <Text style={styles.title}>Selling Of Goods (SOG)</Text>
+                    {sogContent}
+
+                    <Text style={styles.title}>Outlet Radius</Text>
+                    <View style={styles.cardContainer}>
+                        <View style={styles.card}>
+                            <View style={styles.cardContent}>
+                                {outletContent}
+                            </View>
+                        </View>
+                    </View>
+                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                        <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>Checkout</Text>
+                    </TouchableOpacity>
+                </View>)
+            )}
+
+        </ScrollView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flexGrow: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    image: {
+        width: Dimensions.get('window').width, // Full width of the screen
+        height: 200, // Adjust height as needed
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginHorizontal: 16,
+        marginTop: 16,
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    cardContainer: {
+        marginHorizontal: 16,
+        marginTop: 8,
+    },
+    toggleText: {
+        fontSize: 14,
+        color: '#333',
+        marginRight: 4, // Space between text and icon
+    },
+    card: {
+        width: width - 40,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        padding: 16,
+        elevation: 4, // Shadow for Android
+        shadowColor: '#000', // Shadow for iOS
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        position: 'relative', // Required for positioning the icon
+    },
+    iconButton: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        zIndex: 1,
+    },
+    cardContent: {
+        marginTop: 8, // Space below the toggle button
+    },
+    row: {
+        width: '100%',
+        flexDirection: 'row',
+
+        marginBottom: 12,
+        justifyContent: "space-between"
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginRight: 8,
+        textTransform: 'capitalize', // Capitalize keys like "name", "age"
+    },
+    value: {
+        fontSize: 16,
+        color: '#555',
+    },
+    input: {
+        height: height * 0.05,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        paddingHorizontal: width * 0.02,
+        marginBottom: height * 0.015,
+        backgroundColor: '#fff',
+    },
+    imageContainer: {
+        flex: 1,
+        position: 'relative',
+        alignItems: 'center',
+        backgroundColor: '#ddd',
+        borderRadius: 10,
+        margin: 10,
+    },
+    clearButton: {
+        marginTop: height * 0.01,
+        backgroundColor: 'red',
+        padding: height * 0.01,
+        borderRadius: 5,
+    },
+    imagePreview: {
+        width: width * 0.25,
+        height: width * 0.25,
+        marginTop: height * 0.014,
+        borderRadius: 5,
+    },
+    photoButton: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: Colors.secondaryColor,
+        padding: 4,
+        borderRadius: 5,
+        margin: 4,
+    },
+    containerDropdown: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        padding: 10,
+        backgroundColor: '#f9f9f9',
+    },
+    // label: {
+    //     fontSize: 16,
+    //     marginBottom: 10,
+    //     color: '#333',
+    // },
+    dropdownButton: {
+        padding: 15,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        backgroundColor: '#fff',
+        width: '100%',
+        alignItems: 'center',
+    },
+    buttonText: {
+        fontSize: 16,
+        color: '#555',
+    },
+    dropdown: {
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        backgroundColor: '#fff',
+        width: '100%',
+    },
+    optionContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    optionLabel: {
+        marginLeft: 10,
+        fontSize: 16,
+        color: '#333',
+    },
+    customCheckbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        borderWidth: 2,
+        borderColor: '#007bff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    checkmark: {
+        width: 10,
+        height: 10,
+        backgroundColor: '#fff',
+        borderRadius: 2,
+    },
+    button: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: Colors.buttonBackground,
+        borderRadius: 10,
+        padding: 6,
+        marginHorizontal: 15,
+        marginVertical: 10
+    },
+    pickerContainer: {
+        width: '100%',
+        height: height * 0.06,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        marginBottom: height * 0.015,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+    },
+});
