@@ -47,7 +47,7 @@ export default function FormDetailSog({route}: FormActivityProps) {
         activity_id: number;
         name: string;
         description: string;
-        value: string;
+        value: number;
         notes: string
     }[]>([]);
 
@@ -70,7 +70,7 @@ export default function FormDetailSog({route}: FormActivityProps) {
                 setActivitySog(Array.from({length: filteredBrand[0].sog.length}, (_, i) => ({
                     activity_id: filteredBrand[0].id,
                     name: filteredBrand[0].sog[i],
-                    value: '',
+                    value: 0,
                     description: '',
                     notes: ''
                 })));
@@ -86,6 +86,19 @@ export default function FormDetailSog({route}: FormActivityProps) {
     if (!Array.isArray(activitySog)) {
         console.warn('activitySog is not an array:', activitySog);
         return null; // or return a fallback UI
+    }
+    const footer = () => {
+        return (
+            <View style={{flexDirection: 'row', justifyContent: 'center',marginVertical:8, alignItems: 'center', padding: 8,}}>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground}}/>
+                <View style={{width: 50, height: 2,  backgroundColor: 'grey', marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+            </View>
+        )
     }
 
 
@@ -119,10 +132,11 @@ export default function FormDetailSog({route}: FormActivityProps) {
                                     <TextInput
                                         style={[activityStyles.input, {flex: 1}]}
                                         placeholder="Stock (/Bungkus)"
-                                        value={sog.notes}
+                                        value={sog.value.toString()}
+                                        keyboardType="numeric"
                                         onChangeText={(text) => {
                                             const newActivitySog = [...activitySog];
-                                            newActivitySog[index].notes = text;
+                                            newActivitySog[index].value = Number(text);
                                             setActivitySog(newActivitySog);
                                         }}
                                     />
@@ -135,6 +149,7 @@ export default function FormDetailSog({route}: FormActivityProps) {
             <TouchableOpacity style={activityStyles.button} onPress={goToOutlet}>
                 <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>NEXT</Text>
             </TouchableOpacity>
+            {footer()}
         </ScrollView>
 
     )

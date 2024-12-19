@@ -51,6 +51,20 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
         // setIsFullActivity(true); // Set state to true when button is clicked
     };
 
+    const footer = () => {
+        return (
+            <View style={{flexDirection: 'row', justifyContent: 'center',marginVertical:8, alignItems: 'center', padding: 8,}}>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground}}/>
+                <View style={{width: 50, height: 2,  backgroundColor:  Colors.buttonBackground, marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor:  Colors.buttonBackground,}}/>
+            </View>
+        )
+    }
+
     //NEW CUSTOM CHECKBOX
     const CustomCheckbox = ({isChecked, onPress}: { isChecked: any, onPress: any }) => (
         <TouchableOpacity
@@ -128,6 +142,7 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                     </TouchableOpacity>
                 </View>
             </View>
+            {footer()}
         </ScrollView>
     )
 }

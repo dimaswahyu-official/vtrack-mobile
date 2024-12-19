@@ -40,25 +40,46 @@ interface Activity2 {
     notes: string;
     callPlanOutlet: {
         id: number;
-        name: string;
-        brand: string;
-        outlet_code: string;
-        latitude: string;
-        longitude: string;
-        sio_type: string;
-        region: string;
-        area: string;
-        cycle: string;
-        visit_day: string;
-        odd_even: string;
+        name: string ;
+        brand: string ;
+        outlet_code: string ;
+        latitude: string ;
+        longitude: string ;
+        sio_type: string ;
+        region: string ;
+        area: string ;
+        cycle: string ;
+        visit_day: string ;
+        odd_even: string ;
         range_health_facilities: number;
         range_work_place: number;
         range_public_transportation_facilities: number;
         range_worship_facilities: number;
         range_playground_facilities: number;
         range_educational_facilities: number;
-        photos: [];
-    } | null;
+        photos: [] | null;
+    }
+    callPlanSurvey:{
+        id: number;
+        name: string ;
+        brand: string ;
+        outlet_code: string ;
+        latitude: string ;
+        longitude: string ;
+        sio_type: string ;
+        region: string ;
+        area: string ;
+        cycle: string ;
+        visit_day: string ;
+        odd_even: string ;
+        range_health_facilities: number;
+        range_work_place: number;
+        range_public_transportation_facilities: number;
+        range_worship_facilities: number;
+        range_playground_facilities: number;
+        range_educational_facilities: number;
+        photos: [] | null;
+    }
 }
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity2'>;

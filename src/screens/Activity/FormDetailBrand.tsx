@@ -44,10 +44,23 @@ export default function FormDetailBrand({route}: FormActivityProps) {
     const [activityBrand, setActivityBrand] = useState<{
         activity_id: number;
         name: string;
-        value: string;
+        value: number;
         description: string;
         notes: string
     }[]>([]);
+    const footer = () => {
+        return (
+            <View style={{flexDirection: 'row', justifyContent: 'center',marginVertical:8, alignItems: 'center', padding: 8,}}>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{width: 50, height: 2, backgroundColor: 'grey', marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+                <View style={{width: 50, height: 2,  backgroundColor: 'grey', marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+            </View>
+        )
+    }
 
     const {brands} = useConstantStore();
 
@@ -69,7 +82,7 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                 setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
                     activity_id: filteredBrand[0].id,
                     name: filteredBrand[0].branch,
-                    value: '',
+                    value: 0,
                     description: '',
                     notes: ''
                 })));
@@ -117,10 +130,11 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                                         <TextInput
                                             style={[styles.input, {flex: 1}]}
                                             placeholder="Stock (/Bungkus)"
-                                            value={brand.value}
+                                            value={brand.value.toString()}
+                                            keyboardType="numeric"
                                             onChangeText={(text) => {
                                                 const newActivityBrand = [...activityBrand];
-                                                newActivityBrand[index].value = text;
+                                                newActivityBrand[index].value = Number(text);
                                                 setActivityBrand(newActivityBrand);
                                             }}
                                         />
@@ -132,9 +146,13 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                 )
             )
             }
+
+
+
             <TouchableOpacity style={styles.button} onPress={goToSog}>
                 <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>NEXT</Text>
             </TouchableOpacity>
+            {footer()}
         </ScrollView>
 
     )
