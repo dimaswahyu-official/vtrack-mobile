@@ -44,27 +44,27 @@ const ActivityNavigator = () => {
             <Stack.Screen
                 name="FormDetailActivity"
                 component={FormDetailActivity}
-                options={{ headerTitle: '' }}
+                options={{ headerTitle: '' , headerBackVisible: false  }}
             />
             <Stack.Screen
                 name="FormDetailSio"
                 component={FormDetailSio}
-                options={{ headerTitle: '' }}
+                options={{ headerTitle: '' , headerBackVisible: false }}
             />
             <Stack.Screen
                 name="FormDetailBrand"
                 component={FormDetailBrand}
-                options={{ headerTitle: '' }}
+                options={{ headerTitle: '', headerBackVisible: false  }}
             />
             <Stack.Screen
                 name="FormDetailSog"
                 component={FormDetailSog}
-                options={{ headerTitle: '' }}
+                options={{ headerTitle: '', headerBackVisible: false  }}
             />
             <Stack.Screen
                 name="FormDetailOutlet"
                 component={FormDetailOutlet}
-                options={{ headerTitle: '' }}
+                options={{ headerTitle: '' , headerBackVisible: false  }}
             />
         </Stack.Navigator>
     );
