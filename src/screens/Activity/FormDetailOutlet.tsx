@@ -1,7 +1,7 @@
 import {Dimensions, FlatList, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {StackNavigationProp} from "@react-navigation/stack";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
-import {RouteProp, useNavigation} from "@react-navigation/native";
+import { RouteProp, useNavigation} from "@react-navigation/native";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useState} from "react";
@@ -137,10 +137,18 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                             </View>
                         )}
                     </View>
-                    <TouchableOpacity style={activityStyles.button} onPress={checkOutData}>
-                        <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>Check Out</Text>
-                    </TouchableOpacity>
                 </View>
+            </View>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.secondaryColor}}
+                                  onPress={() => navigation.goBack()}>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.buttonBackground}}
+
+                >
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
+                </TouchableOpacity>
             </View>
             {footer()}
         </ScrollView>

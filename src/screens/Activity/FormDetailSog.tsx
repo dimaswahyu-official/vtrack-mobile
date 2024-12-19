@@ -146,9 +146,16 @@ export default function FormDetailSog({route}: FormActivityProps) {
                     </View>
                 </View>
             ))}
-            <TouchableOpacity style={activityStyles.button} onPress={goToOutlet}>
-                <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>NEXT</Text>
-            </TouchableOpacity>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.secondaryColor}}
+                onPress={() => navigation.goBack()}
+                >
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.buttonBackground}} onPress={goToOutlet}>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
+                </TouchableOpacity>
+            </View>
             {footer()}
         </ScrollView>
 

@@ -146,12 +146,15 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                 )
             )
             }
-
-
-
-            <TouchableOpacity style={styles.button} onPress={goToSog}>
-                <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>NEXT</Text>
-            </TouchableOpacity>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.secondaryColor}}
+                                  onPress={() => navigation.goBack()}>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.buttonBackground}} onPress={goToSog}>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
+                </TouchableOpacity>
+            </View>
             {footer()}
         </ScrollView>
 

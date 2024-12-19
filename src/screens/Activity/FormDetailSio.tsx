@@ -44,14 +44,26 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
     const footer = () => {
         return (
-            <View style={{flexDirection: 'row', justifyContent: 'center',marginVertical:8, alignItems: 'center', padding: 8,}}>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                marginVertical: 8,
+                alignItems: 'center',
+                padding: 8,
+            }}>
+                <View style={{
+                    width: 10,
+                    height: 10,
+                    borderWidth: 0.5,
+                    borderRadius: 5,
+                    backgroundColor: Colors.buttonBackground,
+                }}/>
                 <View style={{width: 50, height: 2, backgroundColor: 'grey', marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+                <View style={{width: 10, height: 10, borderWidth: 0.5, borderRadius: 5, backgroundColor: 'white',}}/>
                 <View style={{width: 50, height: 2, backgroundColor: 'grey', marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
-                <View style={{width: 50, height: 2,  backgroundColor: 'grey', marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+                <View style={{width: 10, height: 10, borderWidth: 0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+                <View style={{width: 50, height: 2, backgroundColor: 'grey', marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10, borderWidth: 0.5, borderRadius: 5, backgroundColor: 'white',}}/>
             </View>
         )
     }
@@ -214,9 +226,15 @@ export default function FormDetailSio({route}: FormActivityProps) {
                     </View>
                 )
             )}
-            <TouchableOpacity style={activityStyles.button} onPress={goToBrand}>
-                <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>NEXT</Text>
-            </TouchableOpacity>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.secondaryColor}}
+                                  onPress={() => navigation.goBack()}>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.buttonBackground}} onPress={goToBrand}>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
+                </TouchableOpacity>
+            </View>
             {footer()}
         </ScrollView>
 
