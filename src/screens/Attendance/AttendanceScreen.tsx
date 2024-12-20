@@ -43,7 +43,7 @@ export default function AttendanceScreen({
   const { theme } = useThemeStore();
   const { clearAuth, user } = useAuthStore();
   const { clearConstants } = useConstantStore();
-  const { absenToday, setAbsenToday } = useAbsenToday();
+  const { absenToday, setAbsenToday, clearAbsenToday } = useAbsenToday();
   const { isOnline, isWifi } = useOffline();
   const { setLoading } = useLoadingStore();
   const { profile } = route.params;
@@ -65,11 +65,54 @@ export default function AttendanceScreen({
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      setLoading(true);
-    } else {
-      setLoading(false);
-    }
+    const checkTodayAttendance = async () => {
+      try {
+        if (!user) {
+          setLoading(true);
+          return;
+        }
+
+        if (absenToday === null) {
+          const response = await AbsenService.findToday(user.id);
+          const checkAbsenToday = response.data;
+          if (checkAbsenToday) {
+            setAbsenToday({
+              id: checkAbsenToday.id,
+              userId: checkAbsenToday.userId,
+              date: checkAbsenToday.date,
+              status: checkAbsenToday.status,
+              remarks: checkAbsenToday.remarks,
+              createdAt: checkAbsenToday.createdAt,
+              updatedAt: checkAbsenToday.updatedAt,
+              clockIn: checkAbsenToday.clockIn,
+              clockOut: checkAbsenToday.clockOut,
+              area: checkAbsenToday.area,
+              region: checkAbsenToday.region,
+              longitudeIn: checkAbsenToday.longitudeIn,
+              latitudeIn: checkAbsenToday.latitudeIn,
+              longitudeOut: checkAbsenToday.longitudeOut,
+              latitudeOut: checkAbsenToday.latitudeOut,
+              photoIn: checkAbsenToday.photoIn,
+              photoOut: checkAbsenToday.photoOut,
+            });
+          } else {
+            console.log('absenToday', absenToday)
+            clearAbsenToday();
+          }
+        }
+      } catch (error) {
+        console.error('Error checking attendance:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to check today\'s attendance'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkTodayAttendance();
 
     console.log("absenToday", absenToday);
   }, [user, setLoading, absenToday]);
@@ -337,7 +380,7 @@ export default function AttendanceScreen({
               <Text style={styles.locationText}>{absenToday?.remarks}</Text>
               <Text style={styles.locationText}>{absenToday?.status}</Text>
             </View>
-            {absenToday?.clockIn && time < "17" ? (
+            {(absenToday?.clockIn || absenToday == null) && time < "17" ? (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   onPress={() => handleTakePhoto(0)}

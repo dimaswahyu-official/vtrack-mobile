@@ -31,6 +31,15 @@ class AbsenService {
         }
     }
 
+    static async findToday(userId: string): Promise<any> {
+        try {
+            const response = await axiosInstance.get(`/absensi/today/${userId}`);
+            return response.data
+        } catch (error: any) {
+            throw new Error(error);
+        }
+    }
+
 
     static async syncAbsen(data: any): Promise<any> {
         try {
