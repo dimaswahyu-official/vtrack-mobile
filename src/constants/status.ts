@@ -18,34 +18,33 @@ export const STATUS_APPROVED = 203;
 // MD Activity Status Codes
 export const EXISTING_SURVEY_STATUS = {
   [STATUS_PROCESSING]: 'Proses Dikunjungi',
-  [STATUS_NOT_VISITED]: 'Belum Dikunjungi',
   [STATUS_TEMP_CLOSED]: 'Outlet Tutup Sementara',
   [STATUS_PERM_CLOSED]: 'Outlet Tutup Permanen',
   [STATUS_NOT_FOUND]: 'Outlet Tidak Ditemukan',
-  [STATUS_CANCELLED]: 'Schedule Dibatalkan',
-  [STATUS_VISITED]: 'Sudah Dikunjungi',
-  [STATUS_COMPLETED]: 'Selesai',
+  // [STATUS_CANCELLED]: 'Schedule Dibatalkan',
+  // [STATUS_VISITED]: 'Sudah Dikunjungi',
+  // [STATUS_COMPLETED]: 'Selesai',
 };
 
 // Survey Activity Status Codes
 export const NEW_SURVEY_STATUS = {
-  [STATUS_PROCESSING]: 'Proses Dikunjungi',
-  [STATUS_NOT_VISITED]: 'Belum Dikunjungi',
+  // [STATUS_PROCESSING]: 'Proses Dikunjungi',
+  // [STATUS_NOT_VISITED]: 'Belum Dikunjungi',
   [STATUS_OUTLET_AGREED]: 'Outlet Setuju',
   [STATUS_TEMP_CLOSED]: 'Outlet Tutup Sementara',
   [STATUS_PERM_CLOSED]: 'Outlet Tutup Permanen',
   [STATUS_NOT_FOUND]: 'Outlet Tidak Ditemukan',
   [STATUS_REJECTED]: 'Outlet Menolak',
-  [STATUS_PIC_REJECTED]: 'Ditolak PIC',
-  [STATUS_HO_PROCESSING]: 'Proses HO',
-  [STATUS_HO_REJECTED]: 'Ditolak HO',
-  [STATUS_APPROVED]: 'Disetujui HO',
+  // [STATUS_PIC_REJECTED]: 'Ditolak PIC',
+  // [STATUS_HO_PROCESSING]: 'Proses HO',
+  // [STATUS_HO_REJECTED]: 'Ditolak HO',
+  // [STATUS_APPROVED]: 'Disetujui HO',
 };
 
 export const getStatusLabel = (statusNumber: keyof typeof EXISTING_SURVEY_STATUS) => {
-  return EXISTING_SURVEY_STATUS[statusNumber] || 'Unknown Status';
+  return EXISTING_SURVEY_STATUS[statusNumber] || 'Belum Dikunjungi';
 };
 
 export const getStatusLabelNew = (statusNumber: keyof typeof NEW_SURVEY_STATUS) => {
-  return NEW_SURVEY_STATUS[statusNumber] || 'Unknown Status';
+  return NEW_SURVEY_STATUS[statusNumber] || 'Belum Dikunjungi';
 };

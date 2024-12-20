@@ -173,7 +173,7 @@ export default function ActivityScreen() {
                         {/* Column 2 */}
                         <View style={styles.col2}>
                             <Text
-                                style={[styles.brand, {textAlign: 'right', color:item.status===400 ?'red':'green' }]}>{item.type === 1 ? 'Outlet New, ' : ''}{getStatusLabel(item.status as any)}</Text>
+                                style={[styles.brand, {textAlign: 'right', color:item.status===400 ?'red':'green' }]}>{item.type === 1 ? 'Outlet Baru, ' : ''}{getStatusLabel(item.status as any)}</Text>
                             {/*<View style={[styles.row, {marginTop: height * 0.01, alignItems: 'center'}]}>*/}
                             <TouchableOpacity style={styles.buttonWork}
                                               onPress={() => openMaps('-6.198453', '106.802473')}>

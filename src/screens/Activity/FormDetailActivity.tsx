@@ -40,9 +40,8 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
     const [callPlanId, setCallPlanId] = useState(1);
     const [outletId, setOutletId] = useState(1);
-    const [status, setStatus] = useState(0);
+    const [photos, setPhotos] = useState<any | null>(null);
     const [pickerOptions, setPickerOptions] = useState([]); // Options for the picker
-
     const [area, setArea] = useState('Area A');
     const [region, setRegion] = useState('Region X');
     const [visible, setVisible] = useState(false);
@@ -57,6 +56,10 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const defaultImage = 'https://via.placeholder.com/100';
     const statusOptions = Object.entries(NEW_SURVEY_STATUS);
     const statusOptionExist = Object.entries(EXISTING_SURVEY_STATUS);
+    const [status, setStatus] = useState(
+        item.type === 1 ? statusOptions[0][0] : statusOptionExist[0][0]
+    );
+
     useEffect(() => {
         setUserId(item.user_id);
         setCallPlanScheduleId(item.id);
@@ -139,7 +142,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         const newPhotos = activityPhotos.filter((_, i) => i !== index);
         setActivityPhotos(newPhotos);
     };
-    console.log("dd"+ item.callPlanOutlet.photos[0])
     const handleTakePhoto = async () => {
         // Request camera permissions
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -154,10 +156,26 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         });
         if (!response.canceled) {
             // Pass the photo URI to the next page
-            navigation.navigate('FormDetailSio', { item, photox:response.assets[0].uri ?? defaultImage });
-            setVisible(false);
+            setPhotos(response.assets[0].uri ?? defaultImage)
+            handleNext()
         }
     }
+
+    const handleNext = () => {
+        setVisible(false);
+        if (status === '401' || status === '402' || status === '403' || status === '404') {
+            navigation.navigate('Activity2'); // Navigate to "Activity" screen
+        } else {
+            console.log("Proceeding with the next steps...");
+            // Handle other cases here
+            navigation.navigate('FormDetailSio', { item, photox:photos });
+
+        }
+    };
+
+    useEffect(() => {
+        console.log(`Default Status: ${status}`);
+    }, [status]);
 
     const handleClearPhoto = (index: number) => {
         // const newActivitySio = [...activitySio];
@@ -262,14 +280,14 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     onValueChange={(itemValue) => {
                                         setStatus(itemValue);
                                         console.log(status+" STATUS");
-                                        if (itemValue !== 0) {
+                                        if (itemValue !== '0') {
                                             setStartTime(new Date().toISOString());
                                         }
                                     }}>
                                     {item.type===1 ? statusOptions.map(([key, value]) => (
-                                        <Picker.Item key={key} label={value} value={key} />
+                                        <Picker.Item key={key} label={value} value={String(key)} />
                                     )) : statusOptionExist.map(([key, value]) => (
-                                        <Picker.Item key={key} label={value} value={key} />
+                                        <Picker.Item key={key} label={value} value={String(key)} />
                                     ))}
                                     </Picker>
                             </View>
