@@ -104,7 +104,7 @@ export default function FormDetailSog({route}: FormActivityProps) {
 
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
-            <Text style={activityStyles.title}>Selling Of Goods (SOG)</Text>
+            <Text style={activityStyles.title}>Source Of Goods (SOG)</Text>
             {activitySog?.map((sog, index) => (
                 <View style={activityStyles.cardContainer} key={index}>
                     <View style={activityStyles.card}>

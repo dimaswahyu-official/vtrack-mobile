@@ -25,6 +25,8 @@ import * as ImagePicker from "expo-image-picker";
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {EXISTING_SURVEY_STATUS, getStatusLabelNew, NEW_SURVEY_STATUS} from "../../constants/status";
+import useAbsenToday from "../../store/useAbsenToday";
+import useActivityStore from "../../store/useActivityStore";
 
 const {width, height} = Dimensions.get('window');
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -36,17 +38,25 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const {item} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
+    const { activityDataGlobal,setActivityGlobal } = useActivityStore();
     const [userId, setUserId] = useState(1);
     const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
     const [callPlanId, setCallPlanId] = useState(1);
     const [outletId, setOutletId] = useState(1);
-    const [photos, setPhotos] = useState<any | null>(null);
-    const [pickerOptions, setPickerOptions] = useState([]); // Options for the picker
+    const [surveyOutletId, setSurveyOutletId] = useState(1);
+    const [programId, setProgramId] = useState(1);
     const [area, setArea] = useState('Area A');
     const [region, setRegion] = useState('Region X');
-    const [visible, setVisible] = useState(false);
+    const [brand, setBrand] = useState('Region X');
+    const [typeSio, setSio] = useState('Region X');
+    const [createdAt, setCreatedAt] = useState('Region X');
+    const [createdBy, setCreatedBy] = useState('Region X');
     const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
     const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
+    const [photos, setPhotos] = useState<any | null>(null);
+    const [pickerOptions, setPickerOptions] = useState([]); // Options for the picker
+
+    const [visible, setVisible] = useState(false);
     const [dataOffline, setDataOffline] = useState<any>({});
     const [activityPhotos, setActivityPhotos] = useState<Array<string>>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -72,29 +82,27 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         setEndTime(item.end_time);
     }, [item.id]);
 
-
-    // HANDLE SUBMIT
-    const handleSubmit = async () => {
-        const activityData = {
-            user_id: userId,
-            call_plan_schedule_id: callPlanScheduleId,
-            call_plan_id: callPlanId,
-            outlet_id: outletId,
-            survey_outlet_id: "", //NEW
-            program_id: "", //NEW
-            status: status,
-            area: area,
-            region: region,
-            start_time: startTime || new Date().toISOString(),
-            end_time: new Date().toISOString(),
-            photo: JSON.stringify(activityPhotos),
-            created_by: "user_creator",
-            created_at: new Date().toISOString(),
-            is_sync: 0,
-            id_server: 0
-        };
-        console.log("SUBMIT DATAA" + JSON.stringify(activityData));
+    if(activityDataGlobal===null){
+        setActivityGlobal({
+            user_id:item.user_id,
+            call_plan_schedule_id:item.call_plan_schedule_id,
+            call_plan_id:item.call_plan_id,
+            outlet_id:item.outlet_id,
+            survey_outlet_id:item.survey_outlet_id,
+            program_id:item.program_id,
+            status:item.status,
+            area:item.area,
+            region:item.region,
+            brand:item.brand ,
+            type_sio:item.sio_type,
+            photos:photos,
+            brandData:null,
+            sioData:null,
+            sogData:null
+        })
+        // console.log(ac)
     }
+
 
     //PopUp Notification
     const PopupCard = () => {

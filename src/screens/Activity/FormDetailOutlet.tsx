@@ -1,4 +1,4 @@
-import {Dimensions, FlatList, ScrollView, Text, TouchableOpacity, View} from "react-native";
+import {Alert, Dimensions, FlatList, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {StackNavigationProp} from "@react-navigation/stack";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
 import { RouteProp, useNavigation} from "@react-navigation/native";
@@ -74,7 +74,9 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
             ]}
             onPress={onPress}
         >
-            {isChecked && <View style={activityStyles.checkmark}/>}
+            {isChecked && (
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 10 }}>✔</Text> // Display checkmark
+            )}
         </TouchableOpacity>
     );
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -87,13 +89,21 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
         {label: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)', value: 'option5'},
         {label: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)', value: 'option6'},
     ];
-    const toggleSelection = (value: any) => {
-        setSelectedValues((prev: any) =>
-            prev.includes(value)
-                ? prev.filter((item: any) => item !== value)
-                : [...prev, value]
-        );
-    }
+    const toggleSelection = (value: string) => {
+        setSelectedValues((prev) => {
+            if (prev.includes(value)) {
+                // Deselect the item if it's already selected
+                return prev.filter((item) => item !== value);
+            } else if (prev.length < 2) {
+                // Add the item if the limit of 2 is not reached
+                return [...prev, value];
+            } else {
+                // If limit reached, ignore the action
+                Alert.alert('Limit Area', 'Maksimal area yang dapat dipilih adalah sebanyak 2 area.');
+                return prev;
+            }
+        });
+    };
     const renderOption = ({item}: { item: any }) => (
         <TouchableOpacity
             style={activityStyles.optionContainer}
@@ -111,17 +121,16 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
             <View style={activityStyles.cardContainer}>
                 <View style={activityStyles.card}>
                     <View style={{padding: 6, justifyContent: "flex-start", alignItems: "flex-start"}}>
-                        <Text style={[activityStyles.label, {marginBottom: 6}]}>Pastikan Outlet berada di jarak aman
-                            dari jarak
-                            berikut
-                            :</Text>
+                        <Text style={[activityStyles.label, {marginBottom: 6}]}>
+                            Pastikan Outlet berada di jarak aman dari jarak berikut:
+                        </Text>
                         <TouchableOpacity
                             style={activityStyles.dropdownButton}
                             onPress={() => setIsDropdownVisible((prev) => !prev)}
                         >
                             <Text style={activityStyles.buttonText}>
                                 {selectedValues.length > 0
-                                    ? `Area yang dipilih : ${selectedValues.length} Area`
+                                    ? `Area yang dipilih: ${selectedValues.length} Area`
                                     : 'Pilihan Area'}
                             </Text>
                         </TouchableOpacity>
@@ -139,15 +148,32 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                     </View>
                 </View>
             </View>
-            <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
-                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.secondaryColor}}
-                                  onPress={() => navigation.goBack()}>
-                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.buttonBackground}}
-
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16}}>
+                <TouchableOpacity
+                    style={{
+                        flex: 1,
+                        padding: 12,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        marginHorizontal: 8,
+                        backgroundColor: Colors.secondaryColor,
+                    }}
+                    onPress={() => navigation.goBack()}
                 >
-                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={{
+                        flex: 1,
+                        padding: 12,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        marginHorizontal: 8,
+                        backgroundColor: Colors.buttonBackground,
+                    }}
+                    onPress={() => navigation.replace('Activity2')}
+                >
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>Next</Text>
                 </TouchableOpacity>
             </View>
             {footer()}
