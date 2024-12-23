@@ -29,12 +29,12 @@ const MainNavigator = () => (
 
                 return <Ionicons name={iconName} size={22} color={color} />;
             },
-            tabBarActiveTintColor: Colors.secondaryColor,
+            tabBarActiveTintColor: Colors.buttonBackground,
             tabBarInactiveTintColor: 'gray',
             tabBarStyle: {
-                backgroundColor: Colors.buttonBackground,
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
+                backgroundColor: 'white',
+                // borderTopLeftRadius: 20,
+                // borderTopRightRadius: 20,
                 paddingTop: 4,
                 height: 60,
             },

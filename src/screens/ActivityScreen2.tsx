@@ -1,6 +1,7 @@
 // Get screen dimensions
 import {
-    Animated,
+    Alert,
+    Animated, BackHandler,
     Dimensions, FlatList,
     Image,
     Linking, RefreshControl, StyleSheet,
@@ -24,6 +25,7 @@ import {formatDate} from "../utils/DateHelper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Colors from "../utils/Colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import {ActivityModel} from "../model/activityModel";
 
 
 const {width, height} = Dimensions.get('window');
@@ -94,10 +96,42 @@ export default function ActivityScreen() {
     const {user} = useAuthStore();
     const userId = user?.id || '';
 
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            // Prevent the default behavior of going back
+            e.preventDefault();
+
+            // Optionally, show a confirmation alert
+            Alert.alert(
+                'Hold on!',
+                'You cannot go back from this screen.',
+                [
+                    { text: 'OK', style: 'cancel' },
+                ]
+            );
+        });
+
+        return unsubscribe;
+    }, [navigation]);
+
 
     const fetchScedule = async () => {
         setRefreshing(true);
         try {
+            if (!isOnline) {
+
+                const getDataOffline = await ActivityModel.getAllActivity(db);
+                // Load data from AsyncStorage if offline
+                const storedActivities = await AsyncStorage.getItem('activities');
+                if (storedActivities) {
+                    setActivities(JSON.parse(storedActivities));
+                    Toast.show({ type: "info", text1: "Offline Mode", text2: "Showing cached data." });
+                } else {
+                    Toast.show({ type: "error", text1: "No Internet Connection", text2: "No cached data available." });
+                }
+                setRefreshing(false);
+                return;
+            }
             const response = await ActivityService.getListingSchedule(userId);
             const data: Activity2[] = await response.data;
             setActivities(data);
@@ -259,7 +293,7 @@ const styles = StyleSheet.create({
         paddingBottom: height * 0.02,
     },
     card: {
-        backgroundColor: '#fcf6f3',
+        backgroundColor: 'white',
         borderRadius: 15,
         padding: height * 0.02,
         marginBottom: height * 0.02,
@@ -269,7 +303,7 @@ const styles = StyleSheet.create({
         shadowOffset: {width: 0, height: 2},
         elevation: 3,
         borderWidth:3,
-        borderColor: Colors.secondaryColor,
+        borderColor: 'gray',
     },
     title: {
         fontSize: width > 400 ? 18 : 16,

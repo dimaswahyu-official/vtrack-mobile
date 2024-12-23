@@ -131,10 +131,10 @@ export default function AttendanceScreen({
       return;
     }
 
-    if (absenToday?.clockIn) {
-      Alert.alert("Notice", "You have already checked in today");
-      return;
-    }
+    // if (absenToday?.clockIn) {
+    //   Alert.alert("Notice", "You have already checked in today");
+    //   return;
+    // }
 
     try {
       const permissionResult =

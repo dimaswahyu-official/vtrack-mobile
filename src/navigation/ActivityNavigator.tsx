@@ -31,11 +31,11 @@ const ActivityNavigator = () => {
                 component={ActivityScreen2}
                 options={{ headerTitle: '' }}
             />
-            <Stack.Screen
-                name="Activity"
-                component={ActivityScreen}
-                options={{ headerTitle: '' }}
-            />
+            {/*<Stack.Screen*/}
+            {/*    name="Activity"*/}
+            {/*    component={ActivityScreen}*/}
+            {/*    options={{ headerTitle: '' }}*/}
+            {/*/>*/}
             <Stack.Screen
                 name="FormActivityNormal"
                 component={FormActivityNormal}
