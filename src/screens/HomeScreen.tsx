@@ -94,22 +94,22 @@ export default function HomeScreen() {
         }
     }
 
-    const fetchActivityCounts = async () => {
-        try {
-            const syncedQuery = await countSyncedActivities(db);
-            setSyncedCount(syncedQuery);
-            const notSyncedQuery = await countNotSyncedActivities(db);
-            setNotSyncedCount(notSyncedQuery);
-        } catch (error) {
-            console.error('Error fetching activity counts:', error);
-        }
-    }
+    // const fetchActivityCounts = async () => {
+    //     try {
+    //         const syncedQuery = await countSyncedActivities(db);
+    //         setSyncedCount(syncedQuery);
+    //         const notSyncedQuery = await countNotSyncedActivities(db);
+    //         setNotSyncedCount(notSyncedQuery);
+    //     } catch (error) {
+    //         console.error('Error fetching activity counts:', error);
+    //     }
+    // }
 
     useEffect(() => {
         if ((isOnline || isWifi) && !brands.length && !sio.length) {
             fetchConstants();
         }
-        fetchActivityCounts();
+        // fetchActivityCounts();
     }, [isOnline, isWifi, brands, sio]);
 
 
