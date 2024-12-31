@@ -8,6 +8,9 @@ import {MaterialIcons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
+import {ActivitySioModel} from "../../model/activityModel";
+import {SioModel} from "../../model/ActivitySioRepository";
+import {useSQLiteContext} from "expo-sqlite";
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailSio'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailSio'>;
@@ -28,7 +31,8 @@ type SioType = {
 };
 
 export default function FormDetailSio({route}: FormActivityProps) {
-    const {item, photox} = route.params || {};
+    const db = useSQLiteContext();
+    const {item, photox, idx} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const activityStyles = ActivityStyles();
     const [sioType, setSioType] = useState<SioType | null>(null);
@@ -76,7 +80,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                 setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
                 if (filteredSio.length > 0) {
                     setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                        activity_id: filteredSio[0].sioTypeGalery[i].id,
+                        activity_id: idx,
                         name: filteredSio[0].sioTypeGalery[i].name,
                         description: '',
                         notes: '',
@@ -89,7 +93,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                 setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
                 if (filteredSio.length > 0) {
                     setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                        activity_id: filteredSio[0].sioTypeGalery[i].id,
+                        activity_id: idx,
                         name: filteredSio[0].sioTypeGalery[i].name,
                         description: '',
                         notes: '',
@@ -137,8 +141,38 @@ export default function FormDetailSio({route}: FormActivityProps) {
         setActivitySio(newActivitySio);
     };
 
-    const goToBrand = () => {
-        navigation.navigate('FormDetailBrand', {item});
+
+    const insertSioToSqlite = async (data: any) => {
+        // If the input is an array, loop through and process each item
+        if (Array.isArray(data)) {
+            data.forEach((activity: any) => {
+                insertSioToSqlite(activity); // Call the function for each individual item
+            });
+            console.log('You have total Data to Insert Sio = ' + data.length);
+            return; // Exit after processing the array
+        }
+        // If the input is a single object, process it
+        const sioData = {
+            activity_id: idx,
+            name: data.name,
+            description: data.description ?? '',
+            notes: data.notes ?? '',
+            photo: data.newPhoto,
+        }
+        try {
+            console.log(JSON.stringify(sioData) + "Data Sio")
+            navigation.navigate('FormDetailBrand', {item, idx});
+            // Uncomment this line to insert data into SQLite
+            // await SioModel.create(db, sioData);
+        } catch (error) {
+            console.error('Error inserting sio:', error);
+            Alert.alert('Error', 'Failed to save sio. Please try again.');
+        }
+    }
+
+    const goToBrand = async () => {
+        await insertSioToSqlite(activitySio)
+        // navigation.navigate('FormDetailBrand', {item});
         // setIsFullActivity(true); // Set state to true when button is clicked
     };
 
@@ -227,11 +261,25 @@ export default function FormDetailSio({route}: FormActivityProps) {
                 )
             )}
             <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
-                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.secondaryColor}}
+                <TouchableOpacity style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    marginHorizontal: 8,
+                    backgroundColor: Colors.secondaryColor
+                }}
                                   onPress={() => navigation.goBack()}>
                     <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Back</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.buttonBackground}} onPress={goToBrand}>
+                <TouchableOpacity style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    marginHorizontal: 8,
+                    backgroundColor: Colors.buttonBackground
+                }} onPress={goToBrand}>
                     <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
                 </TouchableOpacity>
             </View>

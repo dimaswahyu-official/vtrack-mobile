@@ -1,57 +1,51 @@
 import * as SQLite from 'expo-sqlite';
 import {ActivitySog} from "./ActivitySogRepository";
 
-export interface ActivityBranch {
+export interface ActivityOutlet {
     id?: number;
     activity_id: number;
-    name: string;
+    label: string;
     value: number;
-    description: string;
-    notes: string;
 }
 
 
-type BrandCreateParams = Omit<ActivitySog, 'id'>;
+type OutletCreateParams = Omit<ActivityOutlet, 'id'>;
 
-export const createTableActivityBranch = async (db: SQLite.SQLiteDatabase): Promise<void> => {
+export const createTableActivityOutlet = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS ActivityBranch (
+        CREATE TABLE IF NOT EXISTS ActivityOutlet (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             activity_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
+            label TEXT NOT NULL,
             value INTEGER NOT NULL,
-            description TEXT,
-            notes TEXT,
             FOREIGN KEY (activity_id) REFERENCES Activity(id)
         )
     `);
 };
 
 
-// Model Untuk Brand
-export const BrandModel = {
+// Model Untuk Outlet
+export const OutletModel = {
     // Insert Into
-    create: async (db: SQLite.SQLiteDatabase, params: BrandCreateParams): Promise<number> => {
+    create: async (db: SQLite.SQLiteDatabase, params: OutletCreateParams): Promise<number> => {
         const {
             activity_id,
-            name,
-            description,
-            notes,
+            label,
             value
         } = params;
 
         // Log the parameters to verify they are correct
-        console.log('Inserting SOG with parameters:', params);
+        console.log('Inserting Outlet with parameters:', params);
         try {
             const result = await db.runAsync(
-                `INSERT INTO ActivitySio (activity_id, name, description, notes, value)
-                 VALUES (?, ?, ?, ?,?)`,
-                [activity_id, name, description, notes,value],
+                `INSERT INTO ActivitySio (activity_id, label, value)
+                 VALUES (?, ?, ?)`,
+                [activity_id, label,value],
             );
             const insertId = result.lastInsertRowId as number;
 
             // Log the insertId to confirm successful insertion
-            console.log('Activity Brand inserted with ID:', insertId);
+            console.log('Activity Outlet inserted with ID:', insertId);
             return insertId;
 
         } catch (error) {

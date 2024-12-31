@@ -1,7 +1,7 @@
 import {Alert, Dimensions, FlatList, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {StackNavigationProp} from "@react-navigation/stack";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
-import { RouteProp, useNavigation} from "@react-navigation/native";
+import {RouteProp, useNavigation} from "@react-navigation/native";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useState} from "react";
@@ -46,6 +46,18 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
         setEndTime(item.end_time);
 
     }, [item.id]);
+
+    useEffect(() => {
+        if (item.range_educational_facilities == 0 ||
+            item.range_health_facilities == 0 ||
+            item.range_playground_facilities == 0 ||
+            item.range_public_transportation_facilities == 0 ||
+            item.range_worship_facilities == 0 ||
+            item.range_work_place == 0
+        ) {
+            navigation.replace('Activity2')
+        }
+    }, []);
     const checkOutData = () => {
         // navigation.navigate('FormDetailSio', {item});
         // setIsFullActivity(true); // Set state to true when button is clicked
@@ -53,14 +65,44 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
 
     const footer = () => {
         return (
-            <View style={{flexDirection: 'row', justifyContent: 'center',marginVertical:8, alignItems: 'center', padding: 8,}}>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                marginVertical: 8,
+                alignItems: 'center',
+                padding: 8,
+            }}>
+                <View style={{
+                    width: 10,
+                    height: 10,
+                    borderWidth: 0.5,
+                    borderRadius: 5,
+                    backgroundColor: Colors.buttonBackground,
+                }}/>
                 <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{
+                    width: 10,
+                    height: 10,
+                    borderWidth: 0.5,
+                    borderRadius: 5,
+                    backgroundColor: Colors.buttonBackground,
+                }}/>
                 <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground}}/>
-                <View style={{width: 50, height: 2,  backgroundColor:  Colors.buttonBackground, marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor:  Colors.buttonBackground,}}/>
+                <View style={{
+                    width: 10,
+                    height: 10,
+                    borderWidth: 0.5,
+                    borderRadius: 5,
+                    backgroundColor: Colors.buttonBackground
+                }}/>
+                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
+                <View style={{
+                    width: 10,
+                    height: 10,
+                    borderWidth: 0.5,
+                    borderRadius: 5,
+                    backgroundColor: Colors.buttonBackground,
+                }}/>
             </View>
         )
     }
@@ -75,19 +117,25 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
             onPress={onPress}
         >
             {isChecked && (
-                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 10 }}>✔</Text> // Display checkmark
+                <Text style={{color: '#fff', fontWeight: 'bold', fontSize: 10}}>✔</Text> // Display checkmark
             )}
         </TouchableOpacity>
     );
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
     const outlet: Outlet[] = [
-        {label: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)', value: 'option1'},
-        {label: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)', value: 'option2'},
-        {label: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)', value: 'option3'},
-        {label: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)', value: 'option4'},
-        {label: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)', value: 'option5'},
-        {label: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)', value: 'option6'},
+        {label: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)', value: 'range_health_facilities'},
+        {label: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)', value: 'range_educational_facilities'},
+        {label: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)', value: 'range_playground_facilities'},
+        {
+            label: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
+            value: 'range_worship_facilities'
+        },
+        {
+            label: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
+            value: 'range_public_transportation_facilities'
+        },
+        {label: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)', value: 'range_work_place'},
     ];
     const toggleSelection = (value: string) => {
         setSelectedValues((prev) => {
@@ -113,7 +161,7 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                 isChecked={selectedValues.includes(item.value)}
                 onPress={() => toggleSelection(item.value)}
             />
-            <Text style={[activityStyles.optionLabel,{paddingRight:6}]}>{item.label}</Text>
+            <Text style={[activityStyles.optionLabel, {paddingRight: 6}]}>{item.label}</Text>
         </TouchableOpacity>
     );
     return (
@@ -171,7 +219,15 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                         marginHorizontal: 8,
                         backgroundColor: Colors.buttonBackground,
                     }}
-                    onPress={() => navigation.replace('Activity2')}
+                    onPress={() => {
+                        console.log(selectedValues)
+                        navigation.replace('Activity2')
+                        navigation.reset({
+                            index: 0, // Sets the starting screen index
+                            routes: [{ name: 'Activity2' }], // Sets the new navigation stack
+                        });
+
+                    }}
                 >
                     <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>Next</Text>
                 </TouchableOpacity>

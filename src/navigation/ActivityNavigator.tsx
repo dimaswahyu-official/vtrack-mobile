@@ -14,10 +14,10 @@ export type ActivityStackParamList = {
     Activity: undefined;
     FormActivityNormal: { item: any };
     FormDetailActivity: { item: any};
-    FormDetailSio: { item: any ;  photox: any};
-    FormDetailBrand: { item: any };
-    FormDetailSog: { item: any };
-    FormDetailOutlet: { item: any };
+    FormDetailSio: { item: any ;  photox: any, idx:any};
+    FormDetailBrand: { item: any,idx:any };
+    FormDetailSog: { item: any,idx:any };
+    FormDetailOutlet: { item: any,idx:any };
 };
 
 const Stack = createNativeStackNavigator<ActivityStackParamList>();

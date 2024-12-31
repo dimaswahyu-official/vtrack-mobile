@@ -25,63 +25,77 @@ import {formatDate} from "../utils/DateHelper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Colors from "../utils/Colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import {ActivityModel} from "../model/activityModel";
+// import {ActivityModel, createTableActivity} from "../model/activityModel";
+import {ActivityModel2, createTableActivity} from "../model/activityModel2";
 
 
 const {width, height} = Dimensions.get('window');
 
-interface Activity2 {
-    id: number;
-    user_id: number;
-    call_plan_id: number;
-    outlet_id: number | null;
-    code_call_plan: string;
-    status: number;
-    type: number;
-    day_plan: string;
-    notes: string;
-    callPlanOutlet: {
-        id: number;
-        name: string ;
-        brand: string ;
-        outlet_code: string ;
-        latitude: string ;
-        longitude: string ;
-        sio_type: string ;
-        region: string ;
-        area: string ;
-        cycle: string ;
-        visit_day: string ;
-        odd_even: string ;
-        range_health_facilities: number;
-        range_work_place: number;
-        range_public_transportation_facilities: number;
-        range_worship_facilities: number;
-        range_playground_facilities: number;
-        range_educational_facilities: number;
-        photos: [] | null;
-    }
-    callPlanSurvey:{
-        id: number;
-        name: string ;
-        brand: string ;
-        outlet_code: string ;
-        latitude: string ;
-        longitude: string ;
-        sio_type: string ;
-        region: string ;
-        area: string ;
-        cycle: string ;
-        visit_day: string ;
-        odd_even: string ;
-        range_health_facilities: number;
-        range_work_place: number;
-        range_public_transportation_facilities: number;
-        range_worship_facilities: number;
-        range_playground_facilities: number;
-        range_educational_facilities: number;
-        photos: [] | null;
-    }
+export interface Activity2 {
+    id:               number;
+    user_id:          number;
+    call_plan_id:     number;
+    code_call_plan:   number;
+    outlet_id:        number | null;
+    survey_outlet_id: number | null;
+    day_plan:         Date;
+    notes:            string;
+    status:           number;
+    type:             number;
+    time_start:       null;
+    time_end:         null;
+    created_by:       string;
+    created_at:       Date;
+    updated_by:       null;
+    updated_at:       Date;
+    deleted_by:       null;
+    deleted_at:       null;
+    program_id:       null;
+    callPlanOutlet:   CallPlan | null;
+    callPlanSurvey:   CallPlan | null;
+    callPlanProgram:  null;
+}
+
+export interface CallPlan {
+    id:                                     number;
+    outlet_code:                            string;
+    name:                                   string;
+    brand:                                  string;
+    unique_name?:                           null;
+    address_line:                           string;
+    sub_district:                           string;
+    district:                               null | string;
+    city_or_regency:                        null | string;
+    postal_code:                            number;
+    latitude:                               string;
+    longitude:                              string;
+    sio_type:                               string;
+    region:                                 string;
+    area:                                   string;
+    cycle:                                  string;
+    is_active?:                             number;
+    visit_day:                              string;
+    odd_even:                               string;
+    photos:                                 string[];
+    remarks:                                string;
+    range_health_facilities:                number;
+    range_work_place:                       number;
+    range_public_transportation_facilities: number;
+    range_worship_facilities:               number;
+    range_playground_facilities:            number;
+    range_educational_facilities:           number;
+    survey_outlet_id?:                      null;
+    created_by:                             string;
+    created_at:                             Date;
+    updated_by:                             null;
+    updated_at:                             Date;
+    deleted_by:                             null;
+    deleted_at:                             null;
+    batch_code?:                            string;
+    outlet_id?:                             number;
+    new_outlet_id?:                         null;
+    status?:                                null;
+    is_approved?:                           null;
 }
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity2'>;
@@ -95,46 +109,31 @@ export default function ActivityScreen() {
     const [error, setError] = useState<string | null>(null);
     const {user} = useAuthStore();
     const userId = user?.id || '';
-
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            // Prevent the default behavior of going back
-            e.preventDefault();
-
-            // Optionally, show a confirmation alert
-            Alert.alert(
-                'Hold on!',
-                'You cannot go back from this screen.',
-                [
-                    { text: 'OK', style: 'cancel' },
-                ]
-            );
-        });
-
-        return unsubscribe;
-    }, [navigation]);
+    const [status, setStatus] = useState(0);
+    const [dataOffline, setDataOffline] = useState<any>({});
 
 
     const fetchScedule = async () => {
         setRefreshing(true);
         try {
             if (!isOnline) {
-
-                const getDataOffline = await ActivityModel.getAllActivity(db);
-                // Load data from AsyncStorage if offline
+            //     // const getDataOffline = await ActivityModel.getAllActivity(db);
+            //     // Load data from AsyncStorage if offline
                 const storedActivities = await AsyncStorage.getItem('activities');
                 if (storedActivities) {
                     setActivities(JSON.parse(storedActivities));
-                    Toast.show({ type: "info", text1: "Offline Mode", text2: "Showing cached data." });
+                    Toast.show({type: "info", text1: "Offline Mode", text2: "Showing cached data."});
                 } else {
-                    Toast.show({ type: "error", text1: "No Internet Connection", text2: "No cached data available." });
+                    Toast.show({type: "error", text1: "No Internet Connection", text2: "No cached data available."});
                 }
                 setRefreshing(false);
                 return;
             }
+            await createTableActivity(db)
             const response = await ActivityService.getListingSchedule(userId);
             const data: Activity2[] = await response.data;
             setActivities(data);
+            // insertActivityDB(data);
             // Store the fetched data in AsyncStorage
             await AsyncStorage.setItem('activities', JSON.stringify(data));
         } catch (e: any) {
@@ -143,10 +142,10 @@ export default function ActivityScreen() {
             setRefreshing(false);
         }
     }
-
     useEffect(() => {
         fetchScedule();
     }, []);
+
 
     const openMaps = (latitude: string, longitude: string) => {
         const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
@@ -192,22 +191,29 @@ export default function ActivityScreen() {
                     <View style={styles.row}>
                         {/* Column 1 */}
                         <View style={styles.col1}>
-                            <Text style={[styles.title, {fontStyle: 'italic', marginBottom:20}]}>{item.callPlanOutlet?.name}</Text>
+                            <Text style={[styles.title, {
+                                fontStyle: 'italic',
+                                marginBottom: 20
+                            }]}>{item.callPlanOutlet?.name}</Text>
 
                             <Text style={[styles.description, {fontStyle: 'italic'}]}>{item.code_call_plan}</Text>
                             <View style={styles.divider}/>
-                            <Text style={styles.description}>{item.callPlanOutlet?.brand}</Text>
+                            <Text style={styles.description}>{item.callPlanOutlet ? item.callPlanOutlet?.brand : item.callPlanSurvey?.brand}</Text>
                             <View style={styles.divider}/>
-                            <Text style={[styles.description]}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : ''}</Text>
+                            <Text
+                                style={[styles.description]}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : item.callPlanSurvey?.sio_type}</Text>
                             <View style={styles.divider}/>
                             <Text style={styles.description}>Schedule: {formatDate(item.day_plan)}</Text>
                             <View style={styles.divider}/>
-                            <Text style={styles.description}>Visit Day: {item.callPlanOutlet?.visit_day || ''}</Text>
+                            <Text style={styles.description}>Visit Day: {item.callPlanOutlet ? item.callPlanOutlet.visit_day : item.callPlanSurvey?.visit_day}</Text>
                         </View>
                         {/* Column 2 */}
                         <View style={styles.col2}>
                             <Text
-                                style={[styles.brand, {textAlign: 'right', color:item.status===400 ?'red':'green' }]}>{item.type === 1 ? 'Outlet Baru, ' : ''}{getStatusLabel(item.status as any)}</Text>
+                                style={[styles.brand, {
+                                    textAlign: 'right',
+                                    color: item.status === 400 ? 'red' : 'green'
+                                }]}>{item.type === 1 ? 'Outlet Baru, ' : ''}{getStatusLabel(item.status as any)}</Text>
                             {/*<View style={[styles.row, {marginTop: height * 0.01, alignItems: 'center'}]}>*/}
                             <TouchableOpacity style={styles.buttonWork}
                                               onPress={() => openMaps('-6.198453', '106.802473')}>
@@ -302,7 +308,7 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         shadowOffset: {width: 0, height: 2},
         elevation: 3,
-        borderWidth:3,
+        borderWidth: 3,
         borderColor: 'gray',
     },
     title: {
