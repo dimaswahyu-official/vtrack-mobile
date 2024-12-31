@@ -1,4 +1,4 @@
-import {Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
+import {Alert, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
 import {StackNavigationProp} from "@react-navigation/stack";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
 import {RouteProp, useNavigation} from "@react-navigation/native";
@@ -28,7 +28,7 @@ type Brand = {
 
 export default function FormDetailBrand({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item} = route.params || {};
+    const {item, idx} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const [isFullActivity, setIsFullActivity] = useState(false);
     const [userId, setUserId] = useState(1);
@@ -76,24 +76,70 @@ export default function FormDetailBrand({route}: FormActivityProps) {
         setEndTime(item.end_time);
         setBrand(item.callPlanOutlet?.brand);
         if (brands.length > 0) {
-            const filteredBrand = brands.filter(b => b.brand === item.callPlanOutlet.brand);
-            setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
-            if (filteredBrand.length > 0) {
-                setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
-                    activity_id: filteredBrand[0].id,
-                    name: filteredBrand[0].branch,
-                    value: 0,
-                    description: '',
-                    notes: ''
-                })));
+            if (item.callPlanOutlet != null) {
+                const filteredBrand = brands.filter(b => b.brand === item.callPlanOutlet.brand);
+                setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
+                if (filteredBrand.length > 0) {
+                    setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
+                        activity_id: idx,
+                        name: filteredBrand[0].branch[0],
+                        value: 0,
+                        description: '',
+                        notes: ''
+                    })));
+                }
+            }else{
+                const filteredBrand = brands.filter(b => b.brand === item.callPlanSurvey.brand);
+                setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
+                if (filteredBrand.length > 0) {
+                    setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
+                        activity_id: idx,
+                        name: filteredBrand[0].branch[0],
+                        value: 0,
+                        description: '',
+                        notes: ''
+                    })));
+                }
             }
+
         }
     }, [item.id]);
 
-    const goToSog = () => {
-        navigation.navigate('FormDetailSog', {item});
+    const insertBrandToSqlite = async (data: any) => {
+        // If the input is an array, loop through and process each item
+        if (Array.isArray(data)) {
+            data.forEach((activity: any) => {
+                insertBrandToSqlite(activity); // Call the function for each individual item
+            });
+            console.log('You have total Data to Insert Brand = ' + data.length);
+            return; // Exit after processing the array
+        }
+        // If the input is a single object, process it
+        const brandData = {
+            activity_id: idx,
+            name: data.name,
+            description: data.description ?? '',
+            notes: data.notes ?? '',
+            value: data.value,
+        }
+        try {
+            console.log(JSON.stringify(brandData) + " Data Brand")
+            navigation.navigate('FormDetailSog', {item,idx});
+            // Uncomment this line to insert data into SQLite
+            // await SioModel.create(db, sioData);
+        } catch (error) {
+            console.error('Error inserting sio:', error);
+            Alert.alert('Error', 'Failed to save sio. Please try again.');
+        }
+    }
+
+    const goToSog = async () => {
+        await insertBrandToSqlite(activityBrand)
+        // navigation.navigate('FormDetailSog', {item, idx});
         // setIsFullActivity(true); // Set state to true when button is clicked
     };
+
+
     const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
     if (!Array.isArray(activityBrand)) {
         console.warn('activityBrand is not an array:', activityBrand);

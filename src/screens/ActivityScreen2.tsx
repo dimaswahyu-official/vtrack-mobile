@@ -112,24 +112,6 @@ export default function ActivityScreen() {
     const [status, setStatus] = useState(0);
     const [dataOffline, setDataOffline] = useState<any>({});
 
-//Handle to android cannot press button back
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            // Prevent the default behavior of going back
-            e.preventDefault();
-            // Optionally, show a confirmation alert
-            Alert.alert(
-                'Hold on!',
-                'You cannot go back from this screen.',
-                [
-                    {text: 'OK', style: 'cancel'},
-                ]
-            );
-        });
-
-        return unsubscribe;
-    }, [navigation]);
-
 
     const fetchScedule = async () => {
         setRefreshing(true);

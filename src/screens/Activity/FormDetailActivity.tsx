@@ -57,6 +57,8 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const [pickerOptions, setPickerOptions] = useState([]); // Options for the picker
 
     const [visible, setVisible] = useState(false);
+    const [idActivity, setIdActivity] = useState(0);
+
     const [dataOffline, setDataOffline] = useState<any>({});
     const [activityPhotos, setActivityPhotos] = useState<Array<string>>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -120,15 +122,15 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         );
     };
     // insert data after fetching to sqlite
-    const insertActivityDB = (data: any) => {
+    const insertActivityDB =  async (data: any , image:any) => {
         // If the input is an array, loop through and process each item
-        if (Array.isArray(data)) {
-            data.forEach((activity: any) => {
-                insertActivityDB(activity); // Call the function for each individual item
-            });
-            console.log('You have total Data to Insert = ' +data.length);
-            return; // Exit after processing the array
-        }
+        // if (Array.isArray(data)) {
+        //     data.forEach((activity: any) => {
+        //         insertActivityDB(activity); // Call the function for each individual item
+        //     });
+        //     console.log('You have total Data to Insert = ' + data.length);
+        //     return; // Exit after processing the array
+        // }
         // If the input is a single object, process it
         const activityData = {
             user_id: userId, // Ensure `userId` is defined
@@ -144,30 +146,30 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             type_sio: data?.callPlanOutlet?.sio_type ?? data?.callPlanSurvey?.sio_type ?? '',
             start_time: new Date().toISOString(),
             end_time: new Date().toISOString(),
-            photo: photosx,
+            photo: image,
             updated_at: new Date().toISOString(),
             created_at: new Date().toISOString(),
             is_sync: 0,
             id_server: 0,
         };
-
         try {
-            console.log(JSON.stringify(activityData)+" masuk pak eko")
+            setVisible(false);
             // Uncomment this line to insert data into SQLite
-            // ActivityModel2.create(db, activityData);
+            const idAct = await ActivityModel2.create(db, activityData);
+            setIdActivity(idAct);
+            if (status == 401 || status == 402 || status == 403 || status == 404) {
+                navigation.navigate('Activity2'); // Navigate to "Activity" screen
+            } else {
+                // Step 2: Navigate to the next screen if the insertion is successful
+                navigation.navigate('FormDetailSio', {item, photox: image, idx: idActivity});
+                console.log('Navigation to FormDetailSio successful');
+
+            }
+
         } catch (error) {
             console.error('Error:', error);
             Alert.alert('Error', `${error}`);
         }
-    };
-    // Function to handle image press
-    const handleImagePress = (item: string) => {
-        setSelectedImage(item);
-        setIsModalVisible(true);
-    };
-    const handleRemovePhoto = (index: number) => {
-        const newPhotos = activityPhotos.filter((_, i) => i !== index);
-        setActivityPhotos(newPhotos);
     };
     const handleTakePhoto = async () => {
         // Request camera permissions
@@ -184,76 +186,20 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         if (!response.canceled) {
             // Pass the photo URI to the next page
             setPhotos(response.assets[0].uri ?? defaultImage)
-            await handleInsertAndNavigate(item,navigation,photosx.uri)
+            await insertActivityDB(item, response.assets[0].uri)
         }
     }
-
-    const handleInsertAndNavigate = async (item:any, navigation:any, photos:any) => {
-        setVisible(false);
-        try {
-            // Step 1: Insert activity into the database
-            insertActivityDB(item);
-
-            // Step 2: Navigate to the next screen if the insertion is successful
-            navigation.navigate('FormDetailSio', { item, photox: photos });
-            console.log('Navigation to FormDetailSio successful');
-        } catch (error) {
-            // Handle errors during insertion
-            console.error('Error inserting activity:', error);
-            Alert.alert('Error', 'Failed to save activity. Please try again.');
-        }
-    };
-
-    const handleNext = () => {
-        setVisible(false);
-        if (status === 401 || status === 402 || status === 403 || status === 404) {
-            navigation.navigate('Activity2'); // Navigate to "Activity" screen
-        } else {
-            console.log("Proceeding with the next steps...");
-            // Handle other cases here
-            insertActivityDB(item)
-            navigation.navigate('FormDetailSio', { item, photox:photosx });
-
-        }
-    };
 
     useEffect(() => {
         console.log(`Default Status: ${status}`);
     }, [status]);
 
-    const handleClearPhoto = (index: number) => {
-        // const newActivitySio = [...activitySio];
-        // newActivitySio[index].photo = '';
-        // setActivitySio(newActivitySio);
-    };
-
-    // const handleTakePhotoMany = async () => {
-    //     // Request camera permissions
-    //     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    //     if (!permissionResult.granted) {
-    //         Alert.alert('Permission required', 'Please grant permission to access the camera.');
-    //         return;
-    //     }
-    //
-    //     // Launch the camera
-    //     const result = await ImagePicker.launchCameraAsync({
-    //         allowsEditing: true,
-    //         quality: 1,
-    //     });
-    //
-    //     console.log('result', activityPhotos);
-    //     if (!result.canceled) {
-    //         setActivityPhotos([...activityPhotos, result.assets[0].uri]);
-    //     }
-    //
-    //     console.log('result2', activityPhotos);
-    // };
 
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
             {/* Full-Width Image */}
             <Image
-                source={{uri:  item.callPlanOutlet.photos[0] || defaultImage}} // Replace with your image URL
+                source={{uri: item.callPlanOutlet.photos[0] || defaultImage}} // Replace with your image URL
                 style={activityStyles.image}
                 resizeMode="cover"
             />
@@ -266,34 +212,40 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                         {/* Text Fields */}
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Shop Name :</Text>
-                            <Text style={activityStyles.value}>{item.callPlanOutlet? item.callPlanOutlet.name : ''}</Text>
+                            <Text
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.name : ''}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Kode Outlet :</Text>
-                            <Text style={activityStyles.value}>{item.callPlanOutlet? item.callPlanOutlet.outlet_code : ''}</Text>
+                            <Text
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.outlet_code : ''}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Address :</Text>
                             <Text style={[activityStyles.value, {
                                 flexShrink: 1,
                                 textAlign: 'right'
-                            }]}>{item.callPlanOutlet? item.callPlanOutlet.address_line : ''}</Text>
+                            }]}>{item.callPlanOutlet ? item.callPlanOutlet.address_line : ''}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Brand :</Text>
-                            <Text style={activityStyles.value}>{item.callPlanOutlet? item.callPlanOutlet.brand :''}</Text>
+                            <Text
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.brand : ''}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Tipe Outlet :</Text>
-                            <Text style={activityStyles.value}>{item.callPlanOutlet? item.callPlanOutlet.sio_type : ''}</Text>
+                            <Text
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : ''}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Regional :</Text>
-                            <Text style={activityStyles.value}>{item.callPlanOutlet? item.callPlanOutlet.region :''}</Text>
+                            <Text
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.region : ''}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Area :</Text>
-                            <Text style={activityStyles.value}>{item.callPlanOutlet? item.callPlanOutlet.area:''}</Text>
+                            <Text
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.area : ''}</Text>
                         </View>
                     </View>
 
@@ -323,17 +275,17 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     selectedValue={status}
                                     onValueChange={(itemValue) => {
                                         setStatus(itemValue);
-                                        console.log(status+" STATUS");
+                                        console.log(status + " STATUS");
                                         if (itemValue !== 0) {
                                             setStartTime(new Date().toISOString());
                                         }
                                     }}>
-                                    {item.type===1 ? statusOptions.map(([key, value]) => (
-                                        <Picker.Item key={key} label={value} value={String(key)} />
+                                    {item.type === 1 ? statusOptions.map(([key, value]) => (
+                                        <Picker.Item key={key} label={value} value={String(key)}/>
                                     )) : statusOptionExist.map(([key, value]) => (
-                                        <Picker.Item key={key} label={value} value={String(key)} />
+                                        <Picker.Item key={key} label={value} value={String(key)}/>
                                     ))}
-                                    </Picker>
+                                </Picker>
                             </View>
                         </View>
                     </View>
