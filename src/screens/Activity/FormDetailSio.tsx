@@ -37,14 +37,64 @@ export default function FormDetailSio({route}: FormActivityProps) {
     const activityStyles = ActivityStyles();
     const [sioType, setSioType] = useState<SioType | null>(null);
     const defaultImage = 'https://via.placeholder.com/100';
+
     const [activitySio, setActivitySio] = useState<{
         activity_id: number;
         name: string;
         description: string;
         notes: string;
         photo: string
-        newPhoto: string;
+        photoBefore: string,
+        photoAfter: string,
     }[]>([]);
+
+
+
+    const {sio} = useConstantStore();
+    const [collapsedStates, setCollapsedStates] = useState<boolean[]>(
+        Array(sio.length).fill(true) // Initialize all items as collapsed
+    );
+    useEffect(() => {
+        if (sio.length > 0) {
+            if (item.callPlanOutlet != null) {
+                const filteredSio = sio.filter(s => s.name === (item.callPlanOutlet.sio_type));
+                setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
+                if (filteredSio.length > 0) {
+                    setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
+                        activity_id: idx,
+                        name: filteredSio[0].sioTypeGalery[i].name,
+                        description: '',
+                        notes: '',
+                        photo: filteredSio[0].sioTypeGalery[i].photo,
+                        photoBefore: '',
+                        photoAfter: '',
+                    })));
+                }
+            } else {
+                const filteredSio = sio.filter(s => s.name === (item.callPlanSurvey.sio_type));
+                setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
+                if (filteredSio.length > 0) {
+                    setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
+                        activity_id: idx,
+                        name: filteredSio[0].sioTypeGalery[i].name,
+                        description: '',
+                        notes: '',
+                        photo: filteredSio[0].sioTypeGalery[i].photo,
+                        photoBefore: '',
+                        photoAfter: '',
+                    })));
+                }
+            }
+
+
+        }
+    }, [item.id]);
+
+
+    if (!Array.isArray(activitySio)) {
+        console.warn('activitySio is not an array:', activitySio);
+        return null; // or return a fallback UI
+    }
 
     const footer = () => {
         return (
@@ -72,47 +122,6 @@ export default function FormDetailSio({route}: FormActivityProps) {
         )
     }
 
-    const {sio} = useConstantStore();
-    useEffect(() => {
-        if (sio.length > 0) {
-            if (item.callPlanOutlet != null) {
-                const filteredSio = sio.filter(s => s.name === (item.callPlanOutlet.sio_type));
-                setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
-                if (filteredSio.length > 0) {
-                    setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                        activity_id: idx,
-                        name: filteredSio[0].sioTypeGalery[i].name,
-                        description: '',
-                        notes: '',
-                        photo: filteredSio[0].sioTypeGalery[i].photo,
-                        newPhoto: ''
-                    })));
-                }
-            } else {
-                const filteredSio = sio.filter(s => s.name === (item.callPlanSurvey.sio_type));
-                setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
-                if (filteredSio.length > 0) {
-                    setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                        activity_id: idx,
-                        name: filteredSio[0].sioTypeGalery[i].name,
-                        description: '',
-                        notes: '',
-                        photo: filteredSio[0].sioTypeGalery[i].photo,
-                        newPhoto: ''
-                    })));
-                }
-            }
-
-
-        }
-    }, [item.id]);
-    const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
-
-    if (!Array.isArray(activitySio)) {
-        console.warn('activitySio is not an array:', activitySio);
-        return null; // or return a fallback UI
-    }
-
 
     const handleTakePhoto = async (index: number) => {
         // Request camera permissions
@@ -130,14 +139,41 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
         if (!result.canceled) {
             const newActivitySio = [...activitySio];
-            newActivitySio[index].newPhoto = result.assets[0].uri;
+            newActivitySio[index].photoAfter = result.assets[0].uri;
             setActivitySio(newActivitySio);
         }
     };
 
     const handleClearPhoto = (index: number) => {
         const newActivitySio = [...activitySio];
-        newActivitySio[index].newPhoto = '';
+        newActivitySio[index].photoAfter = '';
+        setActivitySio(newActivitySio);
+    };
+
+    const handleTakePhotoBefore = async (index: number) => {
+        // Request camera permissions
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permissionResult.granted) {
+            Alert.alert('Permission required', 'Please grant permission to access the camera.');
+            return;
+        }
+
+        // Launch the camera
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: false,
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            const newActivitySio = [...activitySio];
+            newActivitySio[index].photoBefore = result.assets[0].uri;
+            setActivitySio(newActivitySio);
+        }
+    };
+
+    const handleClearPhotoBefore = (index: number) => {
+        const newActivitySio = [...activitySio];
+        newActivitySio[index].photoBefore = '';
         setActivitySio(newActivitySio);
     };
 
@@ -161,7 +197,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
         }
         try {
             console.log(JSON.stringify(sioData) + "Data Sio")
-            navigation.navigate('FormDetailBrand', {item, idx});
+            navigation.navigate('FormDetailProgram', {item, idx});
             // Uncomment this line to insert data into SQLite
             // await SioModel.create(db, sioData);
         } catch (error) {
@@ -176,6 +212,14 @@ export default function FormDetailSio({route}: FormActivityProps) {
         // setIsFullActivity(true); // Set state to true when button is clicked
     };
 
+    const toggleCollapse = (index: number) => {
+        setCollapsedStates((prevStates) => {
+            const newStates = [...prevStates];
+            newStates[index] = !newStates[index]; // Toggle the specific index
+            return newStates;
+        });
+    };
+
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
             <Text style={activityStyles.title}>Foto Outlet Baru</Text>
@@ -187,53 +231,84 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
             <Text style={activityStyles.title}>Materi Branding SIO</Text>
             {activitySio?.map((sio, index) => (
-                    <View style={activityStyles.cardContainer} key={index}>
+                <TouchableOpacity
+                    key={index}
+                    onPress={() => toggleCollapse(index)} // Toggle collapse when the card is pressed
+                    activeOpacity={0.8} // Add a slight opacity effect when pressed
+                    style={activityStyles.cardContainer}
+                >
                         <View style={activityStyles.card}>
                             {/* Toggle Button as Icon */}
                             <Text style={activityStyles.toggleText}>
                                 {sio.name ?? ''}
                             </Text>
                             <TouchableOpacity
-                                onPress={() => setIsCollapsed(!isCollapsed)}
+                                onPress={() => toggleCollapse(index)}
                                 style={activityStyles.iconButton}
                             >
                                 <MaterialIcons
-                                    name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
+                                    name={collapsedStates[index] ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
                                     size={24}
                                     color="#333"
                                 />
                             </TouchableOpacity>
-                            {!isCollapsed && (
+                            {!collapsedStates[index] && (
                                 <View style={activityStyles.cardContent}>
+                                    <View style={styles.column}>
+                                        <Image
+                                            source={{uri: sio.photo || defaultImage}}
+                                            style={styles.image}
+                                        />
+                                        <Text style={styles.text}>Contoh</Text>
+                                    </View>
                                     <View style={styles.row}>
                                         {/* First Picture Section */}
                                         <View style={styles.column}>
                                             <Image
-                                                source={{uri: sio.photo || defaultImage}}
+                                                source={{uri: sio.photoBefore || defaultImage}}
                                                 style={styles.image}
-                                            />
-                                            <Text style={styles.text}>Contoh</Text>
+                                            />{sio.photoAfter === '' ? (<>
+                                                    <Text style={styles.text}>Foto Sebelum</Text>
+                                                    <TouchableOpacity style={[activityStyles.photoButton]}
+                                                                      onPress={() => handleTakePhotoBefore(index)}>
+                                                        <MaterialIcons name="camera-alt" size={24} color="#fff"/>
+                                                        <Text style={[activityStyles.label, {color: 'white'}]}>new
+                                                            photo</Text>
+                                                    </TouchableOpacity>
+
+                                                </>
+                                            )
+                                            : (
+                                                <TouchableOpacity style={activityStyles.clearButton}
+                                                                  onPress={() => handleClearPhotoBefore(index)}>
+                                                    <MaterialIcons name="delete" size={15} color="#fff"/>
+                                                </TouchableOpacity>
+                                            )}
                                         </View>
                                         <View style={styles.divider}/>
                                         {/* Second Picture Section */}
                                         <View style={styles.column}>
                                             <Image
-                                                source={{uri: sio.newPhoto || defaultImage}}
+                                                source={{uri: sio.photoAfter || defaultImage}}
                                                 style={styles.image}
                                             />
-                                            {sio.newPhoto === '' ? (
-                                                <TouchableOpacity style={[activityStyles.photoButton]}
-                                                                  onPress={() => handleTakePhoto(index)}>
-                                                    <MaterialIcons name="camera-alt" size={24} color="#fff"/>
-                                                    <Text style={[activityStyles.label, {color: 'white'}]}>new
-                                                        photo</Text>
-                                                </TouchableOpacity>
-                                            ) : (
-                                                <TouchableOpacity style={activityStyles.clearButton}
-                                                                  onPress={() => handleClearPhoto(index)}>
-                                                    <MaterialIcons name="delete" size={15} color="#fff"/>
-                                                </TouchableOpacity>
-                                            )}
+                                            {sio.photoAfter === '' ? (<>
+                                                    <Text style={styles.text}>Foto Sesudah</Text>
+                                                    <TouchableOpacity style={[activityStyles.photoButton]}
+                                                                      onPress={() => handleTakePhoto(index)}>
+                                                        <MaterialIcons name="camera-alt" size={24} color="#fff"/>
+                                                        <Text style={[activityStyles.label, {color: 'white'}]}>new
+                                                            photo</Text>
+                                                    </TouchableOpacity>
+
+                                                </>
+                                                )
+                                                : (
+                                                    <TouchableOpacity style={activityStyles.clearButton}
+                                                                      onPress={() => handleClearPhoto(index)}>
+                                                        <MaterialIcons name="delete" size={15} color="#fff"/>
+                                                    </TouchableOpacity>
+                                                )}
 
                                         </View>
                                     </View>
@@ -257,7 +332,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                                 </View>
                             )}
                         </View>
-                    </View>
+                </TouchableOpacity>
                 )
             )}
             <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>

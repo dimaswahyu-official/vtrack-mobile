@@ -94,6 +94,13 @@ const ActivityStyles = () => {
             padding: height * 0.01,
             borderRadius: 5,
         },
+        deleteButton: {
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            borderRadius: 50,
+            padding: 8,
+        },
         imagePreview: {
             width: width * 0.25,
             height: width * 0.25,

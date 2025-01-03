@@ -28,6 +28,7 @@ import {EXISTING_SURVEY_STATUS, NEW_SURVEY_STATUS} from "../../constants/status"
 import useAbsenToday from "../../store/useAbsenToday";
 import {ActivityModel2} from "../../model/activityModel2";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ActivityService from "../../services/activityService";
 
 const {width, height} = Dimensions.get('window');
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -135,7 +136,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         const activityData = {
             user_id: userId, // Ensure `userId` is defined
             call_plan_id: data.call_plan_id ?? 0,
-            code_call_plan: data.code_call_plan ?? 0,
+            call_plan_schedule_id: callPlanScheduleId,
             outlet_id: data.outlet_id ?? 0,
             survey_outlet_id: data.survey_outlet_id ?? 0,
             program_id: data.program_id ?? 0,
@@ -154,11 +155,17 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         };
         try {
             setVisible(false);
-            // Uncomment this line to insert data into SQLite
+            // insert data into SQLite
             const idAct = await ActivityModel2.create(db, activityData);
             setIdActivity(idAct);
+            //get activity by schedule id
+            const resultinsert = await ActivityModel2.getActivityByScheduleId(db, callPlanScheduleId);
+            console.log("resultinsert = ", resultinsert[0]);
+            //test to send backend
+            // const response = await ActivityService.syncActivity(resultinsert);
+            // console.log("from api = "+response);
             if (status == 401 || status == 402 || status == 403 || status == 404) {
-                navigation.navigate('Activity2'); // Navigate to "Activity" screen
+                navigation.replace('Activity2',{status}); // Navigate to "Activity" screen
             } else {
                 // Step 2: Navigate to the next screen if the insertion is successful
                 navigation.navigate('FormDetailSio', {item, photox: image, idx: idActivity});
@@ -249,20 +256,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                         </View>
                     </View>
 
-                </View>
-            </View>
-            <Text style={activityStyles.title}>Program</Text>
-            <View style={activityStyles.cardContainer}>
-                <View style={activityStyles.card}>
-                    <View style={activityStyles.cardContent}>
-                        <View>
-                            <Text style={[activityStyles.label, {alignItems: 'flex-end', marginBottom: 8}]}>JUDUL
-                                PROGRAM</Text>
-                            <Text style={activityStyles.value}>Isi Program : Telah terjadi penembakan di game valorant
-                                yang
-                                menyebabkan perdamaian dunia terganggu</Text>
-                        </View>
-                    </View>
                 </View>
             </View>
             <View style={activityStyles.cardContainer}>

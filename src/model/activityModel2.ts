@@ -7,7 +7,7 @@ type ActivityWithDetails = {
     id: number;
     id_server: number;
     user_id:string;
-    code_call_plan: number;
+    call_plan_schedule_id: number;
     call_plan_id:number;
     outlet_id:number;
     survey_outlet_id:number,
@@ -29,7 +29,7 @@ interface Activity{
     id: number;
     id_server: number;
     user_id: string;
-    code_call_plan: number;
+    call_plan_schedule_id: number;
     call_plan_id:number;
     outlet_id:number;
     survey_outlet_id:number,
@@ -69,7 +69,7 @@ export const addIdServerColumn = async (db: SQLite.SQLiteDatabase): Promise<void
 
 // Function to create tables
 export const createTableActivity = async (db: SQLite.SQLiteDatabase): Promise<void> => {
-    await db.runAsync('DROP TABLE IF EXISTS Activity');
+    // await db.runAsync('DROP TABLE IF EXISTS Activity');
     // await db.runAsync('DROP TABLE IF EXISTS ActivitySio');
     // await db.runAsync('DROP TABLE IF EXISTS ActivitySog');
     // console.log('All tables dropped successfully');
@@ -79,7 +79,7 @@ export const createTableActivity = async (db: SQLite.SQLiteDatabase): Promise<vo
       id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
       user_id INTEGER,
       call_plan_id INTEGER NOT NULL,
-      code_call_plan INTEGER NOT NULL,
+      call_plan_schedule_id INTEGER NOT NULL,
       outlet_id INTEGER NOT NULL,
       survey_outlet_id INTEGER NOT NULL,
       program_id INTEGER NOT NULL,
@@ -110,7 +110,7 @@ export const ActivityModel2 = {
         const {
             user_id,
             call_plan_id,
-            code_call_plan,
+            call_plan_schedule_id,
             outlet_id,
             survey_outlet_id,
             program_id,
@@ -134,7 +134,7 @@ export const ActivityModel2 = {
             const result = await db.runAsync(
                 `INSERT INTO Activity (user_id,
                                        call_plan_id,
-                                       code_call_plan,
+                                       call_plan_schedule_id,
                                        outlet_id,
                                        survey_outlet_id,
                                        program_id,
@@ -154,7 +154,7 @@ export const ActivityModel2 = {
                 [
                     user_id,
                     call_plan_id,
-                    code_call_plan,
+                    call_plan_schedule_id,
                     outlet_id,
                     survey_outlet_id,
                     program_id,
@@ -165,7 +165,7 @@ export const ActivityModel2 = {
                     type_sio,
                     start_time,
                     end_time,
-                    photo ? JSON.stringify(photo) : null,
+                    photo ? JSON.stringify(photo) : null ,
                     updated_at,
                     created_at,
                     is_sync ? 1 : 0,
@@ -184,32 +184,16 @@ export const ActivityModel2 = {
         }
 
     },
-    // Get Activity All Schedule
-    getActivityAllSchedule : async (db: SQLite.SQLiteDatabase): Promise<Activity[]> => {
+    // Get Activity by id
+    getActivityByScheduleId : async (db: SQLite.SQLiteDatabase, call_plan_schedule_id: number): Promise<Activity[]> => {
         const query = `
             SELECT
-                id,
-                user_id,
-                code_call_plan,
-                call_plan_id,
-                outlet_id,
-                survey_outlet_id,
-                program_id,
-                status,
-                area,
-                region,
-                brand,
-                type_sio,
-                start_time,
-                end_time,
-                photo,
-                updated_at,
-                created_at,
-                is_sync,
-            FROM Activity
+                *
+            FROM Activity 
+            WHERE call_plan_schedule_id = ?
             `;
 
-        const results = await db.getAllAsync(query) as ActivityWithDetails[];
+        const results = await db.getAllAsync(query, [call_plan_schedule_id]) as ActivityWithDetails[];
 
         if (!results.length) {
             return []; // No activity found
@@ -219,7 +203,7 @@ export const ActivityModel2 = {
         const activity: Activity = {
             id: results[0].id,
             user_id: results[0].user_id,
-            code_call_plan: results[0].code_call_plan,
+            call_plan_schedule_id: results[0].call_plan_schedule_id,
             call_plan_id: results[0].call_plan_id ?? 0,
             outlet_id: results[0].outlet_id,
             survey_outlet_id: results[0].survey_outlet_id,
