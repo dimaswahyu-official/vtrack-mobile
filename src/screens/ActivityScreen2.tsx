@@ -13,7 +13,7 @@ import {
 import {StackNavigationProp} from "@react-navigation/stack";
 import {ActivityStackParamList} from "../navigation/ActivityNavigator";
 import {useSQLiteContext} from "expo-sqlite";
-import {useNavigation} from "@react-navigation/native";
+import {RouteProp, useNavigation} from "@react-navigation/native";
 import {useOffline} from "../context/OfflineProvider";
 import React, {useEffect, useState} from "react";
 import {useAuthStore} from "../store/useAuthStore";
@@ -27,6 +27,7 @@ import Colors from "../utils/Colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 // import {ActivityModel, createTableActivity} from "../model/activityModel";
 import {ActivityModel2, createTableActivity} from "../model/activityModel2";
+import {ActivityModel} from "../model/activityModel";
 
 
 const {width, height} = Dimensions.get('window');
@@ -97,19 +98,24 @@ export interface CallPlan {
     status?:                                null;
     is_approved?:                           null;
 }
+type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'Activity2'>;
 
+type FormActivityProps = {
+    route: FormActivityRouteProp;
+};
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity2'>;
 
-export default function ActivityScreen() {
+export default function ActivityScreen({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const navigation = useNavigation<NavigationProp>();
+
+    const {status} = route.params || {};
     const {isOnline, isWifi} = useOffline();
     const [activities, setActivities] = useState<Activity2[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const {user} = useAuthStore();
     const userId = user?.id || '';
-    const [status, setStatus] = useState(0);
     const [dataOffline, setDataOffline] = useState<any>({});
 
 
@@ -117,8 +123,8 @@ export default function ActivityScreen() {
         setRefreshing(true);
         try {
             if (!isOnline) {
-            //     // const getDataOffline = await ActivityModel.getAllActivity(db);
-            //     // Load data from AsyncStorage if offline
+                const getDataOffline = await ActivityModel.getAllActivity(db);
+                // Load data from AsyncStorage if offline
                 const storedActivities = await AsyncStorage.getItem('activities');
                 if (storedActivities) {
                     setActivities(JSON.parse(storedActivities));

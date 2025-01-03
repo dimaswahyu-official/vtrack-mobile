@@ -8,13 +8,15 @@ import FormDetailSio from "../screens/Activity/FormDetailSio";
 import FormDetailBrand from "../screens/Activity/FormDetailBrand";
 import FormDetailSog from "../screens/Activity/FormDetailSog";
 import FormDetailOutlet from "../screens/Activity/FormDetailOutlet";
+import FormDetailProgram from "../screens/Activity/FormDetailProgram";
 
 export type ActivityStackParamList = {
-    Activity2: undefined;
+    Activity2: undefined | { status:any };
     Activity: undefined;
     FormActivityNormal: { item: any };
     FormDetailActivity: { item: any};
     FormDetailSio: { item: any ;  photox: any, idx:any};
+    FormDetailProgram: { item: any , idx:any};
     FormDetailBrand: { item: any,idx:any };
     FormDetailSog: { item: any,idx:any };
     FormDetailOutlet: { item: any,idx:any };
@@ -49,6 +51,11 @@ const ActivityNavigator = () => {
             <Stack.Screen
                 name="FormDetailSio"
                 component={FormDetailSio}
+                options={{ headerTitle: '' , headerBackVisible: false }}
+            />
+            <Stack.Screen
+                name="FormDetailProgram"
+                component={FormDetailProgram}
                 options={{ headerTitle: '' , headerBackVisible: false }}
             />
             <Stack.Screen
