@@ -135,12 +135,10 @@ export default function ActivityScreen({route}: FormActivityProps) {
                 return;
             }
             await createTableActivity(db)
-            await createTableSchedule(db)
             const response = await ActivityService.getListingSchedule(userId);
             const data: Activity2[] = await response.data;
             const dataActivity = await ActivityModel2.getAllActivity(db);
-            const databyScheduleID = await ActivityModel2.getActivityByScheduleId(db,3);
-            console.log(dataActivity);
+
             // Logic to update the status in the array based on matching schedule_id
             const updatedData = data.map(item => {
                 // Find a matching activity for the current item
@@ -156,35 +154,6 @@ export default function ActivityScreen({route}: FormActivityProps) {
                 // Return the item unchanged if no match is found
                 return item;
             });
-            // insert data to sqlite schedule
-            // for (let index = 0; index < data.length; index++) {
-            //     const ScheduleData = {
-            //         user_id: data[index].user_id,
-            //         code_call_plan: data[index].code_call_plan,
-            //         call_plan_id: data[index].call_plan_id,
-            //         outlet_id: data[index].outlet_id ?? undefined,
-            //         survey_outlet_id: data[index].survey_outlet_id ?? undefined,
-            //         day_plan: data[index].day_plan,
-            //         notes: data[index].notes,
-            //         status: data[index].status,
-            //         type: data[index].type,
-            //         time_start: data[index].time_start,
-            //         time_end: data[index].time_end,
-            //         created_by: data[index].created_by,
-            //         created_at: data[index].created_at,
-            //         updated_by: data[index].updated_by,
-            //         updated_at: data[index].updated_at,
-            //         deleted_by: data[index].deleted_by,
-            //         deleted_at: data[index].deleted_at,
-            //         program_id: data[index].program_id,
-            //         callPlanOutlet: data[index].callPlanOutlet,
-            //         callPlanSurvey: data[index].callPlanSurvey,
-            //         callPlanProgram: data[index].callPlanProgram,
-            //         id_server: 0,
-            //         is_sync: 0,
-            //     };
-            //     await ScheduleModel.create(db, ScheduleData);
-            // }
             setActivities(updatedData);
             // Store the fetched data in AsyncStorage
             await AsyncStorage.setItem('activities', JSON.stringify(data));

@@ -154,14 +154,13 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     // Insert data and retrieve the newly inserted activity
                     const idAct = await ActivityModel2.create(db, activityData);
                     setIdActivity(idAct);
-
                     const [resultInsert] = await ActivityModel2.getActivityByScheduleId(db, callPlanScheduleId);
                     console.log("Inserted activity:", resultInsert);
                 } catch (error) {
                     console.error("Error handling activity:", error);
                 }
             } else {
-                await ActivityModel2.updateStatusActivity(db, status,callPlanScheduleId)
+                await ActivityModel2.updateStatusActivity(db, status,photosx,callPlanScheduleId)
                 console.log("Activity already exists for the call plan schedule ID:", callPlanScheduleId);
             }
             // const response = await ActivityService.syncActivity(resultinsert);

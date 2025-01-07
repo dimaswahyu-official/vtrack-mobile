@@ -279,12 +279,13 @@ export const ActivityModel2 = {
         }));
         return activity;
     },
-    updateStatusActivity: async (db: SQLite.SQLiteDatabase, status:number, id: number): Promise<void> => {
+    updateStatusActivity: async (db: SQLite.SQLiteDatabase, status:number, photo:any, id: number): Promise<void> => {
         await db.runAsync(
             `UPDATE Activity
-                SET status = ?
+                SET status = ?,
+                    photo =?
                 WHERE id = ?;
-            ` , [status,id]
+            ` , [status, photo,id]
         )
 
     }
