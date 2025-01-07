@@ -28,6 +28,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 // import {ActivityModel, createTableActivity} from "../model/activityModel";
 import {ActivityModel2, createTableActivity} from "../model/activityModel2";
 import {ActivityModel} from "../model/activityModel";
+import {createTableSchedule, ScheduleModel} from "../model/ScheduleModel";
 
 
 const {width, height} = Dimensions.get('window');
@@ -35,25 +36,25 @@ const {width, height} = Dimensions.get('window');
 export interface Activity2 {
     id:               number;
     user_id:          number;
-    call_plan_id:     number;
-    code_call_plan:   number;
+    call_plan_id:     number ;
+    code_call_plan:   string;
     outlet_id:        number | null;
     survey_outlet_id: number | null;
-    day_plan:         Date;
+    day_plan:         string;
     notes:            string;
-    status:           number;
-    type:             number;
-    time_start:       null;
-    time_end:         null;
+    status:           number ;
+    type:             number ;
+    time_start:       string;
+    time_end:         string;
     created_by:       string;
-    created_at:       Date;
-    updated_by:       null;
-    updated_at:       Date;
-    deleted_by:       null;
-    deleted_at:       null;
-    program_id:       null;
-    callPlanOutlet:   CallPlan | null;
-    callPlanSurvey:   CallPlan | null;
+    created_at:       string;
+    updated_by:       string;
+    updated_at:       string;
+    deleted_by:       string;
+    deleted_at:       string;
+    program_id:       number;
+    callPlanOutlet:   CallPlan | null | undefined;
+    callPlanSurvey:   CallPlan | null | undefined;
     callPlanProgram:  null;
 }
 
@@ -62,11 +63,11 @@ export interface CallPlan {
     outlet_code:                            string;
     name:                                   string;
     brand:                                  string;
-    unique_name?:                           null;
+    unique_name?:                           string;
     address_line:                           string;
     sub_district:                           string;
-    district:                               null | string;
-    city_or_regency:                        null | string;
+    district:                               string;
+    city_or_regency:                        string;
     postal_code:                            number;
     latitude:                               string;
     longitude:                              string;
@@ -74,7 +75,7 @@ export interface CallPlan {
     region:                                 string;
     area:                                   string;
     cycle:                                  string;
-    is_active?:                             number;
+    is_active:                             number;
     visit_day:                              string;
     odd_even:                               string;
     photos:                                 string[];
@@ -85,18 +86,18 @@ export interface CallPlan {
     range_worship_facilities:               number;
     range_playground_facilities:            number;
     range_educational_facilities:           number;
-    survey_outlet_id?:                      null;
+    survey_outlet_id:                      number;
     created_by:                             string;
-    created_at:                             Date;
-    updated_by:                             null;
-    updated_at:                             Date;
-    deleted_by:                             null;
-    deleted_at:                             null;
-    batch_code?:                            string;
-    outlet_id?:                             number;
-    new_outlet_id?:                         null;
-    status?:                                null;
-    is_approved?:                           null;
+    created_at:                             string;
+    updated_by:                             string;
+    updated_at:                             string;
+    deleted_by:                             string;
+    deleted_at:                             string;
+    batch_code:                            string;
+    outlet_id:                             number;
+    new_outlet_id:                         number;
+    status:                                number;
+    is_approved:                           boolean;
 }
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'Activity2'>;
 
@@ -108,8 +109,6 @@ type NavigationProp = StackNavigationProp<ActivityStackParamList, 'Activity2'>;
 export default function ActivityScreen({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const navigation = useNavigation<NavigationProp>();
-
-    const {status} = route.params || {};
     const {isOnline, isWifi} = useOffline();
     const [activities, setActivities] = useState<Activity2[]>([]);
     const [refreshing, setRefreshing] = useState(false);
@@ -136,10 +135,57 @@ export default function ActivityScreen({route}: FormActivityProps) {
                 return;
             }
             await createTableActivity(db)
+            await createTableSchedule(db)
             const response = await ActivityService.getListingSchedule(userId);
             const data: Activity2[] = await response.data;
-            setActivities(data);
-            // insertActivityDB(data);
+            const dataActivity = await ActivityModel2.getAllActivity(db);
+            const databyScheduleID = await ActivityModel2.getActivityByScheduleId(db,3);
+            console.log(dataActivity);
+            // Logic to update the status in the array based on matching schedule_id
+            const updatedData = data.map(item => {
+                // Find a matching activity for the current item
+                const matchingActivity = dataActivity.find(
+                    activity => activity.call_plan_schedule_id === item.id
+                );
+
+                // If a match is found, update the status
+                if (matchingActivity) {
+                    return { ...item, status: matchingActivity.status };
+                }
+
+                // Return the item unchanged if no match is found
+                return item;
+            });
+            // insert data to sqlite schedule
+            // for (let index = 0; index < data.length; index++) {
+            //     const ScheduleData = {
+            //         user_id: data[index].user_id,
+            //         code_call_plan: data[index].code_call_plan,
+            //         call_plan_id: data[index].call_plan_id,
+            //         outlet_id: data[index].outlet_id ?? undefined,
+            //         survey_outlet_id: data[index].survey_outlet_id ?? undefined,
+            //         day_plan: data[index].day_plan,
+            //         notes: data[index].notes,
+            //         status: data[index].status,
+            //         type: data[index].type,
+            //         time_start: data[index].time_start,
+            //         time_end: data[index].time_end,
+            //         created_by: data[index].created_by,
+            //         created_at: data[index].created_at,
+            //         updated_by: data[index].updated_by,
+            //         updated_at: data[index].updated_at,
+            //         deleted_by: data[index].deleted_by,
+            //         deleted_at: data[index].deleted_at,
+            //         program_id: data[index].program_id,
+            //         callPlanOutlet: data[index].callPlanOutlet,
+            //         callPlanSurvey: data[index].callPlanSurvey,
+            //         callPlanProgram: data[index].callPlanProgram,
+            //         id_server: 0,
+            //         is_sync: 0,
+            //     };
+            //     await ScheduleModel.create(db, ScheduleData);
+            // }
+            setActivities(updatedData);
             // Store the fetched data in AsyncStorage
             await AsyncStorage.setItem('activities', JSON.stringify(data));
         } catch (e: any) {
@@ -219,7 +265,8 @@ export default function ActivityScreen({route}: FormActivityProps) {
                                 style={[styles.brand, {
                                     textAlign: 'right',
                                     color: item.status === 400 ? 'red' : 'green'
-                                }]}>{item.type === 1 ? 'Outlet Baru, ' : ''}{getStatusLabel(item.status as any)}</Text>
+                                    //
+                                }]}>{item.type === 1 ? 'Outlet Baru, ' : ''}{ getStatusLabel(item.status as any) }</Text>
                             {/*<View style={[styles.row, {marginTop: height * 0.01, alignItems: 'center'}]}>*/}
                             <TouchableOpacity style={styles.buttonWork}
                                               onPress={() => openMaps('-6.198453', '106.802473')}>

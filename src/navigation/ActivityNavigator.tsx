@@ -11,7 +11,7 @@ import FormDetailOutlet from "../screens/Activity/FormDetailOutlet";
 import FormDetailProgram from "../screens/Activity/FormDetailProgram";
 
 export type ActivityStackParamList = {
-    Activity2: undefined | { status:any };
+    Activity2: undefined;
     Activity: undefined;
     FormActivityNormal: { item: any };
     FormDetailActivity: { item: any};

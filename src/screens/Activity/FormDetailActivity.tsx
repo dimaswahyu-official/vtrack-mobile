@@ -73,16 +73,18 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         item.type === 1 ? Number(statusOptions[0][0]) : Number(statusOptionExist[0][0])
     );
 
+
     useEffect(() => {
         setUserId(item.user_id);
         setCallPlanScheduleId(item.id);
         setCallPlanId(item.call_plan_id);
         setOutletId(item.outlet_id);
-        setStatus(item.status);
+        setStatus(status);
         setArea(item.callPlanOutlet?.area);
         setRegion(item.callPlanOutlet?.region);
         setStartTime(item.start_time);
         setEndTime(item.end_time);
+        console.log(item.id)
     }, [item.id]);
 
 
@@ -124,15 +126,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     };
     // insert data after fetching to sqlite
     const insertActivityDB =  async (data: any , image:any) => {
-        // If the input is an array, loop through and process each item
-        // if (Array.isArray(data)) {
-        //     data.forEach((activity: any) => {
-        //         insertActivityDB(activity); // Call the function for each individual item
-        //     });
-        //     console.log('You have total Data to Insert = ' + data.length);
-        //     return; // Exit after processing the array
-        // }
-        // If the input is a single object, process it
         const activityData = {
             user_id: userId, // Ensure `userId` is defined
             call_plan_id: data.call_plan_id ?? 0,
@@ -155,24 +148,31 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         };
         try {
             setVisible(false);
-            // insert data into SQLite
-            const idAct = await ActivityModel2.create(db, activityData);
-            setIdActivity(idAct);
-            //get activity by schedule id
-            const resultinsert = await ActivityModel2.getActivityByScheduleId(db, callPlanScheduleId);
-            console.log("resultinsert = ", resultinsert[0]);
-            //test to send backend
+            const response = await ActivityModel2.getActivityByScheduleId(db, callPlanScheduleId);
+            if (!response || (await response).length === 0) {
+                try {
+                    // Insert data and retrieve the newly inserted activity
+                    const idAct = await ActivityModel2.create(db, activityData);
+                    setIdActivity(idAct);
+
+                    const [resultInsert] = await ActivityModel2.getActivityByScheduleId(db, callPlanScheduleId);
+                    console.log("Inserted activity:", resultInsert);
+                } catch (error) {
+                    console.error("Error handling activity:", error);
+                }
+            } else {
+                await ActivityModel2.updateStatusActivity(db, status,callPlanScheduleId)
+                console.log("Activity already exists for the call plan schedule ID:", callPlanScheduleId);
+            }
             // const response = await ActivityService.syncActivity(resultinsert);
             // console.log("from api = "+response);
             if (status == 401 || status == 402 || status == 403 || status == 404) {
-                navigation.replace('Activity2',{status}); // Navigate to "Activity" screen
+                navigation.replace('Activity2'); // Navigate to "Activity" screen
             } else {
                 // Step 2: Navigate to the next screen if the insertion is successful
                 navigation.navigate('FormDetailSio', {item, photox: image, idx: idActivity});
                 console.log('Navigation to FormDetailSio successful');
-
             }
-
         } catch (error) {
             console.error('Error:', error);
             Alert.alert('Error', `${error}`);
@@ -197,16 +197,16 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         }
     }
 
-    useEffect(() => {
-        console.log(`Default Status: ${status}`);
-    }, [status]);
+    // useEffect(() => {
+    //     console.log(`Default Status: ${status}`);
+    // }, [status]);
 
 
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
             {/* Full-Width Image */}
             <Image
-                source={{uri: item.callPlanOutlet.photos[0] || defaultImage}} // Replace with your image URL
+                source={{uri: item.callPlanOutlet? item.callPlanOutlet.photos[0] : item.callPlanSurvey.photos[0] || defaultImage}} // Replace with your image URL
                 style={activityStyles.image}
                 resizeMode="cover"
             />
@@ -220,39 +220,39 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Shop Name :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.name : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.name : item.callPlanSurvey.name}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Kode Outlet :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.outlet_code : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.outlet_code : item.callPlanSurvey.outlet_code}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Address :</Text>
                             <Text style={[activityStyles.value, {
                                 flexShrink: 1,
                                 textAlign: 'right'
-                            }]}>{item.callPlanOutlet ? item.callPlanOutlet.address_line : ''}</Text>
+                            }]}>{item.callPlanOutlet ? item.callPlanOutlet.address_line : item.callPlanSurvey.address_line}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Brand :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.brand : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.brand : item.callPlanSurvey.brand}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Tipe Outlet :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : item.callPlanSurvey.sio_type}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Regional :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.region : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.region : item.callPlanSurvey.region}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Area :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.area : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.area : item.callPlanSurvey.area}</Text>
                         </View>
                     </View>
 
@@ -268,7 +268,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     selectedValue={status}
                                     onValueChange={(itemValue) => {
                                         setStatus(itemValue);
-                                        console.log(status + " STATUS");
+                                        console.log(status + " STATUS NEW");
                                         if (itemValue !== 0) {
                                             setStartTime(new Date().toISOString());
                                         }

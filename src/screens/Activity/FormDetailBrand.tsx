@@ -140,7 +140,16 @@ export default function FormDetailBrand({route}: FormActivityProps) {
     };
 
 
-    const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
+    const [collapsedStates, setCollapsedStates] = useState<boolean[]>(
+        Array(brands.length).fill(false) // Initialize all items as collapsed
+    );
+    const toggleCollapse = (index: number) => {
+        setCollapsedStates((prevStates) => {
+            const newStates = [...prevStates];
+            newStates[index] = !newStates[index]; // Toggle the specific index
+            return newStates;
+        });
+    };
     if (!Array.isArray(activityBrand)) {
         console.warn('activityBrand is not an array:', activityBrand);
         return null; // or return a fallback UI
@@ -150,23 +159,28 @@ export default function FormDetailBrand({route}: FormActivityProps) {
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Penjualan Brand</Text>
             {activityBrand?.map((brand, index) => (
-                    <View style={styles.cardContainer} key={index}>
+                <TouchableOpacity
+                    key={index}
+                    onPress={() => toggleCollapse(index)} // Toggle collapse when the card is pressed
+                    activeOpacity={0.8} // Add a slight opacity effect when pressed
+                    style={styles.cardContainer}
+                >
                         <View style={styles.card}>
                             {/* Toggle Button as Icon */}
                             <Text style={styles.toggleText}>
                                 {brand.name}
                             </Text>
                             <TouchableOpacity
-                                onPress={() => setIsCollapsed(!isCollapsed)}
+                                onPress={() => toggleCollapse(index)}
                                 style={styles.iconButton}
                             >
                                 <MaterialIcons
-                                    name={isCollapsed ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
+                                    name={collapsedStates[index] ?'keyboard-arrow-down' : 'keyboard-arrow-up'}
                                     size={24}
                                     color="#333"
                                 />
                             </TouchableOpacity>
-                            {!isCollapsed && (
+                            {!collapsedStates[index] && (
                                 <View style={styles.cardContent}>
                                     {/* Text Fields */}
                                     <View>
@@ -188,7 +202,7 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                                 </View>
                             )}
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 )
             )
             }
