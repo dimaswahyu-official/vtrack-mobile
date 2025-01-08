@@ -1,60 +1,57 @@
 import * as SQLite from 'expo-sqlite';
 
-export interface ActivityBranch {
+export interface ActivityProgram {
     id?: number;
     call_plan_schedule_id: number;
     name: string;
-    value: number;
     description: string;
-    notes: string;
+    photo: string;
 }
 
 
-type ActivityBranchCreateParams = Omit<ActivityBranch, 'id'>;
-type ActivityBranchUpdateParams = Partial<ActivityBranch>;
+type ActivityProgramCreateParams = Omit<ActivityProgram, 'id'>;
+type ActivityProgramUpdateParams = Partial<ActivityProgram>;
 
-export const createTableActivityBranch = async (db: SQLite.SQLiteDatabase): Promise<void> => {
+export const createTableActivityProgram = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS ActivityBranch (
+        CREATE TABLE IF NOT EXISTS ActivityProgram (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             call_plan_schedule_id INTEGER NOT NULL,
             name TEXT NOT NULL,
-            value INTEGER NOT NULL,
+            photo TEXT,
             description TEXT,
-            notes TEXT,
             FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity(call_plan_schedule_id)
         )
     `);
 };
 
 
-export const ActivityBranchModel = {
+export const ActivityProgramModel = {
     // Insert Into
-    create: async (db: SQLite.SQLiteDatabase, params: ActivityBranchCreateParams): Promise<number> => {
+    create: async (db: SQLite.SQLiteDatabase, params: ActivityProgramCreateParams): Promise<number> => {
         const {
             call_plan_schedule_id,
             name,
             description,
-            notes,
-            value
+            photo
         } = params;
 
         // Log the parameters to verify they are correct
-        console.log('Inserting SOG with parameters:', params);
+        console.log('Inserting Activity Program with parameters:', params);
         try {
             const result = await db.runAsync(
-                `INSERT INTO ActivityBranch (call_plan_schedule_id, name, description, notes, value)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [call_plan_schedule_id, name, description, notes, value]
+                `INSERT INTO ActivityProgram (call_plan_schedule_id, name, description, photo)
+                 VALUES (?, ?, ?, ?)`,
+                [call_plan_schedule_id, name, description, photo]
             );
             const insertId = result.lastInsertRowId as number;
 
             // Log the insertId to confirm successful insertion
-            console.log('Activity Branch inserted with ID:', insertId);
+            console.log('Activity Program inserted with ID:', insertId);
             return insertId;
 
         } catch (error) {
-            console.error('Error inserting Activity Branch : ', error);
+            console.error('Error inserting Activity Program : ', error);
             throw error;
         }
 
@@ -62,7 +59,7 @@ export const ActivityBranchModel = {
 
     update: async (
 		db: SQLite.SQLiteDatabase,
-		params: ActivityBranchUpdateParams
+		params: ActivityProgramUpdateParams
 	): Promise<void> => {
 		if (!params.call_plan_schedule_id) {
 			throw new Error('call_plan_schedule_id is required for update');
@@ -80,14 +77,14 @@ export const ActivityBranchModel = {
 		const values = entries.map(([_, value]) => value);
 
 		await db.runAsync(
-			`UPDATE ActivityBranch SET ${fields} WHERE call_plan_schedule_id = ?`,
+			`UPDATE ActivityProgram SET ${fields} WHERE call_plan_schedule_id = ?`,
 			[...values, params.call_plan_schedule_id]
 		);
 	},
 
-    findByCallPlanScheduleId: async (db: SQLite.SQLiteDatabase, call_plan_schedule_id: number): Promise<ActivityBranch[]> => {
-		const result = await db.getAllAsync<ActivityBranch>(
-			`SELECT * FROM ActivityBranch WHERE call_plan_schedule_id = ?`,
+    findByCallPlanScheduleId: async (db: SQLite.SQLiteDatabase, call_plan_schedule_id: number): Promise<ActivityProgram[]> => {
+		const result = await db.getAllAsync<ActivityProgram>(
+			`SELECT * FROM ActivityProgram WHERE call_plan_schedule_id = ?`,
 			[call_plan_schedule_id]
 		);
 		return result;

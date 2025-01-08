@@ -29,6 +29,7 @@ import useAbsenToday from "../../store/useAbsenToday";
 import {ActivityModel2} from "../../model/activityModel2";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityService from "../../services/activityService";
+import { ActivityRepository } from "../../model/ActivityRepository";
 
 const {width, height} = Dimensions.get('window');
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -83,6 +84,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         setRegion(item.callPlanOutlet?.region);
         setStartTime(item.start_time);
         setEndTime(item.end_time);
+
     }, [item.id]);
 
 
@@ -121,7 +123,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 </Modal>
             </View>
         );
-    };
+    };    
     // insert data after fetching to sqlite
     const insertActivityDB =  async (data: any , image:any) => {
         // If the input is an array, loop through and process each item
@@ -148,18 +150,18 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             start_time: new Date().toISOString(),
             end_time: new Date().toISOString(),
             photo: image,
-            updated_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
             is_sync: 0,
             id_server: 0,
+            updated_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
         };
         try {
             setVisible(false);
             // insert data into SQLite
-            const idAct = await ActivityModel2.create(db, activityData);
+            const idAct = await ActivityRepository.create(db, activityData);
             setIdActivity(idAct);
             //get activity by schedule id
-            const resultinsert = await ActivityModel2.getActivityByScheduleId(db, callPlanScheduleId);
+            const resultinsert = await ActivityRepository.findByCallPlanScheduleId(db, callPlanScheduleId);
             console.log("resultinsert = ", resultinsert[0]);
             //test to send backend
             // const response = await ActivityService.syncActivity(resultinsert);

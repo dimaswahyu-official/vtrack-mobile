@@ -1,83 +1,114 @@
 import * as SQLite from 'expo-sqlite';
 
 export interface ActivitySio {
-    id?: number;
-    activity_id: number;
-    name: string;
-    description: string;
-    notes: string;
-    photo: string;
+	id?: number;
+	call_plan_schedule_id: number;
+	name: string;
+	description: string;
+	notes: string;
+	photo: string;
+	photo_before: string;
+	photo_after: string;
 }
 
-type SioCreateParams = Omit<ActivitySio, 'id'>;
+type ActivitySioCreateParams = Omit<ActivitySio, 'id'>;
+type ActivitySioUpdateParams = Partial<ActivitySio>;
 
-export const createTableActivitySio = async (db: SQLite.SQLiteDatabase): Promise<void> => {
-    await db.execAsync(`
+export const createTableActivitySio = async (
+	db: SQLite.SQLiteDatabase
+): Promise<void> => {
+	await db.execAsync(`
         CREATE TABLE IF NOT EXISTS ActivitySio
         (
-            id
-            INTEGER
-            PRIMARY
-            KEY
-            AUTOINCREMENT
-            NOT
-            NULL,
-            activity_id
-            INTEGER
-            NOT
-            NULL,
-            name
-            TEXT
-            NOT
-            NULL,
-            description
-            TEXT,
-            notes
-            TEXT,
-            photo
-            TEXT,
-            FOREIGN
-            KEY
-        (
-            activity_id
-        ) REFERENCES Activity
-        (
-            id
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            call_plan_schedule_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            notes TEXT,
+            photo TEXT,
+            photo_before TEXT,
+            photo_after TEXT,
+            FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity (call_plan_schedule_id)
         )
-            )
     `);
 };
 // Model Untuk SIO
-export const SioModel = {
-    // Insert Into
-    create: async (db: SQLite.SQLiteDatabase, params: SioCreateParams): Promise<number> => {
-        const {
-            activity_id,
-            name,
-            description,
-            notes,
-            photo,
-        } = params;
+export const ActivitySioModel = {
+	// Insert Into
+	create: async (
+		db: SQLite.SQLiteDatabase,
+		params: ActivitySioCreateParams
+	): Promise<number> => {
+		const {
+			call_plan_schedule_id,
+			name,
+			description,
+			notes,
+			photo,
+			photo_before,
+			photo_after,
+		} = params;
 
-        // Log the parameters to verify they are correct
-        console.log('Inserting SIO with parameters:', params);
-        try {
-            const result = await db.runAsync(
-                `INSERT INTO ActivitySio (activity_id, name, description, notes, photo)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [activity_id, name, description, notes, photo],
-            );
-            const insertId = result.lastInsertRowId as number;
+		// Log the parameters to verify they are correct
+		console.log('Inserting SIO with parameters:', params);
+		try {
+			const result = await db.runAsync(
+				`INSERT INTO ActivitySio (call_plan_schedule_id, name, description, notes, photo, photo_before, photo_after)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+				[
+					call_plan_schedule_id,
+					name,
+					description,
+					notes,
+					photo,
+					photo_before,
+					photo_after,
+				]
+			);
+			const insertId = result.lastInsertRowId as number;
 
-            // Log the insertId to confirm successful insertion
-            console.log('Activity SIO inserted with ID:', insertId);
-            return insertId;
+			// Log the insertId to confirm successful insertion
+			console.log('Activity SIO inserted with ID:', insertId);
+			return insertId;
+		} catch (error) {
+			console.error('Error inserting Activity SIO : ', error);
+			throw error;
+		}
+	},
 
-        } catch (error) {
-            console.error('Error inserting Activity SIO : ', error); // Log the error
-            throw error; // Rethrow the error if needed
-        }
+	update: async (
+		db: SQLite.SQLiteDatabase,
+		params: ActivitySioUpdateParams
+	): Promise<void> => {
+		if (!params.call_plan_schedule_id) {
+			throw new Error('call_plan_schedule_id is required for update');
+		}
 
-    },
+		const entries = Object.entries(params).filter(
+			([key]) => key !== 'call_plan_schedule_id'
+		);
 
-}
+		if (entries.length === 0) {
+			return;
+		}
+
+		const fields = entries.map(([key]) => `${key} = ?`).join(', ');
+		const values = entries.map(([_, value]) => value);
+
+		await db.runAsync(
+			`UPDATE ActivitySio SET ${fields} WHERE call_plan_schedule_id = ?`,
+			[...values, params.call_plan_schedule_id]
+		);
+	},
+
+	findByCallPlanScheduleId: async (
+		db: SQLite.SQLiteDatabase,
+		call_plan_schedule_id: number
+	): Promise<ActivitySio[]> => {
+		const result = await db.getAllAsync<ActivitySio>(
+			`SELECT * FROM ActivitySio WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
+		);
+		return result;
+	},
+};
