@@ -138,6 +138,7 @@ export default function ActivityScreen({route}: FormActivityProps) {
             const response = await ActivityService.getListingSchedule(userId);
             const data: Activity2[] = await response.data;
             const dataActivity = await ActivityModel2.getAllActivity(db);
+            // console.log(dataActivity);
 
             // Logic to update the status in the array based on matching schedule_id
             const updatedData = data.map(item => {
@@ -165,7 +166,7 @@ export default function ActivityScreen({route}: FormActivityProps) {
     }
     useEffect(() => {
         fetchScedule();
-    }, []);
+    }, [navigation]);
 
 
     const openMaps = (latitude: string, longitude: string) => {

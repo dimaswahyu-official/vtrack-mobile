@@ -71,7 +71,7 @@ export const addIdServerColumn = async (db: SQLite.SQLiteDatabase): Promise<void
 // Function to create tables
 export const createTableActivity = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     // await db.runAsync('DROP TABLE IF EXISTS Activity');
-    // await db.runAsync('DROP TABLE IF EXISTS ActivitySog');
+    // await db.runAsync('DROP TABLE IF EXISTS ActivitySio');
     // console.log('All tables dropped successfully');
     await db.execAsync(`
     PRAGMA journal_mode = WAL;
@@ -82,7 +82,7 @@ export const createTableActivity = async (db: SQLite.SQLiteDatabase): Promise<vo
       call_plan_schedule_id INTEGER NOT NULL,
       outlet_id INTEGER NOT NULL,
       survey_outlet_id INTEGER NOT NULL,
-      program_id INTEGER NOT NULL,
+      program_id INTEGER,
       status INTEGER NOT NULL,
       area TEXT NOT NULL,
       region TEXT NOT NULL,
@@ -157,7 +157,7 @@ export const ActivityModel2 = {
                     call_plan_schedule_id,
                     outlet_id,
                     survey_outlet_id,
-                    program_id,
+                    program_id ? program_id : null,
                     status,
                     area,
                     region,
@@ -285,7 +285,7 @@ export const ActivityModel2 = {
                 SET status = ?,
                     photo =?
                 WHERE id = ?;
-            ` , [status, photo,id]
+            ` , [status, photo, id]
         )
 
     }

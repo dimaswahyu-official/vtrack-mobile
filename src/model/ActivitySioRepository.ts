@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-type ActivitySio = {
+export interface ActivitySio  {
     id: number;
     activity_id: number;
     name: string;
@@ -65,7 +65,7 @@ export const SioModel = {
 
     },
     // Get Activity by id
-    getSioByScheduleId: async (db: SQLite.SQLiteDatabase, activity_id: number): Promise<ActivitySio[]> => {
+    getSioByActivityId: async (db: SQLite.SQLiteDatabase, activity_id: number): Promise<ActivitySio[]> => {
         const query = `
             SELECT *
             FROM ActivitySio

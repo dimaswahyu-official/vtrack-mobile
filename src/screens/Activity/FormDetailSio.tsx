@@ -76,9 +76,10 @@ export default function FormDetailSio({route}: FormActivityProps) {
         Array(sio.length).fill(true) // Initialize all items as collapsed
     );
     useEffect(() => {
-        createTableActivitySio(db).then(r => {})
-        SioModel.getSioByScheduleId(db, idx)
+        createTableActivitySio(db)
+        SioModel.getSioByActivityId(db, idx)
             .then(response => {
+                console.log("SIO by Activity ID "+ idx +" = "+JSON.stringify(response));
                 if (!response || response.length === 0) {
                     console.log("No data found for the given schedule ID.");
                     if (sio.length > 0) {
@@ -227,11 +228,11 @@ export default function FormDetailSio({route}: FormActivityProps) {
             description: data.description ?? '',
             notes: data.notes ?? '',
             photo:data.photo ?? '',
-            photo_before: data.photoBefore ?? '',
-            photo_after: data.photoAfter ?? '',
+            photo_before: data.photo_before ?? '',
+            photo_after: data.photo_after ?? '',
         }
         try {
-            const response = await SioModel.getSioByScheduleId(db, idx);
+            const response = await SioModel.getSioByActivityId(db, idx);
             if (!response || (await response).length === 0) {
                 try {
                     // Insert data and retrieve the newly inserted activity
@@ -241,7 +242,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                 }
             } else {
                 // await ActivityModel2.updateStatusActivity(db, status,photosx,callPlanScheduleId)
-                console.log("Sio already exists for the call plan schedule ID:", idx);
+                console.log("Sio already exists for the activityID:", idx);
             }
 
             // console.log(JSON.stringify(sioData) + "Data Sio")

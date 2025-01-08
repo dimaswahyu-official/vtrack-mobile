@@ -66,6 +66,18 @@ export default function FormDetailProgram({route}: FormActivityProps) {
             </View>
         )
     }
+    const validatePhotos = (program:any) => {
+        // Check if main program photo is missing
+        if (!program[0]?.photo) {
+            return {
+                name: "Main Program",
+                description: "Foto Bukti Menjalankan Program",
+            };
+        }
+
+        // Return null if all photos are present
+        return null;
+    };
 
     const handleAddProgramCompetitor = () => {
         setActivityProgramCompetitor({
@@ -332,7 +344,16 @@ export default function FormDetailProgram({route}: FormActivityProps) {
                         marginHorizontal: 8,
                         backgroundColor: Colors.buttonBackground,
                     }}
-                    onPress={goToBrand}
+                    onPress={() => {
+                        const missingPhoto = validatePhotos(activityProgram);
+                        if (missingPhoto) {
+                            alert(
+                                `Missing photo for:\nProgram: ${missingPhoto.name}\nDescription: ${missingPhoto.description}`
+                            );
+                        } else {
+                            goToBrand();
+                        }
+                    }}
                 >
                     <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Next</Text>
                 </TouchableOpacity>

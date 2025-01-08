@@ -84,7 +84,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         setRegion(item.callPlanOutlet?.region);
         setStartTime(item.start_time);
         setEndTime(item.end_time);
-        console.log(item.id)
     }, [item.id]);
 
 
@@ -145,6 +144,9 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             created_at: new Date().toISOString(),
             is_sync: 0,
             id_server: 0,
+            // photo_program: data.callPlanProgram.photo_program ?? null,
+            // name_program: data.callPlanProgram.name ?? null,
+            // description_program: data.callPlanProgram.description ?? null,
         };
         try {
             setVisible(false);
@@ -154,23 +156,29 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     // Insert data and retrieve the newly inserted activity
                     const idAct = await ActivityModel2.create(db, activityData);
                     setIdActivity(idAct);
+                    console.log("id Activity new", idAct);
                     const [resultInsert] = await ActivityModel2.getActivityByScheduleId(db, callPlanScheduleId);
                     console.log("Inserted activity:", resultInsert);
+                    if (status == 401 || status == 402 || status == 403 || status == 404) {
+                        navigation.replace('Activity2'); // Navigate to "Activity" screen
+                    } else {
+                        // Step 2: Navigate to the next screen if the insertion is successful
+                        navigation.navigate('FormDetailSio', {item, photox: image, idx: idAct});
+                        console.log('Navigation to FormDetailSio successful');
+                    }
                 } catch (error) {
                     console.error("Error handling activity:", error);
                 }
             } else {
                 await ActivityModel2.updateStatusActivity(db, status,photosx,callPlanScheduleId)
-                console.log("Activity already exists for the call plan schedule ID:", callPlanScheduleId);
-            }
-            // const response = await ActivityService.syncActivity(resultinsert);
-            // console.log("from api = "+response);
-            if (status == 401 || status == 402 || status == 403 || status == 404) {
-                navigation.replace('Activity2'); // Navigate to "Activity" screen
-            } else {
-                // Step 2: Navigate to the next screen if the insertion is successful
-                navigation.navigate('FormDetailSio', {item, photox: image, idx: idActivity});
-                console.log('Navigation to FormDetailSio successful');
+                console.log("Activity already exists for the call plan schedule ID:", callPlanScheduleId + " With Status "+ status);
+                if (status == 401 || status == 402 || status == 403 || status == 404) {
+                    navigation.replace('Activity2'); // Navigate to "Activity" screen
+                } else {
+                    // Step 2: Navigate to the next screen if the insertion is successful
+                    navigation.navigate('FormDetailSio', {item, photox: image, idx: response[0].id});
+                    console.log('Navigation to FormDetailSio successful');
+                }
             }
         } catch (error) {
             console.error('Error:', error);
@@ -267,7 +275,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     selectedValue={status}
                                     onValueChange={(itemValue) => {
                                         setStatus(itemValue);
-                                        console.log(status + " STATUS NEW");
+                                        console.log(itemValue + " STATUS NEW");
                                         if (itemValue !== 0) {
                                             setStartTime(new Date().toISOString());
                                         }
