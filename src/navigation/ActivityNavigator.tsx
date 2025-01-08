@@ -15,7 +15,7 @@ export type ActivityStackParamList = {
     Activity: undefined;
     FormActivityNormal: { item: any };
     FormDetailActivity: { item: any};
-    FormDetailSio: { item: any ;  photox: any, idx:any};
+    FormDetailSio: { item: any ;  photox: any};
     FormDetailProgram: { item: any , idx:any};
     FormDetailBrand: { item: any,idx:any };
     FormDetailSog: { item: any,idx:any };

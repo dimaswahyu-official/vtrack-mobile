@@ -155,7 +155,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			await createTableActivitySog(db);
 			await createTableActivityBranch(db);
 			await createTableActivityProgram(db);
-			// Fetch latest schedule data from API
+			// // Fetch latest schedule data from API
 			const response = await ActivityService.getListingSchedule(userId);
 			const data: Activity2[] = await response.data;
 

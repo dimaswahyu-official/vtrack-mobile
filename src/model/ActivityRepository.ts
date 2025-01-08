@@ -20,8 +20,6 @@ interface Activity {
 	photo: string;
 	is_sync: number;
 	id_server: number;
-    updated_at: string;
-    created_at: string;
 }
 
 interface ActivityDetail {
@@ -147,7 +145,7 @@ export const ActivityRepository = {
 		call_plan_schedule_id: number
 	): Promise<Activity[]> => {
 		const result = await db.getAllAsync<Activity>(
-			`SELECT * FROM Activity JOIN ActivitySio ON Activity.call_plan_schedule_id = ActivitySio.call_plan_schedule_id WHERE Activity.call_plan_schedule_id = ?`,
+			`SELECT * FROM Activity WHERE Activity.call_plan_schedule_id = ?`,
 			[call_plan_schedule_id]
 		);
 		return result;

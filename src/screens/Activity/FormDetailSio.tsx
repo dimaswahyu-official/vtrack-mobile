@@ -8,8 +8,8 @@ import {MaterialIcons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
-import {ActivitySioModel} from "../../model/activityModel";
-import {createTableActivitySio, SioModel} from "../../model/ActivitySioRepository";
+import {ActivitySioModel} from "../../model/ActivitySioRepository";
+import {createTableActivitySio} from "../../model/ActivitySioRepository";
 import {useSQLiteContext} from "expo-sqlite";
 import {ActivityModel2, createTableActivity} from "../../model/activityModel2";
 
@@ -76,8 +76,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
         Array(sio.length).fill(true) // Initialize all items as collapsed
     );
     useEffect(() => {
-        createTableActivitySio(db)
-        SioModel.getSioByActivityId(db, idx)
+        ActivitySioModel.findByCallPlanScheduleId(db, idx)
             .then(response => {
                 console.log("SIO by Activity ID "+ idx +" = "+JSON.stringify(response));
                 if (!response || response.length === 0) {
@@ -223,7 +222,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
         }
         // If the input is a single object, process it
         const sioData = {
-            activity_id: idx,
+            call_plan_schedule_id: item.call_plan_schedule_id,
             name: data.name,
             description: data.description ?? '',
             notes: data.notes ?? '',
@@ -232,11 +231,11 @@ export default function FormDetailSio({route}: FormActivityProps) {
             photo_after: data.photo_after ?? '',
         }
         try {
-            const response = await SioModel.getSioByActivityId(db, idx);
+            const response = await ActivitySioModel.findByCallPlanScheduleId(db, idx);
             if (!response || (await response).length === 0) {
                 try {
                     // Insert data and retrieve the newly inserted activity
-                    await SioModel.create(db, sioData);
+                    await ActivitySioModel.create(db, sioData);
                 } catch (error) {
                     console.error("Error handling activity:", error);
                 }
