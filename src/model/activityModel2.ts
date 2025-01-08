@@ -68,6 +68,15 @@ export const addIdServerColumn = async (db: SQLite.SQLiteDatabase): Promise<void
     }
 };
 
+export const dropTableExisting = async (db: SQLite.SQLiteDatabase): Promise<void> => {
+    await db.runAsync('DROP TABLE IF EXISTS Activity');
+    await db.runAsync('DROP TABLE IF EXISTS ActivitySio');
+    await db.runAsync('DROP TABLE IF EXISTS ActivitySog');
+    await db.runAsync('DROP TABLE IF EXISTS ActivityBranch');
+    await db.runAsync('DROP TABLE IF EXISTS ActivityProgram');
+    console.log('All tables dropped successfully');
+}
+
 // Function to create tables
 export const createTableActivity = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     // await db.runAsync('DROP TABLE IF EXISTS Activity');

@@ -29,6 +29,7 @@ import useAbsenToday from "../../store/useAbsenToday";
 import {ActivityModel2} from "../../model/activityModel2";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActivityService from "../../services/activityService";
+import { ActivityRepository } from "../../model/ActivityRepository";
 
 const {width, height} = Dimensions.get('window');
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -79,11 +80,12 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         setCallPlanScheduleId(item.id);
         setCallPlanId(item.call_plan_id);
         setOutletId(item.outlet_id);
-        setStatus(status);
+        setStatus(item.status);
         setArea(item.callPlanOutlet?.area);
         setRegion(item.callPlanOutlet?.region);
         setStartTime(item.start_time);
         setEndTime(item.end_time);
+
     }, [item.id]);
 
 
@@ -140,13 +142,10 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             start_time: new Date().toISOString(),
             end_time: new Date().toISOString(),
             photo: image,
-            updated_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
             is_sync: 0,
             id_server: 0,
-            // photo_program: data.callPlanProgram.photo_program ?? null,
-            // name_program: data.callPlanProgram.name ?? null,
-            // description_program: data.callPlanProgram.description ?? null,
+            updated_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
         };
         try {
             setVisible(false);
@@ -204,9 +203,9 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         }
     }
 
-    // useEffect(() => {
-    //     console.log(`Default Status: ${status}`);
-    // }, [status]);
+    useEffect(() => {
+        console.log(`Default Status: ${status}`);
+    }, [status]);
 
 
     return (
