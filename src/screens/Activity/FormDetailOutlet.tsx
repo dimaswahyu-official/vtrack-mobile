@@ -139,20 +139,16 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
     ];
     const toggleSelection = (value: string) => {
         setSelectedValues((prev) => {
-            return [...prev, value];
-            // if (prev.includes(value)) {
-            //     // Deselect the item if it's already selected
-            //     return prev.filter((item) => item !== value);
-            // } else if (prev.length < 2) {
-            //     // Add the item if the limit of 2 is not reached
-            //     return [...prev, value];
-            // } else {
-            //     // If limit reached, ignore the action
-            //     Alert.alert('Limit Area', 'Maksimal area yang dapat dipilih adalah sebanyak 2 area.');
-            //     return prev;
-            // }
+            if (prev.includes(value)) {
+                // Deselect the item if it's already selected
+                return prev.filter((item) => item !== value);
+            } else {
+                // Add the item to the selection
+                return [...prev, value];
+            }
         });
     };
+
     const renderOption = ({item}: { item: any }) => (
         <TouchableOpacity
             style={activityStyles.optionContainer}

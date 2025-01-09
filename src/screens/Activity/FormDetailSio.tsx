@@ -8,8 +8,7 @@ import {MaterialIcons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
-import {ActivitySioModel} from "../../model/activityModel";
-import {SioModel} from "../../model/ActivitySioRepository";
+import {ActivitySioModel} from "../../model/ActivitySioRepository";
 import {useSQLiteContext} from "expo-sqlite";
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailSio'>;
@@ -32,22 +31,42 @@ type SioType = {
 
 export default function FormDetailSio({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item, photox, idx} = route.params || {};
+    const {item, photox} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const activityStyles = ActivityStyles();
     const [sioType, setSioType] = useState<SioType | null>(null);
     const defaultImage = 'https://via.placeholder.com/100';
 
     const [activitySio, setActivitySio] = useState<{
-        activity_id: number;
+        call_plan_schedule_id: number;
         name: string;
         description: string;
         notes: string;
         photo: string
-        photoBefore: string,
-        photoAfter: string,
+        photo_before: string,
+        photo_after: string,
     }[]>([]);
 
+    const initializeActivitySio = (data: Partial<{
+        call_plan_schedule_id: number;
+        name: string;
+        description: string;
+        notes: string;
+        photo: string;
+        photo_before: string;
+        photo_after: string;
+    }>[]) => {
+        const initializedData = data.map(item => ({
+            call_plan_schedule_id: item.call_plan_schedule_id ?? 0, // Default to 0 if missing
+            name: item.name ?? '', // Default to empty string
+            description: item.description ?? '', // Default to empty string
+            notes: item.notes ?? '', // Default to empty string
+            photo: item.photo ?? '', // Default to empty string
+            photo_before: item.photo_before ?? '', // Default to empty string
+            photo_after: item.photo_after ?? '', // Default to empty string
+        }));
+        setActivitySio(initializedData);
+    };
 
 
     const {sio} = useConstantStore();
@@ -61,13 +80,13 @@ export default function FormDetailSio({route}: FormActivityProps) {
                 setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
                 if (filteredSio.length > 0) {
                     setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                        activity_id: idx,
+                        call_plan_schedule_id: item.call_plan_schedule_id,
                         name: filteredSio[0].sioTypeGalery[i].name,
                         description: '',
                         notes: '',
                         photo: filteredSio[0].sioTypeGalery[i].photo,
-                        photoBefore: '',
-                        photoAfter: '',
+                        photo_before: '',
+                        photo_after: '',
                     })));
                 }
             } else {
@@ -75,18 +94,16 @@ export default function FormDetailSio({route}: FormActivityProps) {
                 setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
                 if (filteredSio.length > 0) {
                     setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                        activity_id: idx,
+                        call_plan_schedule_id: item.call_plan_schedule_id,
                         name: filteredSio[0].sioTypeGalery[i].name,
                         description: '',
                         notes: '',
                         photo: filteredSio[0].sioTypeGalery[i].photo,
-                        photoBefore: '',
-                        photoAfter: '',
+                        photo_before: '',
+                        photo_after: '',
                     })));
                 }
             }
-
-
         }
     }, [item.id]);
 
@@ -139,14 +156,14 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
         if (!result.canceled) {
             const newActivitySio = [...activitySio];
-            newActivitySio[index].photoAfter = result.assets[0].uri;
+            newActivitySio[index].photo_after = result.assets[0].uri;
             setActivitySio(newActivitySio);
         }
     };
 
     const handleClearPhoto = (index: number) => {
         const newActivitySio = [...activitySio];
-        newActivitySio[index].photoAfter = '';
+        newActivitySio[index].photo_after = '';
         setActivitySio(newActivitySio);
     };
 
@@ -166,14 +183,14 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
         if (!result.canceled) {
             const newActivitySio = [...activitySio];
-            newActivitySio[index].photoBefore = result.assets[0].uri;
+            newActivitySio[index].photo_before = result.assets[0].uri;
             setActivitySio(newActivitySio);
         }
     };
 
     const handleClearPhotoBefore = (index: number) => {
         const newActivitySio = [...activitySio];
-        newActivitySio[index].photoBefore = '';
+        newActivitySio[index].photo_before = '';
         setActivitySio(newActivitySio);
     };
 
@@ -189,17 +206,30 @@ export default function FormDetailSio({route}: FormActivityProps) {
         }
         // If the input is a single object, process it
         const sioData = {
-            activity_id: idx,
+            call_plan_schedule_id: item.call_plan_schedule_id,
             name: data.name,
             description: data.description ?? '',
             notes: data.notes ?? '',
-            photo: data.newPhoto,
+            photo: data.photo ?? '',
+            photo_before: data.photo_before ?? '',
+            photo_after: data.photo_after ?? '',
         }
         try {
-            console.log(JSON.stringify(sioData) + "Data Sio")
-            navigation.navigate('FormDetailProgram', {item, idx});
-            // Uncomment this line to insert data into SQLite
-            // await SioModel.create(db, sioData);
+            const response = await ActivitySioModel.findByCallPlanScheduleId(db, item.call_plan_schedule_id);
+            if (!response || (await response).length === 0) {
+                try {
+                    // Insert data and retrieve the newly inserted activity
+                    await ActivitySioModel.create(db, sioData);
+                } catch (error) {
+                    console.error("Error handling activity:", error);
+                }
+            } else {
+                // await ActivityModel2.updateStatusActivity(db, status,photosx,callPlanScheduleId)
+                console.log("Sio already exists for the activityID:", item.call_plan_schedule_id);
+            }
+
+            // console.log(JSON.stringify(sioData) + "Data Sio")
+            navigation.navigate('FormDetailProgram', {item});
         } catch (error) {
             console.error('Error inserting sio:', error);
             Alert.alert('Error', 'Failed to save sio. Please try again.');
@@ -220,6 +250,10 @@ export default function FormDetailSio({route}: FormActivityProps) {
         });
     };
 
+    const areAllPhotosTaken = (activitySio: any) => {
+        return activitySio.every((sio: any) => sio.photo_before && sio.photo_after);
+    };
+
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
             <Text style={activityStyles.title}>Foto Outlet Baru</Text>
@@ -231,12 +265,12 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
             <Text style={activityStyles.title}>Materi Branding SIO</Text>
             {activitySio?.map((sio, index) => (
-                <TouchableOpacity
-                    key={index}
-                    onPress={() => toggleCollapse(index)} // Toggle collapse when the card is pressed
-                    activeOpacity={0.8} // Add a slight opacity effect when pressed
-                    style={activityStyles.cardContainer}
-                >
+                    <TouchableOpacity
+                        key={index}
+                        onPress={() => toggleCollapse(index)} // Toggle collapse when the card is pressed
+                        activeOpacity={0.8} // Add a slight opacity effect when pressed
+                        style={activityStyles.cardContainer}
+                    >
                         <View style={activityStyles.card}>
                             {/* Toggle Button as Icon */}
                             <Text style={activityStyles.toggleText}>
@@ -265,9 +299,9 @@ export default function FormDetailSio({route}: FormActivityProps) {
                                         {/* First Picture Section */}
                                         <View style={styles.column}>
                                             <Image
-                                                source={{uri: sio.photoBefore || defaultImage}}
+                                                source={{uri: sio.photo_before || defaultImage}}
                                                 style={styles.image}
-                                            />{sio.photoAfter === '' ? (<>
+                                            />{sio.photo_before === '' ? (<>
                                                     <Text style={styles.text}>Foto Sebelum</Text>
                                                     <TouchableOpacity style={[activityStyles.photoButton]}
                                                                       onPress={() => handleTakePhotoBefore(index)}>
@@ -289,19 +323,19 @@ export default function FormDetailSio({route}: FormActivityProps) {
                                         {/* Second Picture Section */}
                                         <View style={styles.column}>
                                             <Image
-                                                source={{uri: sio.photoAfter || defaultImage}}
+                                                source={{uri: sio.photo_after || defaultImage}}
                                                 style={styles.image}
                                             />
-                                            {sio.photoAfter === '' ? (<>
-                                                    <Text style={styles.text}>Foto Sesudah</Text>
-                                                    <TouchableOpacity style={[activityStyles.photoButton]}
-                                                                      onPress={() => handleTakePhoto(index)}>
-                                                        <MaterialIcons name="camera-alt" size={24} color="#fff"/>
-                                                        <Text style={[activityStyles.label, {color: 'white'}]}>new
-                                                            photo</Text>
-                                                    </TouchableOpacity>
+                                            {sio.photo_after === '' ? (<>
+                                                        <Text style={styles.text}>Foto Sesudah</Text>
+                                                        <TouchableOpacity style={[activityStyles.photoButton]}
+                                                                          onPress={() => handleTakePhoto(index)}>
+                                                            <MaterialIcons name="camera-alt" size={24} color="#fff"/>
+                                                            <Text style={[activityStyles.label, {color: 'white'}]}>new
+                                                                photo</Text>
+                                                        </TouchableOpacity>
 
-                                                </>
+                                                    </>
                                                 )
                                                 : (
                                                     <TouchableOpacity style={activityStyles.clearButton}
@@ -332,7 +366,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                                 </View>
                             )}
                         </View>
-                </TouchableOpacity>
+                    </TouchableOpacity>
                 )
             )}
             <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
@@ -354,7 +388,15 @@ export default function FormDetailSio({route}: FormActivityProps) {
                     alignItems: 'center',
                     marginHorizontal: 8,
                     backgroundColor: Colors.buttonBackground
-                }} onPress={goToBrand}>
+                }} onPress={() => {
+                    console.log('cucucuit' + areAllPhotosTaken(activitySio))
+                    if (areAllPhotosTaken(activitySio)) {
+                        goToBrand();
+                    } else {
+                        alert("Tolong Lengkapi Seluruh data photo");
+                    }
+                }}
+                >
                     <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
                 </TouchableOpacity>
             </View>

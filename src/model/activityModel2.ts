@@ -6,44 +6,44 @@ import {ActivitySioModel, ActivitySogModel} from "./activityModel";
 type ActivityWithDetails = {
     id: number;
     id_server: number;
-    user_id:string;
+    user_id: string;
     call_plan_schedule_id: number;
-    call_plan_id:number;
-    outlet_id:number;
-    survey_outlet_id:number,
-    program_id:number,
-    status:number;
+    call_plan_id: number;
+    outlet_id: number;
+    survey_outlet_id: number,
+    program_id: number,
+    status: number;
     area: string;
-    region:string;
-    brand:string;
-    type_sio:string;
+    region: string;
+    brand: string;
+    type_sio: string;
     start_time: string;
     end_time: string;
     photo: string;
-    created_at:string;
-    updated_at:string;
+    created_at: string;
+    updated_at: string;
     is_sync: number;
 }
 
-interface Activity{
+interface Activity {
     id: number;
     id_server: number;
     user_id: string;
     call_plan_schedule_id: number;
-    call_plan_id:number;
-    outlet_id:number;
-    survey_outlet_id:number,
-    program_id:number,
-    status:number;
+    call_plan_id: number;
+    outlet_id: number;
+    survey_outlet_id: number,
+    program_id: number,
+    status: number;
     area: string;
-    region:string;
-    brand:string;
-    type_sio:string;
+    region: string;
+    brand: string;
+    type_sio: string;
     start_time: string;
     end_time: string;
     photo: string;
-    created_at:string;
-    updated_at:string;
+    created_at: string;
+    updated_at: string;
     is_sync: number;
 }
 
@@ -54,7 +54,8 @@ type ActivityUpdateParams = Partial<Activity>;
 export const addIdServerColumn = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     try {
         await db.execAsync(`
-            ALTER TABLE Activity ADD COLUMN id_server INTEGER DEFAULT 0;
+            ALTER TABLE Activity
+                ADD COLUMN id_server INTEGER DEFAULT 0;
         `);
         console.log('Column id_server added successfully.');
     } catch (error: unknown) {
@@ -80,7 +81,6 @@ export const dropTableExisting = async (db: SQLite.SQLiteDatabase): Promise<void
 export const createTableActivity = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     // await db.runAsync('DROP TABLE IF EXISTS Activity');
     // await db.runAsync('DROP TABLE IF EXISTS ActivitySio');
-    // await db.runAsync('DROP TABLE IF EXISTS ActivitySog');
     // console.log('All tables dropped successfully');
     await db.execAsync(`
     PRAGMA journal_mode = WAL;
@@ -91,7 +91,7 @@ export const createTableActivity = async (db: SQLite.SQLiteDatabase): Promise<vo
       call_plan_schedule_id INTEGER NOT NULL,
       outlet_id INTEGER NOT NULL,
       survey_outlet_id INTEGER NOT NULL,
-      program_id INTEGER NOT NULL,
+      program_id INTEGER,
       status INTEGER NOT NULL,
       area TEXT NOT NULL,
       region TEXT NOT NULL,
@@ -166,7 +166,7 @@ export const ActivityModel2 = {
                     call_plan_schedule_id,
                     outlet_id,
                     survey_outlet_id,
-                    program_id,
+                    program_id ? program_id : null,
                     status,
                     area,
                     region,
@@ -174,7 +174,7 @@ export const ActivityModel2 = {
                     type_sio,
                     start_time,
                     end_time,
-                    photo ? JSON.stringify(photo) : null ,
+                    photo ? JSON.stringify(photo) : null,
                     updated_at,
                     created_at,
                     is_sync ? 1 : 0,
@@ -194,13 +194,12 @@ export const ActivityModel2 = {
 
     },
     // Get Activity by id
-    getActivityByScheduleId : async (db: SQLite.SQLiteDatabase, call_plan_schedule_id: number): Promise<Activity[]> => {
+    getActivityByScheduleId: async (db: SQLite.SQLiteDatabase, call_plan_schedule_id: number): Promise<Activity[]> => {
         const query = `
-            SELECT
-                *
-            FROM Activity 
+            SELECT *
+            FROM Activity
             WHERE call_plan_schedule_id = ?
-            `;
+        `;
 
         const results = await db.getAllAsync(query, [call_plan_schedule_id]) as ActivityWithDetails[];
 
@@ -216,7 +215,7 @@ export const ActivityModel2 = {
             call_plan_id: results[0].call_plan_id ?? 0,
             outlet_id: results[0].outlet_id,
             survey_outlet_id: results[0].survey_outlet_id,
-            program_id :results[0].program_id,
+            program_id: results[0].program_id,
             status: results[0].status,
             area: results[0].area,
             region: results[0].region,
@@ -224,14 +223,84 @@ export const ActivityModel2 = {
             type_sio: results[0].type_sio,
             photo: results[0].photo,
             id_server: results[0].id_server,
-            updated_at:results[0].updated_at,
-            created_at:results[0].created_at,
-            start_time:results[0].start_time,
-            end_time:results[0].end_time,
-            is_sync:results[0].is_sync,
+            updated_at: results[0].updated_at,
+            created_at: results[0].created_at,
+            start_time: results[0].start_time,
+            end_time: results[0].end_time,
+            is_sync: results[0].is_sync,
         };
         return [activity];
+    },
+
+    getAllActivity: async (db: SQLite.SQLiteDatabase): Promise<{
+        id: number;
+        user_id: string;
+        call_plan_schedule_id: number;
+        call_plan_id: number;
+        outlet_id: number;
+        survey_outlet_id: number;
+        program_id: number;
+        status: number;
+        area: string;
+        region: string;
+        brand: string;
+        type_sio: string;
+        photo: string;
+        id_server: number;
+        updated_at: string;
+        created_at: string;
+        start_time: string;
+        end_time: string;
+        is_sync: number
+    }[]> => {
+        const query = `
+            SELECT *
+            FROM Activity
+        `;
+
+        const results = await db.getAllAsync(query) as ActivityWithDetails[];
+
+        if (!results.length) {
+            return []; // No activity found
+        }
+
+        // Transform the results into the desired format
+        const activity = results.map(row => ({
+            id: row.id,
+            user_id: row.user_id,
+            call_plan_schedule_id: row.call_plan_schedule_id,
+            call_plan_id: row.call_plan_id ?? 0,
+            outlet_id: row.outlet_id,
+            survey_outlet_id: row.survey_outlet_id,
+            program_id: row.program_id,
+            status: row.status,
+            area: row.area,
+            region: row.region,
+            brand: row.brand,
+            type_sio: row.type_sio,
+            photo: row.photo,
+            id_server: row.id_server,
+            updated_at: row.updated_at,
+            created_at: row.created_at,
+            start_time: row.start_time,
+            end_time: row.end_time,
+            is_sync: row.is_sync,
+        }));
+        return activity;
+    },
+    updateStatusActivity: async (db: SQLite.SQLiteDatabase, status:number, photo:any, id: number): Promise<void> => {
+        await db.runAsync(
+            `UPDATE Activity
+                SET status = ?,
+                    photo =?
+                WHERE id = ?;
+            ` , [status, photo, id]
+        )
+
     }
+
+
+
 }
 
 

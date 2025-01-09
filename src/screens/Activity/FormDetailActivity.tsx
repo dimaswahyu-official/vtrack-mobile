@@ -14,24 +14,14 @@ import {RouteProp, useNavigation} from "@react-navigation/native";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
 import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useRef, useState} from "react";
-import useConstantStore from "../../store/useConstantStore";
-import {MaterialIcons} from "@expo/vector-icons";
-import {formatDateWithTime} from "../../utils/DateHelper";
 import {Picker} from "@react-native-picker/picker";
-import Carousel from "react-native-reanimated-carousel";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import Colors from "../../utils/Colors";
 import * as ImagePicker from "expo-image-picker";
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {EXISTING_SURVEY_STATUS, NEW_SURVEY_STATUS} from "../../constants/status";
-import useAbsenToday from "../../store/useAbsenToday";
-import {ActivityModel2} from "../../model/activityModel2";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import ActivityService from "../../services/activityService";
 import { ActivityRepository } from "../../model/ActivityRepository";
 
-const {width, height} = Dimensions.get('window');
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityProps = {
@@ -43,48 +33,35 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const navigation = useNavigation<NavigationProp>();
     const [userId, setUserId] = useState('');
     const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
-    const [callPlanId, setCallPlanId] = useState(1);
-    const [outletId, setOutletId] = useState(1);
-    const [surveyOutletId, setSurveyOutletId] = useState(1);
-    const [programId, setProgramId] = useState(1);
-    const [area, setArea] = useState('Area A');
-    const [region, setRegion] = useState('Region X');
-    const [brand, setBrand] = useState('Region X');
-    const [typeSio, setSio] = useState('Region X');
-    const [createdAt, setCreatedAt] = useState('Region X');
-    const [createdBy, setCreatedBy] = useState('Region X');
-    const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
-    const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
     const [photosx, setPhotos] = useState<any | null>(null);
-    const [pickerOptions, setPickerOptions] = useState([]); // Options for the picker
-
     const [visible, setVisible] = useState(false);
-    const [idActivity, setIdActivity] = useState(0);
-
-    const [dataOffline, setDataOffline] = useState<any>({});
-    const [activityPhotos, setActivityPhotos] = useState<Array<string>>([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const activityStyles = ActivityStyles();
     const defaultImage = 'https://via.placeholder.com/100';
     const statusOptions = Object.entries(NEW_SURVEY_STATUS);
     const statusOptionExist = Object.entries(EXISTING_SURVEY_STATUS);
-    const [status, setStatus] = useState(
-        item.type === 1 ? Number(statusOptions[0][0]) : Number(statusOptionExist[0][0])
-    );
+    const defaultStatus = item.type === 1
+        ? Number(statusOptions?.[0]?.[0] || 100)
+        : Number(statusOptionExist?.[0]?.[0] || 100);
+    const [status, setStatus] = useState(defaultStatus);
+    const [activityDatas, setActivityDatas] = useState<any>(null);
+
+    useEffect(() => {
+        // Fetch data and update state
+        ActivityRepository.findByCallPlanScheduleId(db, item.id)
+            .then((response) => {
+                console.log("Data retrieved:", response);
+                setActivityDatas(response); // Update state with the fetched data
+            })
+            .catch((error) => {
+                console.error("Error fetching data:", error);
+            });
+    }, [db, callPlanScheduleId]); // Dependencies to ensure useEffect runs when these change
+
 
     useEffect(() => {
         setUserId(item.user_id);
         setCallPlanScheduleId(item.id);
-        setCallPlanId(item.call_plan_id);
-        setOutletId(item.outlet_id);
-        setStatus(item.status);
-        setArea(item.callPlanOutlet?.area);
-        setRegion(item.callPlanOutlet?.region);
-        setStartTime(item.start_time);
-        setEndTime(item.end_time);
-
+        setStatus(item.status ?? 100);
     }, [item.id]);
 
 
@@ -115,66 +92,67 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                             <TouchableOpacity style={styles.closeButton} onPress={() => handleTakePhoto()}>
                                 <Text style={styles.closeButtonText}>Check In</Text>
                             </TouchableOpacity>
-                            {/*{photox && (*/}
-                            {/*    <Image source={{ uri: photox }} style={{ width: 100, height: 100 }} />*/}
-                            {/*)}*/}
                         </View>
                     </View>
                 </Modal>
             </View>
         );
-    };    
+    };
     // insert data after fetching to sqlite
     const insertActivityDB =  async (data: any , image:any) => {
-        // If the input is an array, loop through and process each item
-        // if (Array.isArray(data)) {
-        //     data.forEach((activity: any) => {
-        //         insertActivityDB(activity); // Call the function for each individual item
-        //     });
-        //     console.log('You have total Data to Insert = ' + data.length);
-        //     return; // Exit after processing the array
-        // }
-        // If the input is a single object, process it
-        const activityData = {
-            user_id: userId, // Ensure `userId` is defined
+        const activity = {
+            user_id: userId ?? 0,
             call_plan_id: data.call_plan_id ?? 0,
-            call_plan_schedule_id: callPlanScheduleId,
+            call_plan_schedule_id: callPlanScheduleId ?? 0,
             outlet_id: data.outlet_id ?? 0,
-            survey_outlet_id: data.survey_outlet_id ?? 0,
-            program_id: data.program_id ?? 0,
-            status: status ?? 200, // Ensure `status` is defined
+            status: status ?? 100,
             area: data?.callPlanOutlet?.area ?? data?.callPlanSurvey?.area ?? '',
             region: data?.callPlanOutlet?.region ?? data?.callPlanSurvey?.region ?? '',
             brand: data?.callPlanOutlet?.brand ?? data?.callPlanSurvey?.brand ?? '',
             type_sio: data?.callPlanOutlet?.sio_type ?? data?.callPlanSurvey?.sio_type ?? '',
-            start_time: new Date().toISOString(),
-            end_time: new Date().toISOString(),
-            photo: image,
+            start_time: new Date().toISOString() ?? '',
+            end_time: new Date().toISOString() ?? '',
+            photo: image ?? '',
             is_sync: 0,
             id_server: 0,
-            updated_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
         };
         try {
             setVisible(false);
-            // insert data into SQLite
-            const idAct = await ActivityRepository.create(db, activityData);
-            setIdActivity(idAct);
-            //get activity by schedule id
-            const resultinsert = await ActivityRepository.findByCallPlanScheduleId(db, callPlanScheduleId);
-            console.log("resultinsert = ", resultinsert[0]);
-            //test to send backend
-            // const response = await ActivityService.syncActivity(resultinsert);
-            // console.log("from api = "+response);
-            if (status == 401 || status == 402 || status == 403 || status == 404) {
-                navigation.replace('Activity2',{status}); // Navigate to "Activity" screen
+            if (!activityDatas || (Array.isArray(activityDatas) && activityDatas.length === 0)) {
+                try {
+                    // Insert data and retrieve the newly inserted activity
+                    await ActivityRepository.create(db, activity);
+                    const [resultInsert] = await ActivityRepository.findByCallPlanScheduleId(db, callPlanScheduleId);
+                    console.log("Inserted Activity:", resultInsert);
+
+                    // Handle navigation based on status
+                    if ([401, 402, 403, 404].includes(status)) {
+                        navigation.replace('Activity2'); // Navigate to "Activity2" screen
+                    } else {
+                        // navigation.navigate('FormDetailSio', { item, photox: image });
+                        console.log('Navigation to FormDetailSio successful');
+                    }
+                } catch (error) {
+                    console.error("Error while inserting new activity:", error);
+                }
             } else {
-                // Step 2: Navigate to the next screen if the insertion is successful
-                navigation.navigate('FormDetailSio', {item, photox: image, idx: idActivity});
-                console.log('Navigation to FormDetailSio successful');
+                console.log("masuk" + status);
+                try {
+                    // Update the status of the existing activity
+                    await ActivityRepository.update(db , activity);
+                    console.log(`Activity already exists for Schedule ID: ${callPlanScheduleId}, with Status: ${status}`);
 
+                    // Handle navigation based on status
+                    if ([401, 402, 403, 404].includes(status)) {
+                        navigation.replace('Activity2'); // Navigate to "Activity2" screen
+                    } else {
+                        navigation.navigate('FormDetailSio', { item, photox: image, activity:activityDatas });
+                        console.log('Navigation to FormDetailSio successful');
+                    }
+                } catch (error) {
+                    console.error("Error while updating activity:", error);
+                }
             }
-
         } catch (error) {
             console.error('Error:', error);
             Alert.alert('Error', `${error}`);
@@ -199,16 +177,11 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         }
     }
 
-    useEffect(() => {
-        console.log(`Default Status: ${status}`);
-    }, [status]);
-
-
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
             {/* Full-Width Image */}
             <Image
-                source={{uri: item.callPlanOutlet.photos[0] || defaultImage}} // Replace with your image URL
+                source={{uri: item.callPlanOutlet? item.callPlanOutlet.photos[0] : item.callPlanSurvey.photos[0] || defaultImage}} // Replace with your image URL
                 style={activityStyles.image}
                 resizeMode="cover"
             />
@@ -222,39 +195,39 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Shop Name :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.name : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.name : item.callPlanSurvey.name}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Kode Outlet :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.outlet_code : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.outlet_code : item.callPlanSurvey.outlet_code}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Address :</Text>
                             <Text style={[activityStyles.value, {
                                 flexShrink: 1,
                                 textAlign: 'right'
-                            }]}>{item.callPlanOutlet ? item.callPlanOutlet.address_line : ''}</Text>
+                            }]}>{item.callPlanOutlet ? item.callPlanOutlet.address_line : item.callPlanSurvey.address_line}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Brand :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.brand : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.brand : item.callPlanSurvey.brand}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Tipe Outlet :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.sio_type : item.callPlanSurvey.sio_type}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Regional :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.region : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.region : item.callPlanSurvey.region}</Text>
                         </View>
                         <View style={activityStyles.row}>
                             <Text style={activityStyles.label}>Area :</Text>
                             <Text
-                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.area : ''}</Text>
+                                style={activityStyles.value}>{item.callPlanOutlet ? item.callPlanOutlet.area : item.callPlanSurvey.area}</Text>
                         </View>
                     </View>
 
@@ -270,10 +243,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     selectedValue={status}
                                     onValueChange={(itemValue) => {
                                         setStatus(itemValue);
-                                        console.log(status + " STATUS");
-                                        if (itemValue !== 0) {
-                                            setStartTime(new Date().toISOString());
-                                        }
+                                        console.log(status + " STATUS NEW");
                                     }}>
                                     {item.type === 1 ? statusOptions.map(([key, value]) => (
                                         <Picker.Item key={key} label={value} value={String(key)}/>

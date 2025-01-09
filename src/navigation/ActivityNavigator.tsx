@@ -11,15 +11,15 @@ import FormDetailOutlet from "../screens/Activity/FormDetailOutlet";
 import FormDetailProgram from "../screens/Activity/FormDetailProgram";
 
 export type ActivityStackParamList = {
-    Activity2: undefined | { status:any };
+    Activity2: undefined;
     Activity: undefined;
     FormActivityNormal: { item: any };
     FormDetailActivity: { item: any};
-    FormDetailSio: { item: any ;  photox: any, idx:any};
-    FormDetailProgram: { item: any , idx:any};
-    FormDetailBrand: { item: any,idx:any };
-    FormDetailSog: { item: any,idx:any };
-    FormDetailOutlet: { item: any,idx:any };
+    FormDetailSio: { item: any ;  photox: any; activity: any; };
+    FormDetailProgram: { item: any; activity: any;};
+    FormDetailBrand: { item: any;activity: any; };
+    FormDetailSog: { item: any;activity: any;};
+    FormDetailOutlet: { item: any ;activity: any;};
 };
 
 const Stack = createNativeStackNavigator<ActivityStackParamList>();
