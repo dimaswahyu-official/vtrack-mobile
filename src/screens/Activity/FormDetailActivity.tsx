@@ -146,7 +146,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     if ([401, 402, 403, 404].includes(status)) {
                         navigation.replace('Activity2'); // Navigate to "Activity2" screen
                     } else {
-                        navigation.navigate('FormDetailSio', { item:activityDatas, photox: image });
+                        navigation.navigate('FormDetailSio', { item, photox: image, activity:activityDatas });
                         console.log('Navigation to FormDetailSio successful');
                     }
                 } catch (error) {
@@ -176,11 +176,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             await insertActivityDB(item, response.assets[0].uri)
         }
     }
-
-    useEffect(() => {
-        console.log(`Default Status: ${status}`);
-    }, [status]);
-
 
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
@@ -248,7 +243,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     selectedValue={status}
                                     onValueChange={(itemValue) => {
                                         setStatus(itemValue);
-                                        console.log(itemValue + " STATUS NEW");
+                                        console.log(status + " STATUS NEW");
                                     }}>
                                     {item.type === 1 ? statusOptions.map(([key, value]) => (
                                         <Picker.Item key={key} label={value} value={String(key)}/>

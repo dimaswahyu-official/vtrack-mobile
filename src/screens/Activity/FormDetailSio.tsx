@@ -9,9 +9,7 @@ import * as ImagePicker from "expo-image-picker";
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {ActivitySioModel} from "../../model/ActivitySioRepository";
-import {createTableActivitySio} from "../../model/ActivitySioRepository";
 import {useSQLiteContext} from "expo-sqlite";
-import {ActivityModel2, createTableActivity} from "../../model/activityModel2";
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailSio'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailSio'>;
@@ -33,14 +31,14 @@ type SioType = {
 
 export default function FormDetailSio({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item, photox, idx} = route.params || {};
+    const {item, photox} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const activityStyles = ActivityStyles();
     const [sioType, setSioType] = useState<SioType | null>(null);
     const defaultImage = 'https://via.placeholder.com/100';
 
     const [activitySio, setActivitySio] = useState<{
-        activity_id: number;
+        call_plan_schedule_id: number;
         name: string;
         description: string;
         notes: string;
@@ -50,7 +48,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
     }[]>([]);
 
     const initializeActivitySio = (data: Partial<{
-        activity_id: number;
+        call_plan_schedule_id: number;
         name: string;
         description: string;
         notes: string;
@@ -59,7 +57,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
         photo_after: string;
     }>[]) => {
         const initializedData = data.map(item => ({
-            activity_id: item.activity_id ?? 0, // Default to 0 if missing
+            call_plan_schedule_id: item.call_plan_schedule_id ?? 0, // Default to 0 if missing
             name: item.name ?? '', // Default to empty string
             description: item.description ?? '', // Default to empty string
             notes: item.notes ?? '', // Default to empty string
@@ -76,51 +74,37 @@ export default function FormDetailSio({route}: FormActivityProps) {
         Array(sio.length).fill(true) // Initialize all items as collapsed
     );
     useEffect(() => {
-        ActivitySioModel.findByCallPlanScheduleId(db, idx)
-            .then(response => {
-                console.log("SIO by Activity ID "+ idx +" = "+JSON.stringify(response));
-                if (!response || response.length === 0) {
-                    console.log("No data found for the given schedule ID.");
-                    if (sio.length > 0) {
-                        if (item.callPlanOutlet != null) {
-                            const filteredSio = sio.filter(s => s.name === (item.callPlanOutlet.sio_type));
-                            setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
-                            if (filteredSio.length > 0) {
-                                setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                                    activity_id: idx,
-                                    name: filteredSio[0].sioTypeGalery[i].name,
-                                    description: '',
-                                    notes: '',
-                                    photo: filteredSio[0].sioTypeGalery[i].photo,
-                                    photo_before: '',
-                                    photo_after: '',
-                                })));
-                            }
-                        } else {
-                            const filteredSio = sio.filter(s => s.name === (item.callPlanSurvey.sio_type));
-                            setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
-                            if (filteredSio.length > 0) {
-                                setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
-                                    activity_id: idx,
-                                    name: filteredSio[0].sioTypeGalery[i].name,
-                                    description: '',
-                                    notes: '',
-                                    photo: filteredSio[0].sioTypeGalery[i].photo,
-                                    photo_before: '',
-                                    photo_after: '',
-                                })));
-                            }
-                        }
-                    }
-                } else {
-                    initializeActivitySio(response)
+        if (sio.length > 0) {
+            if (item.callPlanOutlet != null) {
+                const filteredSio = sio.filter(s => s.name === (item.callPlanOutlet.sio_type));
+                setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
+                if (filteredSio.length > 0) {
+                    setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
+                        call_plan_schedule_id: item.call_plan_schedule_id,
+                        name: filteredSio[0].sioTypeGalery[i].name,
+                        description: '',
+                        notes: '',
+                        photo: filteredSio[0].sioTypeGalery[i].photo,
+                        photo_before: '',
+                        photo_after: '',
+                    })));
                 }
-            })
-            .catch(error => {
-                console.error("Error fetching data:", error.message);
-            });
-
-
+            } else {
+                const filteredSio = sio.filter(s => s.name === (item.callPlanSurvey.sio_type));
+                setSioType(filteredSio.length > 0 ? filteredSio[0] : {});
+                if (filteredSio.length > 0) {
+                    setActivitySio(Array.from({length: filteredSio[0].sioTypeGalery.length}, (_, i) => ({
+                        call_plan_schedule_id: item.call_plan_schedule_id,
+                        name: filteredSio[0].sioTypeGalery[i].name,
+                        description: '',
+                        notes: '',
+                        photo: filteredSio[0].sioTypeGalery[i].photo,
+                        photo_before: '',
+                        photo_after: '',
+                    })));
+                }
+            }
+        }
     }, [item.id]);
 
 
@@ -226,12 +210,12 @@ export default function FormDetailSio({route}: FormActivityProps) {
             name: data.name,
             description: data.description ?? '',
             notes: data.notes ?? '',
-            photo:data.photo ?? '',
+            photo: data.photo ?? '',
             photo_before: data.photo_before ?? '',
             photo_after: data.photo_after ?? '',
         }
         try {
-            const response = await ActivitySioModel.findByCallPlanScheduleId(db, idx);
+            const response = await ActivitySioModel.findByCallPlanScheduleId(db, item.call_plan_schedule_id);
             if (!response || (await response).length === 0) {
                 try {
                     // Insert data and retrieve the newly inserted activity
@@ -241,11 +225,11 @@ export default function FormDetailSio({route}: FormActivityProps) {
                 }
             } else {
                 // await ActivityModel2.updateStatusActivity(db, status,photosx,callPlanScheduleId)
-                console.log("Sio already exists for the activityID:", idx);
+                console.log("Sio already exists for the activityID:", item.call_plan_schedule_id);
             }
 
             // console.log(JSON.stringify(sioData) + "Data Sio")
-            navigation.navigate('FormDetailProgram', {item, idx});
+            navigation.navigate('FormDetailProgram', {item});
         } catch (error) {
             console.error('Error inserting sio:', error);
             Alert.alert('Error', 'Failed to save sio. Please try again.');
@@ -405,7 +389,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                     marginHorizontal: 8,
                     backgroundColor: Colors.buttonBackground
                 }} onPress={() => {
-                    console.log('cucucuit'+areAllPhotosTaken(activitySio))
+                    console.log('cucucuit' + areAllPhotosTaken(activitySio))
                     if (areAllPhotosTaken(activitySio)) {
                         goToBrand();
                     } else {
