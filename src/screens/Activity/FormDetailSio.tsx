@@ -57,21 +57,20 @@ export default function FormDetailSio({route}: FormActivityProps) {
         photo_after: string;
     }>[]) => {
         const initializedData = data.map(item => ({
-            call_plan_schedule_id: item.call_plan_schedule_id ?? 0, // Default to 0 if missing
-            name: item.name ?? '', // Default to empty string
-            description: item.description ?? '', // Default to empty string
-            notes: item.notes ?? '', // Default to empty string
-            photo: item.photo ?? '', // Default to empty string
-            photo_before: item.photo_before ?? '', // Default to empty string
-            photo_after: item.photo_after ?? '', // Default to empty string
+            call_plan_schedule_id: item.call_plan_schedule_id ?? 0,
+            name: item.name ?? '',
+            description: item.description ?? '',
+            notes: item.notes ?? '',
+            photo: item.photo ?? '',
+            photo_before: item.photo_before ?? '',
+            photo_after: item.photo_after ?? '',
         }));
         setActivitySio(initializedData);
     };
 
-    console.log(activitySio)
     const {sio} = useConstantStore();
     const [collapsedStates, setCollapsedStates] = useState<boolean[]>(
-        Array(sio.length).fill(true) // Initialize all items as collapsed
+        Array(sio.length).fill(true)
     );
 
     const dataSioFiltered = async () => {
@@ -107,7 +106,8 @@ export default function FormDetailSio({route}: FormActivityProps) {
     }
 
     useEffect(() => {
-        ActivitySioModel.findByCallPlanScheduleId(db, activity.call_plan_schedule_id).then(response => {
+        ActivitySioModel.findByCallPlanScheduleId(db, activity?.call_plan_schedule_id).then(response => {
+            console.log("response model",response);
             if (!response || response.length === 0) {
                 console.log("No data found for the given schedule ID.");
                 dataSioFiltered()
@@ -261,8 +261,8 @@ export default function FormDetailSio({route}: FormActivityProps) {
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
             <Text style={activityStyles.title}>Foto Outlet Baru</Text>
-            {activity.photo && <Image
-                source={{uri: activity.photo}} // Replace with your image URL
+            {activity?.photo && <Image
+                source={{uri: activity?.photo}} // Replace with your image URL
                 style={activityStyles.image}
                 resizeMode="cover"
             />}
