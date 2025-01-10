@@ -8,7 +8,7 @@ const axiosInstance = axios.create({
   // baseURL: 'https://api.koneksi.co.id/api/v1',
   // baseURL: 'https://10.0.63.144:9001/api/v1',
   baseURL: 'http://10.0.63.125:9001/api/v1',
-  // baseURL: 'http://192.168.0.107:9001/api/v1',
+  // baseURL: 'http://192.168.0.108:9001/api/v1',
   timeout: 10000,
 });
 
