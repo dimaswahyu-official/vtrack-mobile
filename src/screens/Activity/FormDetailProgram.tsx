@@ -9,6 +9,8 @@ import Colors from "../../utils/Colors";
 import useConstantStore from "../../store/useConstantStore";
 import * as ImagePicker from "expo-image-picker";
 import {MaterialIcons} from "@expo/vector-icons";
+import {ActivityProgramModel} from "../../model/ActivityProgramRepository";
+import {ActivitySioModel} from "../../model/ActivitySioRepository";
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailProgram'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailProgram'>;
@@ -20,7 +22,7 @@ type FormActivityProps = {
 
 export default function FormDetailProgram({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item, idx} = route.params || {};
+    const {item, activity} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const activityStyles = ActivityStyles();
     const defaultImage = 'https://via.placeholder.com/100';
@@ -31,15 +33,10 @@ export default function FormDetailProgram({route}: FormActivityProps) {
         photo: string
     }[]>([]);
 
-    const [activityProgramCompetitor, setActivityProgramCompetitor] = useState<{
-        nameProgramCompetitor: string[];
-        photoCompetitor: string[];
-        descriptionCompetitor: string[];
-    }>({
-        nameProgramCompetitor: [''],
-        photoCompetitor: [''],
-        descriptionCompetitor: [''],
-    });
+
+    const [activityProgramCompetitor, setActivityProgramCompetitor] = useState<
+        { name: string; photo: string; description: string }[]
+    >([]);
 
     const footer = () => {
         return (
@@ -80,23 +77,16 @@ export default function FormDetailProgram({route}: FormActivityProps) {
     };
 
     const handleAddProgramCompetitor = () => {
-        setActivityProgramCompetitor({
-            nameProgramCompetitor: [...activityProgramCompetitor.nameProgramCompetitor, ''],
-            photoCompetitor: [...activityProgramCompetitor.photoCompetitor, ''],
-            descriptionCompetitor: [...activityProgramCompetitor.descriptionCompetitor, ''],
-        });
+        setActivityProgramCompetitor((prev) => [
+            ...prev,
+            { name: '', photo: '', description: '' },
+        ]);
     };
 
     const handleDeleteProgramCompetitor = (index: number) => {
-        const newActivityProgram = {
-            nameProgramCompetitor: activityProgramCompetitor.nameProgramCompetitor.filter((_, i) => i !== index),
-            photoCompetitor: activityProgramCompetitor.photoCompetitor.filter((_, i) => i !== index),
-            descriptionCompetitor: activityProgramCompetitor.descriptionCompetitor.filter((_, i) => i !== index),
-        };
-        setActivityProgramCompetitor(newActivityProgram);
+        setActivityProgramCompetitor((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const [isCollapsed, setIsCollapsed] = useState(false); // State to toggle collapse
 
 
     const handleTakePhoto = async () => {
@@ -135,9 +125,11 @@ export default function FormDetailProgram({route}: FormActivityProps) {
         });
 
         if (!result.canceled) {
-            const newActivityProgram = {...activityProgramCompetitor};
-            newActivityProgram.photoCompetitor[index] = result.assets[0].uri;
-            setActivityProgramCompetitor(newActivityProgram);
+            setActivityProgramCompetitor((prev) =>
+                prev.map((program, i) =>
+                    i === index ? { ...program, photo: result.assets[0].uri } : program
+                )
+            );
         }
     };
 
@@ -147,67 +139,48 @@ export default function FormDetailProgram({route}: FormActivityProps) {
         setActivityProgram(newActivityProgram);
     };
 
-    const handleClearPhotoCompetitor = (index:number) => {
-        const newActivityProgram = {...activityProgramCompetitor};
-        newActivityProgram.photoCompetitor[index] = '';
+    const handleClearPhotoCompetitor = (index: number) => {
+        const newActivityProgram = [...activityProgramCompetitor];
+        newActivityProgram[index].photo = '';
         setActivityProgramCompetitor(newActivityProgram);
     };
 
-    const handleUpdateProgram = (
-        index: number,
-        field: keyof typeof activityProgramCompetitor,
-        value: string
-    ) => {
-        const newActivityProgram = { ...activityProgramCompetitor };
-        newActivityProgram[field][index] = value;
-        setActivityProgramCompetitor(newActivityProgram);
-    };
+    const insertProgramToSqllite = async (data: any) => {
+        console.log(JSON.stringify(data)+"yuyu")
+        // If the input is an array, loop through and process each item
+        if (Array.isArray(data)) {
+            data.forEach((program: any) => {
+                insertProgramToSqllite(program); // Call the function for each individual item
+            });
+            console.log('You have total Data Program to Insert = ' + data.length);
+            return; // Exit after processing the array
+        }
+        // If the input is a single object, process it
+        const Program = {
+            call_plan_schedule_id: activity.call_plan_schedule_id,
+            name: data.nameProgramCompetitor,
+            description: data.descriptionCompetitor ?? '',
+            photo: data.photoCompetitor ?? '',
+        }
+        try {
+            console.log(JSON.stringify(Program) + "DataProgram")
+        } catch (error) {
+            console.error('Error inserting Program Competitor:', error);
+            Alert.alert('Error', 'Failed to save Program Competitor. Please try again.');
+        }
+    }
+
+        useEffect(() => {
+            ActivityProgramModel.findByCallPlanScheduleId(db, activity.call_plan_schedule_id).then(response => {
+                if (!response || response.length === 0) {
+                    console.log("No data found for the given schedule ID.");
+                } else {
+                    // setActivityProgramCompetitor(response);
+                }
+            })
+        }, [activity.call_plan_schedule_id]);
 
 
-    // const insertSioToSqlite = async (data: any) => {
-    //     // If the input is an array, loop through and process each item
-    //     if (Array.isArray(data)) {
-    //         data.forEach((activity: any) => {
-    //             insertSioToSqlite(activity); // Call the function for each individual item
-    //         });
-    //         console.log('You have total Data to Insert Sio = ' + data.length);
-    //         return; // Exit after processing the array
-    //     }
-    //     // If the input is a single object, process it
-    //     const sioData = {
-    //         activity_id: idx,
-    //         name: data.name,
-    //         description: data.description ?? '',
-    //         notes: data.notes ?? '',
-    //         photo: data.newPhoto,
-    //     }
-    //     try {
-    //         console.log(JSON.stringify(sioData) + "Data Sio")
-    //         navigation.navigate('FormDetailBrand', {item, idx});
-    //         // Uncomment this line to insert data into SQLite
-    //         // await SioModel.create(db, sioData);
-    //     } catch (error) {
-    //         console.error('Error inserting sio:', error);
-    //         Alert.alert('Error', 'Failed to save sio. Please try again.');
-    //     }
-    // }
-
-    const goToBrand = async () => {
-        // await insertSioToSqlite(activitySio)
-        navigation.navigate('FormDetailBrand', {item, idx});
-        // setIsFullActivity(true); // Set state to true when button is clicked
-    };
-
-    useEffect(() => {
-        setActivityProgram([
-            {
-                activity_id: 1,
-                nameProgram: '',
-                description: '',
-                photo: '',
-            },
-        ]);
-    }, []);
 
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
@@ -230,7 +203,7 @@ export default function FormDetailProgram({route}: FormActivityProps) {
                                 source={{ uri: activityProgram[0]?.photo || defaultImage }}
                                 style={styles.image}
                             />
-                            {activityProgram[0]?.photo === '' ? (
+                            {activityProgram[0]?.photo == '' ? (
                                 <TouchableOpacity
                                     style={activityStyles.photoButton}
                                     onPress={handleTakePhoto}
@@ -253,7 +226,7 @@ export default function FormDetailProgram({route}: FormActivityProps) {
 
             {/* Competitor Program Section */}
             <Text style={activityStyles.title}>Program Competitor</Text>
-            {activityProgramCompetitor.nameProgramCompetitor.map((_, index) => (
+            {activityProgramCompetitor.map((program,index) => (
             <View style={activityStyles.cardContainer} key={index}>
                 <View style={activityStyles.card}>
                     <TouchableOpacity
@@ -268,29 +241,33 @@ export default function FormDetailProgram({route}: FormActivityProps) {
                         <TextInput
                             style={[activityStyles.input, { flex: 1 }]}
                             placeholder="Nama Program"
-                            value={activityProgramCompetitor.nameProgramCompetitor[index]}
-                            onChangeText={(text) => {handleUpdateProgram(index, 'nameProgramCompetitor', text)
+                            value={program?.name}
+                            onChangeText={(text) => {
+                                const newActivityCompetitor = [...activityProgramCompetitor];
+                                newActivityCompetitor[index].name = text;
+                                setActivityProgramCompetitor(newActivityCompetitor);
                             }}
                         />
                         <Text style={[activityStyles.label, { alignItems: 'flex-end' }]}>Deskripsi Program:</Text>
                         <TextInput
                             style={[activityStyles.input, { flex: 1 }]}
                             placeholder="Deskripsi Program"
-                            value={activityProgramCompetitor.descriptionCompetitor[index]}
+                            value={program?.description}
                             onChangeText={(text) => {
-                                handleUpdateProgram(index, 'descriptionCompetitor', text)
-                            }}
-                        />
+                                const newActivityCompetitor = [...activityProgramCompetitor];
+                                newActivityCompetitor[index].description = text;
+                                setActivityProgramCompetitor(newActivityCompetitor);
+                            }} />
                         <Text style={[activityStyles.label, { alignItems: 'flex-end' }]}>
                             Foto Program Kompetitor (Jika Ada):
                         </Text>
                         {/* Image Section */}
                         <View style={activityStyles.imageContainer}>
                             <Image
-                                source={{ uri: activityProgramCompetitor.photoCompetitor[index] || defaultImage }}
+                                source={{ uri:program.photo || defaultImage }}
                                 style={styles.image}
                             />
-                            {activityProgramCompetitor.photoCompetitor[index] === '' ? (
+                            {program?.photo[index] === '' ? (
                                 <TouchableOpacity
                                     style={activityStyles.photoButton}
                                     onPress={()=>handleTakePhotoCompetitor(index)}
@@ -346,12 +323,14 @@ export default function FormDetailProgram({route}: FormActivityProps) {
                     }}
                     onPress={() => {
                         const missingPhoto = validatePhotos(activityProgram);
+                        insertProgramToSqllite(activityProgramCompetitor);
                         if (missingPhoto) {
                             alert(
                                 `Missing photo for:\nProgram: ${missingPhoto.name}\nDescription: ${missingPhoto.description}`
                             );
                         } else {
-                            goToBrand();
+                            insertProgramToSqllite(activityProgramCompetitor);
+                            // navigation.navigate('FormDetailBrand', {item, activity});
                         }
                     }}
                 >

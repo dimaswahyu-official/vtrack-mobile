@@ -15,6 +15,7 @@ import {AuthStackParamList} from "../navigation/AuthNavigator";
 import {useLoadingStore} from "../store/useLoadingStore";
 import ConstantService from '../services/constantService';
 import useConstantStore from '../store/useConstantStore';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type FormData = {
     email: string;
@@ -26,9 +27,13 @@ export default function LoginScreen() {
     const { setAuthenticated, setUser, setToken, user, isAuthenticated, accessToken } = useAuthStore();
     const navigation = useNavigation<NavigationProp>();
     const [passwordVisible, setPasswordVisible] = useState(false);
-    const { control, handleSubmit, formState: { errors } } = useForm<FormData>();
+    const { control, handleSubmit, formState: { errors },setValue } = useForm<FormData>();
     const { theme } = useThemeStore();
     const {  setLoading } = useLoadingStore();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
+
 
     useEffect(() => {
         const initializeAuthState = async () => {
@@ -36,8 +41,24 @@ export default function LoginScreen() {
             await loadAuthState(useAuthStore.setState);
             setLoading(false);
         };
+        const loadCredentials = async () => {
+            try {
+                const savedEmail = await AsyncStorage.getItem('rememberedEmail');
+                const savedPassword = await AsyncStorage.getItem('rememberedPassword');
+                const savedRememberMe = await AsyncStorage.getItem('rememberMe');
+                if (savedRememberMe === 'true') {
+                    setEmail(savedEmail || '');
+                    setValue('email', savedEmail || '');
+                    setPassword(savedPassword || '');
+                    setRememberMe(true);
+                }
+            } catch (error) {
+                console.error('Failed to load credentials:', error);
+            }
+        };
 
         initializeAuthState();
+        loadCredentials();
     }, [setLoading]);
 
     console.log(`User:${user}`, `isAuthenticated:${isAuthenticated}`, `accessToken:${accessToken}`)
@@ -49,6 +70,17 @@ export default function LoginScreen() {
             try {
                 const response = await AuthServices.login(email, password);
                 if (response.statusCode === 200){
+                    if (rememberMe) {
+                        // Save credentials
+                        await AsyncStorage.setItem('rememberedEmail', data.email);
+                        await AsyncStorage.setItem('rememberedPassword', data.password);
+                        await AsyncStorage.setItem('rememberMe', 'true');
+                    } else {
+                        // Clear credentials
+                        await AsyncStorage.removeItem('rememberedEmail');
+                        await AsyncStorage.removeItem('rememberedPassword');
+                        await AsyncStorage.setItem('rememberMe', 'false');
+                    }
                     setToken(response.data.accessToken);
                     setUser({
                         id: response.data.user.id,
@@ -125,6 +157,7 @@ export default function LoginScreen() {
             <Controller
                 control={control}
                 name="email"
+                defaultValue={email}
                 rules={{
                     required: 'Email is required',
                     pattern: {
@@ -135,9 +168,12 @@ export default function LoginScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
                         placeholder="Email"
-                        value={value}
+                        value={value || email}
                         onBlur={onBlur}
-                        onChangeText={onChange}
+                        onChangeText={(text) => {
+                            onChange(text); // Update react-hook-form value
+                            setEmail(text); // Update local state
+                        }}
                         style={[styles.input, errors.email && { borderColor: 'red' }]}
                     />
                 )}
@@ -164,6 +200,26 @@ export default function LoginScreen() {
                 <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={signInStyles.eyeIcon}>
                     <Icon name={passwordVisible ? 'eye-off' : 'eye'} size={24} color={theme === 'dark' ? '#fff' : '#333'} />
                 </TouchableOpacity>
+            </View>
+
+            <View style={{flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 20,}}>
+                <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} style={{width: 20,
+                    height: 20,
+                    marginRight: 10,}}>
+                    <View style={rememberMe ? { width: 20,
+                        height: 20,
+                        backgroundColor: '#007bff',
+                        borderRadius: 5,} : {width: 20,
+                        height: 20,
+                        backgroundColor: '#fff',
+                        borderWidth: 1,
+                        borderColor: '#ccc',
+                        borderRadius: 5,}} />
+                </TouchableOpacity>
+                <Text style={{ fontSize: 16,
+                    color: '#333',}}>Remember Me</Text>
             </View>
 
             <ButtonComponent
