@@ -14,8 +14,8 @@ export type ActivityStackParamList = {
     Activity2: undefined;
     Activity: undefined;
     FormActivityNormal: { item: any };
-    FormDetailActivity: { item: any};
-    FormDetailSio: { item: any ;  photox: any; activity: any; };
+    FormDetailActivity: { item: any };
+    FormDetailSio: { item: any ; activity: any; };
     FormDetailProgram: { item: any; activity: any;};
     FormDetailBrand: { item: any;activity: any; };
     FormDetailSog: { item: any;activity: any;};

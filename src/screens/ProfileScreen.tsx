@@ -112,9 +112,9 @@ export default function ProfileScreen() {
                     </View>
                     <View style={[styles.row,{width:'100%'}]}>
                         <ButtonComponent
-                            title={'Claim BBM'}
+                            title={'Reimburse'}
                             onPress={() => {
-
+                                navigation.navigate('Reimburse');
                             }}
                             buttonStyle={styles.buttonSync}
                             textStyle={globalStyles.buttonText}

@@ -29,11 +29,8 @@ type FormActivityProps = {
 };
 export default function FormDetailActivity({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item} = route.params || {};
+    const {item } = route.params || {};
     const navigation = useNavigation<NavigationProp>();
-    const [userId, setUserId] = useState('');
-    const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
-    const [photosx, setPhotos] = useState<any | null>(null);
     const [visible, setVisible] = useState(false);
     const activityStyles = ActivityStyles();
     const defaultImage = 'https://via.placeholder.com/100';
@@ -45,24 +42,26 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const [status, setStatus] = useState(defaultStatus);
     const [activityDatas, setActivityDatas] = useState<any>(null);
 
-    useEffect(() => {
-        // Fetch data and update state
-        ActivityRepository.findByCallPlanScheduleId(db, item.id)
-            .then((response) => {
-                console.log("Data retrieved:", response);
-                setActivityDatas(response); // Update state with the fetched data
-            })
-            .catch((error) => {
-                console.error("Error fetching data:", error);
-            });
-    }, [db, callPlanScheduleId]); // Dependencies to ensure useEffect runs when these change
-
 
     useEffect(() => {
-        setUserId(item.user_id);
-        setCallPlanScheduleId(item.id);
-        setStatus(item.status ?? 100);
-    }, [item.id]);
+
+        const fetchActivityData = async () => {
+            try {
+                // Fetch data from the repository
+                const response = await ActivityRepository.findByCallPlanScheduleId(db, item.id);
+
+                if (response && response.length > 0) {
+                    console.log("Data retrieved:", response[0]);
+                    setActivityDatas(response[0]);
+                } else {
+                    console.warn("No activity data found for the given schedule ID:", item.id);
+                }
+            } catch (error) {
+                console.error("Error fetching activity data:", error);
+            }
+        };
+        fetchActivityData();
+    }, [db, item.id]);
 
 
     //PopUp Notification
@@ -101,11 +100,11 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     // insert data after fetching to sqlite
     const insertActivityDB =  async (data: any , image:any) => {
         const activity = {
-            user_id: userId ?? 0,
+            user_id: item.user_id ?? 0,
             call_plan_id: data.call_plan_id ?? 0,
-            call_plan_schedule_id: callPlanScheduleId ?? 0,
+            call_plan_schedule_id: item.id ?? 0,
             outlet_id: data.outlet_id ?? 0,
-            status: status ?? 100,
+            status: status ?? 0,
             area: data?.callPlanOutlet?.area ?? data?.callPlanSurvey?.area ?? '',
             region: data?.callPlanOutlet?.region ?? data?.callPlanSurvey?.region ?? '',
             brand: data?.callPlanOutlet?.brand ?? data?.callPlanSurvey?.brand ?? '',
@@ -122,31 +121,29 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 try {
                     // Insert data and retrieve the newly inserted activity
                     await ActivityRepository.create(db, activity);
-                    const [resultInsert] = await ActivityRepository.findByCallPlanScheduleId(db, callPlanScheduleId);
-                    console.log("Inserted Activity:", resultInsert);
-
+                    const [resultInsert] = await ActivityRepository.findByCallPlanScheduleId(db, item.id);
+                    console.log("Inserted Activity:", resultInsert)
                     // Handle navigation based on status
                     if ([401, 402, 403, 404].includes(status)) {
                         navigation.replace('Activity2'); // Navigate to "Activity2" screen
                     } else {
-                        // navigation.navigate('FormDetailSio', { item, photox: image });
+                        navigation.navigate('FormDetailSio', { item ,activity:resultInsert});
                         console.log('Navigation to FormDetailSio successful');
                     }
                 } catch (error) {
                     console.error("Error while inserting new activity:", error);
                 }
             } else {
-                console.log("masuk" + status);
                 try {
                     // Update the status of the existing activity
                     await ActivityRepository.update(db , activity);
-                    console.log(`Activity already exists for Schedule ID: ${callPlanScheduleId}, with Status: ${status}`);
+                    console.log(`Activity already exists for Schedule ID: ${item.id}, with Status: ${status}`);
 
                     // Handle navigation based on status
                     if ([401, 402, 403, 404].includes(status)) {
                         navigation.replace('Activity2'); // Navigate to "Activity2" screen
                     } else {
-                        navigation.navigate('FormDetailSio', { item, photox: image, activity:activityDatas });
+                        navigation.navigate('FormDetailSio', { item, activity:activityDatas });
                         console.log('Navigation to FormDetailSio successful');
                     }
                 } catch (error) {
@@ -172,10 +169,12 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         });
         if (!response.canceled) {
             // Pass the photo URI to the next page
-            setPhotos(response.assets[0].uri ?? defaultImage)
             await insertActivityDB(item, response.assets[0].uri)
         }
     }
+
+    // console.log(status, "= selected ,", activityDatas.status ,"= root" )
+
 
     return (
         <ScrollView contentContainerStyle={activityStyles.container}>
@@ -243,12 +242,11 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     selectedValue={status}
                                     onValueChange={(itemValue) => {
                                         setStatus(itemValue);
-                                        console.log(status + " STATUS NEW");
-                                    }}>
-                                    {item.type === 1 ? statusOptions.map(([key, value]) => (
-                                        <Picker.Item key={key} label={value} value={String(key)}/>
-                                    )) : statusOptionExist.map(([key, value]) => (
-                                        <Picker.Item key={key} label={value} value={String(key)}/>
+                                        console.log(`${itemValue} STATUS`);
+                                    }}
+                                >
+                                    {(item.type === 1 ? statusOptions : statusOptionExist).map(([key, value]) => (
+                                        <Picker.Item key={key} label={value} value={String(key)} />
                                     ))}
                                 </Picker>
                             </View>
@@ -257,9 +255,10 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 </View>
             </View>
             <TouchableOpacity style={activityStyles.button} onPress={() => {
-                setVisible(true)
+                status == 100 ? navigation.navigate('FormDetailSio', { item, activity:activityDatas }) : setVisible(true)
+
             }}>
-                <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>Checkin</Text>
+                <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>{status == activityDatas?.status && 100 ? 'NEXT' : 'CHECKIN'}</Text>
             </TouchableOpacity>
             {PopupCard()}
         </ScrollView>

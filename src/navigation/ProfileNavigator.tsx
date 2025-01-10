@@ -6,11 +6,13 @@ import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {MainTabParamList} from "./MainNavigator";
 import UpdateProfileForm from "../screens/Profile/UpdateProfileForm";
 import AttendanceScreen from "../screens/Attendance/AttendanceScreen";
+import ReimburseScreen from "../screens/Reimburse/ReimburseScreen";
 // Declare your param list for the Profile stack
 export type ProfileStackParamList = {
     Profile: undefined;
     UpdateProfile: { profile: { name: string; email: string; photo: string; } };
     Attendance: { profile: { name: string; email: string; photo: string; } };
+    Reimburse: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -47,6 +49,11 @@ const ProfileNavigator = () => {
             <Stack.Screen
                 name="Attendance"
                 component={AttendanceScreen}
+                options={{headerTitle: ''}}
+            />
+            <Stack.Screen
+                name="Reimburse"
+                component={ReimburseScreen}
                 options={{headerTitle: ''}}
             />
 
