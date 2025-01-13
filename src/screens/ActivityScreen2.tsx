@@ -1,11 +1,8 @@
 // Get screen dimensions
 import {
-	Alert,
 	Animated,
-	BackHandler,
 	Dimensions,
 	FlatList,
-	Image,
 	Linking,
 	RefreshControl,
 	StyleSheet,
@@ -165,13 +162,11 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			const activityStatusMap = new Map(
 				dataActivity.map(activity => [activity.call_plan_schedule_id, activity.status])
 			);
-            console.log(activityStatusMap);
 			// Merge API data with local status updates
 			const updatedData = data.map((item) => {
 				const localStatus = activityStatusMap.get(item.id);
 				return localStatus ? { ...item, status: localStatus } : item;
 			});
-			console.log(JSON.stringify(updatedData));
 			// Update state with merged data
 			setActivities(updatedData);
 
@@ -280,10 +275,9 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 								{item.type === 1 ? 'Outlet Baru, ' : ''}
 								{getStatusLabel(item.status as any)}
 							</Text>
-							{/*<View style={[styles.row, {marginTop: height * 0.01, alignItems: 'center'}]}>*/}
 							<TouchableOpacity
 								style={styles.buttonWork}
-								onPress={() => openMaps('-6.198453', '106.802473')}>
+								onPress={() => openMaps(item.callPlanOutlet?.longitude ?? '', item.callPlanOutlet?.latitude ?? '')}>
 								<MaterialCommunityIcons
 									name="google-maps"
 									size={22}
@@ -299,7 +293,6 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 									color={Colors.buttonBackground}
 								/>
 							</TouchableOpacity>
-							{/*</View>*/}
 						</View>
 					</View>
 				</Animated.View>

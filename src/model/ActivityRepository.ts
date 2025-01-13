@@ -20,6 +20,8 @@ interface Activity {
 	photo: string;
 	is_sync: number;
 	id_server: number;
+	photo_program?: string;
+	sale_outlet_weekly?: number;
 }
 
 interface ActivityDetail {
@@ -38,6 +40,8 @@ interface ActivityDetail {
 	photo: string;
 	is_sync: number;
 	id_server: number;
+	photo_program?: string;
+	sale_outlet_weekly?: number;
 	activity_sio?: ActivitySio[];
 	activity_sog?: ActivitySog[];
 	activity_branch?: ActivityBranch[];
@@ -65,6 +69,8 @@ export const createTableActivity = async (
             start_time TEXT NOT NULL,
             end_time TEXT NOT NULL,
             photo TEXT NOT NULL,
+			photo_program TEXT,
+			sale_outlet_weekly INTEGER DEFAULT 0,
             is_sync INTEGER DEFAULT 0,
             id_server INTEGER
         )
@@ -89,27 +95,31 @@ export const ActivityRepository = {
 			start_time,
 			end_time,
 			photo,
+			photo_program,
+			sale_outlet_weekly,
 			is_sync,
 			id_server,
 		} = params;
 		const result = await db.runAsync(
-			`INSERT INTO Activity (user_id, call_plan_id, call_plan_schedule_id, outlet_id, status, area, region, brand, type_sio, start_time, end_time, photo, is_sync, id_server)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO Activity (user_id, call_plan_id, call_plan_schedule_id, outlet_id, status, area, region, brand, type_sio, start_time, end_time, photo, photo_program, sale_outlet_weekly, is_sync, id_server)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
-				user_id,
-				call_plan_id,
-				call_plan_schedule_id,
-				outlet_id,
-				status,
-				area,
-				region,
-				brand,
-				type_sio,
-				start_time,
-				end_time,
-				photo,
-				is_sync,
-				id_server,
+				user_id ?? 0,
+				call_plan_id ?? 0,
+				call_plan_schedule_id ?? 0,
+				outlet_id ?? 0,
+				status ?? 0,
+				area ?? '',
+				region ?? '',
+				brand ?? '',
+				type_sio ?? '',
+				start_time ?? '',
+				end_time ?? '',
+				photo ?? '',
+				photo_program ?? '',
+				sale_outlet_weekly ?? 0,
+				is_sync ?? 0,
+				id_server ?? 0,
 			]
 		);
 		return result.lastInsertRowId;
@@ -151,8 +161,8 @@ export const ActivityRepository = {
 		return result;
 	},
 
-    getAll: async (db: SQLite.SQLiteDatabase): Promise<Activity[]> => {
-        const result = await db.getAllAsync<Activity>(`SELECT * FROM Activity`);
-        return result;
-    }
+	getAll: async (db: SQLite.SQLiteDatabase): Promise<Activity[]> => {
+		const result = await db.getAllAsync<Activity>(`SELECT * FROM Activity`);
+		return result;
+	},
 };

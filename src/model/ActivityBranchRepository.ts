@@ -64,12 +64,12 @@ export const ActivityBranchModel = {
 		db: SQLite.SQLiteDatabase,
 		params: ActivityBranchUpdateParams
 	): Promise<void> => {
-		if (!params.call_plan_schedule_id) {
-			throw new Error('call_plan_schedule_id is required for update');
+		if (!params.id) {
+			throw new Error('id is required for update');
 		}
 
 		const entries = Object.entries(params).filter(
-			([key]) => key !== 'call_plan_schedule_id'
+			([key]) => key !== 'id'
 		);
 
 		if (entries.length === 0) {
@@ -80,8 +80,8 @@ export const ActivityBranchModel = {
 		const values = entries.map(([_, value]) => value);
 
 		await db.runAsync(
-			`UPDATE ActivityBranch SET ${fields} WHERE call_plan_schedule_id = ?`,
-			[...values, params.call_plan_schedule_id]
+			`UPDATE ActivityBranch SET ${fields} WHERE id = ?`,
+			[...values, params.id]
 		);
 	},
 

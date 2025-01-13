@@ -17,7 +17,7 @@ export const createTableActivityProgram = async (db: SQLite.SQLiteDatabase): Pro
         CREATE TABLE IF NOT EXISTS ActivityProgram (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             call_plan_schedule_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
+            name TEXT,
             photo TEXT,
             description TEXT,
             FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity(call_plan_schedule_id)
@@ -61,12 +61,12 @@ export const ActivityProgramModel = {
 		db: SQLite.SQLiteDatabase,
 		params: ActivityProgramUpdateParams
 	): Promise<void> => {
-		if (!params.call_plan_schedule_id) {
-			throw new Error('call_plan_schedule_id is required for update');
+		if (!params.id) {
+			throw new Error('id is required for update');
 		}
 
 		const entries = Object.entries(params).filter(
-			([key]) => key !== 'call_plan_schedule_id'
+			([key]) => key !== 'id'
 		);
 
 		if (entries.length === 0) {
@@ -77,8 +77,8 @@ export const ActivityProgramModel = {
 		const values = entries.map(([_, value]) => value);
 
 		await db.runAsync(
-			`UPDATE ActivityProgram SET ${fields} WHERE call_plan_schedule_id = ?`,
-			[...values, params.call_plan_schedule_id]
+			`UPDATE ActivityProgram SET ${fields} WHERE id = ?`,
+			[...values, params.id]
 		);
 	},
 
@@ -89,4 +89,8 @@ export const ActivityProgramModel = {
 		);
 		return result;
 	},
+
+    delete: async (db: SQLite.SQLiteDatabase, id: number): Promise<void> => {
+        await db.runAsync(`DELETE FROM ActivityProgram WHERE id = ?`, [id]);
+    },
 }

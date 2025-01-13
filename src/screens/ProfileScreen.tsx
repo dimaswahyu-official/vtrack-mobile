@@ -56,7 +56,7 @@ export default function ProfileScreen() {
 
         // Clear auth and show success toast
         clearAuth();
-        // clearConstants();
+        clearConstants();
 
         // Set a timeout to stop the loading after 2 seconds (2000ms)
         setTimeout(() => {

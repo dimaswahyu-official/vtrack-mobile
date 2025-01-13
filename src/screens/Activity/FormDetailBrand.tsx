@@ -14,42 +14,27 @@ type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailBrand'
 type FormActivityProps = {
     route: FormActivityRouteProp;
 };
-// Define the Brand type
-type Brand = {
-    brand: string;
-    created_at: string;
-    created_by: string | null;
-    deleted_at: string | null;
-    deleted_by: string | null;
-    id: number;
-    sog: string[];
-    updated_at: string;
-};
 
 export default function FormDetailBrand({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const {item, activity} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
-    const [isFullActivity, setIsFullActivity] = useState(false);
-    const [userId, setUserId] = useState(1);
-    const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
-    const [callPlanId, setCallPlanId] = useState(1);
-    const [outletId, setOutletId] = useState(1);
-    const [status, setStatus] = useState(0);
-    const [brand, setBrand] = useState<Brand | null>(null);
-    const [area, setArea] = useState('Area A');
+    const [brand, setBrand] = useState< [] | null>(null);
     const [saleOutletWeekly, setSaleOutletWeekly] = useState(0);
-    const [region, setRegion] = useState('Region X');
-    const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
-    const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
 
     const [activityBrand, setActivityBrand] = useState<{
-        activity_id: number;
+        id?: number;
+        call_plan_schedule_id: number;
         name: string;
         value: number;
         description: string;
         notes: string;
     }[]>([]);
+
+    const {brands} = useConstantStore();
+    console.log('brands',brands)
+
+
     const footer = () => {
         return (
             <View style={{
@@ -82,61 +67,47 @@ export default function FormDetailBrand({route}: FormActivityProps) {
         )
     }
 
-    const {brands} = useConstantStore();
-
     useEffect(() => {
-        setUserId(item.user_id);
-        setCallPlanScheduleId(item.id);
-        setCallPlanId(item.call_plan_id);
-        setOutletId(item.outlet_id);
-        setStatus(item.status);
-        setArea(item.callPlanOutlet?.area);
-        setRegion(item.callPlanOutlet?.region);
-        setStartTime(item.start_time);
-        setEndTime(item.end_time);
-        setBrand(item.callPlanOutlet?.brand);
-        if (brands.length > 0) {
-            if (item.callPlanOutlet != null) {
-                const filteredBrand = brands.filter(b => b.brand === item.callPlanOutlet.brand);
-                setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
-                if (filteredBrand.length > 0) {
-                    setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
-                        activity_id: activity.call_plan_schedule_id,
-                        name: filteredBrand[0].branch[0],
-                        value: 0,
-                        description: '',
-                        notes: '',
-                    })));
-                }
-            } else {
-                const filteredBrand = brands.filter(b => b.brand === item.callPlanSurvey.brand);
-                setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
-                if (filteredBrand.length > 0) {
-                    setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
-                        activity_id: activity.call_plan_schedule_id,
-                        name: filteredBrand[0].branch[0],
-                        value: 0,
-                        description: '',
-                        notes: '',
-                    })));
-                }
-            }
+        // Set initial brand from outlet or survey
+        const brandSource = item.callPlanOutlet?.brand || item.callPlanSurvey?.brand;
+        setBrand(brandSource);
 
+        if (brands.length === 0) return;
+
+        // Find matching brand
+        const filteredBrand = brands.find(b => b.brand === brandSource);
+        if (!filteredBrand) {
+            setBrand(null);
+            return;
         }
-    }, [item.id]);
+
+        setBrand(filteredBrand);
+
+        // Create activity brands array if branches exist
+        const branchCount = filteredBrand.branch?.length;
+        if (branchCount) {
+            const newActivityBrands = filteredBrand.branch.map((branchName: string) => ({
+                call_plan_schedule_id: activity.call_plan_schedule_id,
+                name: branchName,
+                value: 0,
+                description: '',
+                notes: ''
+            }));
+            setActivityBrand(newActivityBrands);
+        }
+
+    }, [item.id, brands, activity.call_plan_schedule_id]);
 
     const insertBrandToSqlite = async (data: any) => {
-        // If the input is an array, loop through and process each item
         if (Array.isArray(data)) {
             data.forEach((activity: any) => {
-                insertBrandToSqlite(activity); // Call the function for each individual item
+                insertBrandToSqlite(activity);
             });
             console.log('You have total Data to Insert Brand = ' + data.length);
-            return; // Exit after processing the array
+            return;
         }
-        // If the input is a single object, process it
         const brandData = {
-            activity_id: activity.call_plan_schedule_id,
+            call_plan_schedule_id: activity.call_plan_schedule_id,
             name: data.name,
             description: data.description ?? '',
             notes: data.notes ?? '',
@@ -161,23 +132,24 @@ export default function FormDetailBrand({route}: FormActivityProps) {
 
 
     const [collapsedStates, setCollapsedStates] = useState<boolean[]>(
-        Array(brands.length).fill(false) // Initialize all items as collapsed
+        Array(brands.length).fill(false)
     );
+
+
     const toggleCollapse = (index: number) => {
         setCollapsedStates((prevStates) => {
             const newStates = [...prevStates];
-            newStates[index] = !newStates[index]; // Toggle the specific index
+            newStates[index] = !newStates[index];
             return newStates;
         });
     };
     if (!Array.isArray(activityBrand)) {
         console.warn('activityBrand is not an array:', activityBrand);
-        return null; // or return a fallback UI
+        return null;
     }
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-
             <View style={[styles.cardContainer]}>
                 <View style={styles.card}>
                     <View>
@@ -203,12 +175,11 @@ export default function FormDetailBrand({route}: FormActivityProps) {
             {activityBrand?.map((brand, index) => (
                     <TouchableOpacity
                         key={index}
-                        onPress={() => toggleCollapse(index)} // Toggle collapse when the card is pressed
-                        activeOpacity={0.8} // Add a slight opacity effect when pressed
+                        onPress={() => toggleCollapse(index)}
+                        activeOpacity={0.8}
                         style={styles.cardContainer}
                     >
                         <View style={styles.card}>
-                            {/* Toggle Button as Icon */}
                             <Text style={styles.toggleText}>
                                 {brand.name}
                             </Text>
@@ -224,7 +195,6 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                             </TouchableOpacity>
                             {!collapsedStates[index] && (
                                 <View style={styles.cardContent}>
-                                    {/* Text Fields */}
                                     <View>
                                         <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>Total
                                             (/Bungkus)
@@ -284,8 +254,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     image: {
-        width: Dimensions.get('window').width, // Full width of the screen
-        height: 200, // Adjust height as needed
+        width: Dimensions.get('window').width,
+        height: 200,
     },
     title: {
         fontSize: 20,
@@ -302,19 +272,19 @@ const styles = StyleSheet.create({
     toggleText: {
         fontSize: 14,
         color: '#333',
-        marginRight: 4, // Space between text and icon
+        marginRight: 4,
     },
     card: {
         width: width - 40,
         backgroundColor: '#fff',
         borderRadius: 8,
         padding: 16,
-        elevation: 4, // Shadow for Android
-        shadowColor: '#000', // Shadow for iOS
+        elevation: 4,
+        shadowColor: '#000',
         shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        position: 'relative', // Required for positioning the icon
+        position: 'relative',
     },
     iconButton: {
         position: 'absolute',
@@ -323,7 +293,7 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
     cardContent: {
-        marginTop: 8, // Space below the toggle button
+        marginTop: 8,
     },
     row: {
         width: '100%',
@@ -337,7 +307,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
         marginRight: 8,
-        textTransform: 'capitalize', // Capitalize keys like "name", "age"
+        textTransform: 'capitalize',
     },
     value: {
         fontSize: 16,
@@ -389,11 +359,6 @@ const styles = StyleSheet.create({
         padding: 10,
         backgroundColor: '#f9f9f9',
     },
-    // label: {
-    //     fontSize: 16,
-    //     marginBottom: 10,
-    //     color: '#333',
-    // },
     dropdownButton: {
         padding: 15,
         borderRadius: 8,

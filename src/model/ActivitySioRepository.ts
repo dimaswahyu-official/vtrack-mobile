@@ -80,12 +80,12 @@ export const ActivitySioModel = {
 		db: SQLite.SQLiteDatabase,
 		params: ActivitySioUpdateParams
 	): Promise<void> => {
-		if (!params.call_plan_schedule_id) {
-			throw new Error('call_plan_schedule_id is required for update');
+		if (!params.id) {
+			throw new Error('id is required for update');
 		}
 
 		const entries = Object.entries(params).filter(
-			([key]) => key !== 'call_plan_schedule_id'
+			([key]) => key !== 'id'
 		);
 
 		if (entries.length === 0) {
@@ -96,8 +96,8 @@ export const ActivitySioModel = {
 		const values = entries.map(([_, value]) => value);
 
 		await db.runAsync(
-			`UPDATE ActivitySio SET ${fields} WHERE call_plan_schedule_id = ?`,
-			[...values, params.call_plan_schedule_id]
+			`UPDATE ActivitySio SET ${fields} WHERE id = ?`,
+			[...values, params.id]
 		);
 	},
 
@@ -109,6 +109,14 @@ export const ActivitySioModel = {
 			`SELECT * FROM ActivitySio WHERE call_plan_schedule_id = ?`,
 			[call_plan_schedule_id]
 		);
+		return result;
+	},
+
+	findById: async (
+		db: SQLite.SQLiteDatabase,
+		id: number
+	): Promise<ActivitySio[]> => {
+		const result = await db.getAllAsync<ActivitySio>(`SELECT * FROM ActivitySio WHERE id = ?`, [id]);
 		return result;
 	},
 };

@@ -45,7 +45,8 @@ const useConstantStore = create<ConstantState>((set) => ({
     clearConstants: async () => {
         await AsyncStorage.removeItem('brands');
         await AsyncStorage.removeItem('sio');
-        set({ brands: [], sio: [] });
+        await AsyncStorage.removeItem('sog');
+        set({ brands: [], sio: [], sog: [] });
     },
 }));
 

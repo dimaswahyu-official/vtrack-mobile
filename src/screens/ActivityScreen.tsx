@@ -108,7 +108,7 @@ export default function ActivityScreen() {
 
     const initializeDatabase = async () => {
         await createTableActivity(db);
-        // await ActivityModel.clear(db);
+        await ActivityModel.clear(db);
     };
     useEffect(() => {
         initializeDatabase();
@@ -119,7 +119,6 @@ export default function ActivityScreen() {
     }, [isOnline, isWifi]);
 
     const toggleSelection = (id: number) => {
-        console.log(id);
     };
 
     const openMaps = (latitude: string, longitude: string) => {

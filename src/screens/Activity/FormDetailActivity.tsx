@@ -42,19 +42,13 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const [status, setStatus] = useState(defaultStatus);
     const [activityDatas, setActivityDatas] = useState<any>(null);
 
-    console.log("statusOptions",statusOptions);
-    console.log("statusOptionExist",statusOptionExist);
-    console.log("status",status);
-
 
     useEffect(() => {
 
         const fetchActivityData = async () => {
             try {
                 const response = await ActivityRepository.findByCallPlanScheduleId(db, item.id);
-                console.log("masuk fetchActivityData");
                 if (response && response.length > 0) {
-                    console.log("Data retrieved:", response[0]);
                     setActivityDatas(response[0]);
                     setStatus(response[0].status);
                 } else {
@@ -118,6 +112,8 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             photo: image ?? '',
             is_sync: 0,
             id_server: 0,
+            photo_program: '',
+            sale_outlet_weekly: 0,
         };
 
         try {
@@ -135,7 +131,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             // Check if activity exists
             const existingActivity = await ActivityRepository.findByCallPlanScheduleId(db, item.id);
             const activityExists = existingActivity && existingActivity.length > 0;
-            console.log("activityExists",activityExists);
             if (!activityExists) {
                 // Create new activity
                 await ActivityRepository.create(db, activity);
@@ -149,7 +144,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
 
             } else {
                 // Update existing activity
-                console.log("masuk update existing activity");
                 await ActivityRepository.update(db, {
                     ...activity,
                     call_plan_schedule_id: item.id
@@ -170,9 +164,9 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             navigation.replace('Activity2');
         } else {
             navigation.navigate('FormDetailSio', { item, activity });
-            console.log('Navigation to FormDetailSio successful');
         }
     }
+
     const handleTakePhoto = async () => {
         // Request camera permissions
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -257,7 +251,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     selectedValue={String(status)}
                                     onValueChange={(itemValue) => {
                                         setStatus(Number(itemValue));
-                                        console.log(`${itemValue} STATUS`);
                                     }}
                                 >
                                     {(item.type === 1 ? statusOptions : statusOptionExist).map(([key, value]) => (

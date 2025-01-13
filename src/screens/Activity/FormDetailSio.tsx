@@ -25,20 +25,8 @@ type NavigationProp = StackNavigationProp<
 	'FormDetailSio'
 >;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailSio'>;
-const activityStyles = ActivityStyles();
 type FormActivityProps = {
 	route: FormActivityRouteProp;
-};
-
-// Define the SioType type
-type SioType = {
-	sioTypeGalery: {
-		id: number;
-		name: string;
-		photo: string;
-	}[];
-	id: number;
-	name: string;
 };
 
 export default function FormDetailSio({ route }: FormActivityProps) {
@@ -50,6 +38,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 
 	const [activitySio, setActivitySio] = useState<
 		{
+			id?: number;
 			call_plan_schedule_id: number;
 			name: string;
 			description: string;
@@ -62,6 +51,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 
 	const initializeActivitySio = (
 		data: Partial<{
+			id?: number;
 			call_plan_schedule_id: number;
 			name: string;
 			description: string;
@@ -72,6 +62,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 		}>[]
 	) => {
 		const initializedData = data.map((item) => ({
+			id: item.id ?? 0,
 			call_plan_schedule_id: item.call_plan_schedule_id ?? 0,
 			name: item.name ?? '',
 			description: item.description ?? '',
@@ -139,9 +130,8 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 			db,
 			activity?.call_plan_schedule_id
 		).then((response) => {
-			console.log('response model', response);
 			if (!response || response.length === 0) {
-				console.log('No data found for the given schedule ID.');
+				console.info('No data found for the given schedule ID.');
 				dataSioFiltered();
 			} else {
 				initializeActivitySio(response);
@@ -291,44 +281,15 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 	};
 
 	const insertSioToSqlite = async (data: any) => {
-		// If the input is an array, loop through and process each item
-		if (Array.isArray(data)) {
-			data.forEach((activity: any) => {
-				insertSioToSqlite(activity); // Call the function for each individual item
-			});
-			console.log('You have total Data to Insert Sio = ' + data.length);
-			return;
-		}
-		const sioData = {
-			call_plan_schedule_id: activity.call_plan_schedule_id ?? 0,
-			name: data.name,
-			description: data.description ?? '',
-			notes: data.notes ?? '',
-			photo: data.photo ?? '',
-			photo_before: data.photo_before ?? '',
-			photo_after: data.photo_after ?? '',
-		};
 		try {
-			const response = await ActivitySioModel.findByCallPlanScheduleId(
-				db,
-				activity.call_plan_schedule_id
-			);
-			if (!response || (await response).length === 0) {
-				try {
-					// Insert data and retrieve the newly inserted activity
-					await ActivitySioModel.create(db, sioData);
-				} catch (error) {
-					console.error('Error handling activity:', error);
+			data.forEach((sio: any) => {
+				if (sio.id) {
+					ActivitySioModel.update(db, sio);
+				} else {
+					ActivitySioModel.create(db, sio);
 				}
-			} else {
-				await ActivitySioModel.update(db, sioData);
-				console.log(
-					'Sio already exists for the activityID:',
-					activity.call_plan_schedule_id
-				);
-			}
+			});
 
-			// console.log(JSON.stringify(sioData) + "Data Sio")
 			navigation.navigate('FormDetailProgram', { item, activity });
 		} catch (error) {
 			console.error('Error inserting sio:', error);
