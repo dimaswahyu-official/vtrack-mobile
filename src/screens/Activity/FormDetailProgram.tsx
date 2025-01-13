@@ -26,13 +26,14 @@ export default function FormDetailProgram({route}: FormActivityProps) {
     const navigation = useNavigation<NavigationProp>();
     const activityStyles = ActivityStyles();
     const defaultImage = 'https://via.placeholder.com/100';
-    const [activityProgram, setActivityProgram] = useState<{
-        activity_id: number;
-        nameProgram: string;
-        description: string;
-        photo: string
-    }[]>([]);
+    type ActivityProgram = {
+        activity_id?: number;
+        nameProgram?: string;
+        description?: string;
+        photo?: string;
+    };
 
+    const [activityProgram, setActivityProgram] = useState<ActivityProgram>({});
 
     const [activityProgramCompetitor, setActivityProgramCompetitor] = useState<
         { name: string; photo: string; description: string }[]
@@ -104,8 +105,8 @@ export default function FormDetailProgram({route}: FormActivityProps) {
         });
 
         if (!result.canceled) {
-            const newActivityProgram = [...activityProgram];
-            newActivityProgram[0].photo = result.assets[0].uri;
+            const newActivityProgram = {...activityProgram};
+            newActivityProgram.photo = result.assets[0].uri;
             setActivityProgram(newActivityProgram);
         }
     };
@@ -125,6 +126,10 @@ export default function FormDetailProgram({route}: FormActivityProps) {
         });
 
         if (!result.canceled) {
+            const newActivityProgram = [...activityProgramCompetitor];
+            newActivityProgram[index].photo = result.assets[0].uri;
+            setActivityProgramCompetitor(newActivityProgram);
+
             setActivityProgramCompetitor((prev) =>
                 prev.map((program, i) =>
                     i === index ? { ...program, photo: result.assets[0].uri } : program
@@ -134,8 +139,8 @@ export default function FormDetailProgram({route}: FormActivityProps) {
     };
 
     const handleClearPhoto = () => {
-        const newActivityProgram = [...activityProgram];
-        newActivityProgram[0].photo = '';
+        const newActivityProgram = {...activityProgram};
+        newActivityProgram.photo = '';
         setActivityProgram(newActivityProgram);
     };
 
@@ -146,7 +151,6 @@ export default function FormDetailProgram({route}: FormActivityProps) {
     };
 
     const insertProgramToSqllite = async (data: any) => {
-        console.log(JSON.stringify(data)+"yuyu")
         // If the input is an array, loop through and process each item
         if (Array.isArray(data)) {
             data.forEach((program: any) => {
@@ -200,10 +204,10 @@ export default function FormDetailProgram({route}: FormActivityProps) {
                         {/* Image Section */}
                         <View style={activityStyles.imageContainer}>
                             <Image
-                                source={{ uri: activityProgram[0]?.photo || defaultImage }}
+                                source={{ uri: activityProgram?.photo || defaultImage }}
                                 style={styles.image}
                             />
-                            {activityProgram[0]?.photo == '' ? (
+                            {!activityProgram.photo ? (
                                 <TouchableOpacity
                                     style={activityStyles.photoButton}
                                     onPress={handleTakePhoto}
@@ -267,7 +271,7 @@ export default function FormDetailProgram({route}: FormActivityProps) {
                                 source={{ uri:program.photo || defaultImage }}
                                 style={styles.image}
                             />
-                            {program?.photo[index] === '' ? (
+                            {!program?.photo[index] ? (
                                 <TouchableOpacity
                                     style={activityStyles.photoButton}
                                     onPress={()=>handleTakePhotoCompetitor(index)}
@@ -322,16 +326,18 @@ export default function FormDetailProgram({route}: FormActivityProps) {
                         backgroundColor: Colors.buttonBackground,
                     }}
                     onPress={() => {
-                        const missingPhoto = validatePhotos(activityProgram);
-                        insertProgramToSqllite(activityProgramCompetitor);
-                        if (missingPhoto) {
-                            alert(
-                                `Missing photo for:\nProgram: ${missingPhoto.name}\nDescription: ${missingPhoto.description}`
-                            );
-                        } else {
-                            insertProgramToSqllite(activityProgramCompetitor);
-                            // navigation.navigate('FormDetailBrand', {item, activity});
-                        }
+                        navigation.navigate('FormDetailBrand', {item, activity});
+
+                        //     const missingPhoto = validatePhotos(activityProgram);
+                    //     insertProgramToSqllite(activityProgramCompetitor);
+                    //     if (missingPhoto) {
+                    //         alert(
+                    //             `Missing photo for:\nProgram: ${missingPhoto.name}\nDescription: ${missingPhoto.description}`
+                    //         );
+                    //     } else {
+                    //         insertProgramToSqllite(activityProgramCompetitor);
+                    //         navigation.navigate('FormDetailBrand', {item, activity});
+                    //     }
                     }}
                 >
                     <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Next</Text>

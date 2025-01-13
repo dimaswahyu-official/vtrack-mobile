@@ -28,7 +28,7 @@ type Brand = {
 
 export default function FormDetailBrand({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item, idx} = route.params || {};
+    const {item, activity} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const [isFullActivity, setIsFullActivity] = useState(false);
     const [userId, setUserId] = useState(1);
@@ -38,26 +38,46 @@ export default function FormDetailBrand({route}: FormActivityProps) {
     const [status, setStatus] = useState(0);
     const [brand, setBrand] = useState<Brand | null>(null);
     const [area, setArea] = useState('Area A');
+    const [saleOutletWeekly, setSaleOutletWeekly] = useState(0);
     const [region, setRegion] = useState('Region X');
     const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
     const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
+
     const [activityBrand, setActivityBrand] = useState<{
         activity_id: number;
         name: string;
         value: number;
         description: string;
-        notes: string
+        notes: string;
     }[]>([]);
     const footer = () => {
         return (
-            <View style={{flexDirection: 'row', justifyContent: 'center',marginVertical:8, alignItems: 'center', padding: 8,}}>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                marginVertical: 8,
+                alignItems: 'center',
+                padding: 8,
+            }}>
+                <View style={{
+                    width: 10,
+                    height: 10,
+                    borderWidth: 0.5,
+                    borderRadius: 5,
+                    backgroundColor: Colors.buttonBackground,
+                }}/>
                 <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: Colors.buttonBackground,}}/>
+                <View style={{
+                    width: 10,
+                    height: 10,
+                    borderWidth: 0.5,
+                    borderRadius: 5,
+                    backgroundColor: Colors.buttonBackground,
+                }}/>
                 <View style={{width: 50, height: 2, backgroundColor: 'grey', marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
-                <View style={{width: 50, height: 2,  backgroundColor: 'grey', marginHorizontal: 8,}}/>
-                <View style={{width: 10, height: 10,borderWidth:0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+                <View style={{width: 10, height: 10, borderWidth: 0.5, borderRadius: 5, backgroundColor: 'white',}}/>
+                <View style={{width: 50, height: 2, backgroundColor: 'grey', marginHorizontal: 8,}}/>
+                <View style={{width: 10, height: 10, borderWidth: 0.5, borderRadius: 5, backgroundColor: 'white',}}/>
             </View>
         )
     }
@@ -81,23 +101,23 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                 setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
                 if (filteredBrand.length > 0) {
                     setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
-                        activity_id: idx,
+                        activity_id: activity.call_plan_schedule_id,
                         name: filteredBrand[0].branch[0],
                         value: 0,
                         description: '',
-                        notes: ''
+                        notes: '',
                     })));
                 }
-            }else{
+            } else {
                 const filteredBrand = brands.filter(b => b.brand === item.callPlanSurvey.brand);
                 setBrand(filteredBrand.length > 0 ? filteredBrand[0] : {});
                 if (filteredBrand.length > 0) {
                     setActivityBrand(Array.from({length: filteredBrand[0].branch.length}, (_, i) => ({
-                        activity_id: idx,
+                        activity_id: activity.call_plan_schedule_id,
                         name: filteredBrand[0].branch[0],
                         value: 0,
                         description: '',
-                        notes: ''
+                        notes: '',
                     })));
                 }
             }
@@ -116,15 +136,15 @@ export default function FormDetailBrand({route}: FormActivityProps) {
         }
         // If the input is a single object, process it
         const brandData = {
-            activity_id: idx,
+            activity_id: activity.call_plan_schedule_id,
             name: data.name,
             description: data.description ?? '',
             notes: data.notes ?? '',
-            value: data.value,
+            value: data.value
         }
         try {
             console.log(JSON.stringify(brandData) + " Data Brand")
-            navigation.navigate('FormDetailSog', {item,idx});
+            navigation.navigate('FormDetailSog', {item, activity});
             // Uncomment this line to insert data into SQLite
             // await SioModel.create(db, sioData);
         } catch (error) {
@@ -157,14 +177,36 @@ export default function FormDetailBrand({route}: FormActivityProps) {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>Penjualan Brand</Text>
+
+            <View style={[styles.cardContainer]}>
+                <View style={styles.card}>
+                    <View>
+                        <Text style={[styles.label, {alignItems: 'flex-end', marginBottom: 8}]}>Total Penjualan Outlet / Minggu</Text>
+                        <View style={styles.row}>
+                            <TextInput
+                                style={[styles.input, {flex: 1}]}
+                                placeholder="0"
+                                value={''}
+                                keyboardType="numeric"
+                                onChangeText={(text) => {
+                                    setSaleOutletWeekly(Number(text))
+                                }}
+                            />
+                            <Text style={[styles.label,{textAlign:'center', alignItems:'center' , justifyContent:'center'}]}> / Bungkus</Text>
+                        </View>
+
+                    </View>
+                </View>
+            </View>
+
+            <Text style={styles.title}>Stock Brand</Text>
             {activityBrand?.map((brand, index) => (
-                <TouchableOpacity
-                    key={index}
-                    onPress={() => toggleCollapse(index)} // Toggle collapse when the card is pressed
-                    activeOpacity={0.8} // Add a slight opacity effect when pressed
-                    style={styles.cardContainer}
-                >
+                    <TouchableOpacity
+                        key={index}
+                        onPress={() => toggleCollapse(index)} // Toggle collapse when the card is pressed
+                        activeOpacity={0.8} // Add a slight opacity effect when pressed
+                        style={styles.cardContainer}
+                    >
                         <View style={styles.card}>
                             {/* Toggle Button as Icon */}
                             <Text style={styles.toggleText}>
@@ -175,7 +217,7 @@ export default function FormDetailBrand({route}: FormActivityProps) {
                                 style={styles.iconButton}
                             >
                                 <MaterialIcons
-                                    name={collapsedStates[index] ?'keyboard-arrow-down' : 'keyboard-arrow-up'}
+                                    name={collapsedStates[index] ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
                                     size={24}
                                     color="#333"
                                 />
@@ -207,11 +249,25 @@ export default function FormDetailBrand({route}: FormActivityProps) {
             )
             }
             <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16,}}>
-                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.secondaryColor}}
+                <TouchableOpacity style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    marginHorizontal: 8,
+                    backgroundColor: Colors.secondaryColor
+                }}
                                   onPress={() => navigation.goBack()}>
                     <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Back</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 8, backgroundColor: Colors.buttonBackground}} onPress={goToSog}>
+                <TouchableOpacity style={{
+                    flex: 1,
+                    padding: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    marginHorizontal: 8,
+                    backgroundColor: Colors.buttonBackground
+                }} onPress={goToSog}>
                     <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16,}}>Next</Text>
                 </TouchableOpacity>
             </View>

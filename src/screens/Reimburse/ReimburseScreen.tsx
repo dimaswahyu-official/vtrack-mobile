@@ -1,7 +1,10 @@
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import {Dimensions, ScrollView, Text, StyleSheet, TouchableOpacity, View, FlatList} from "react-native";
 import Colors from "../../utils/Colors";
-import React from "react";
+import React, {useEffect} from "react";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import ReimburseService from "../../services/reimburseService";
+import {useAuthStore} from "../../store/useAuthStore";
 
 const {width, height} = Dimensions.get("window");
 
@@ -9,30 +12,47 @@ const {width, height} = Dimensions.get("window");
 type RootStackParamList = {
     Profile: undefined;
     Reimburse: undefined;
+    ReimburseDetails: undefined;
 };
 
 type ReimburseScreenProps = NativeStackScreenProps<
     RootStackParamList,
-    "Reimburse"
+    "Reimburse",
+    'ReimburseDetails'
 >;
 
-export default function ReimburseScreen({
-                                            navigation,
-                                        }: ReimburseScreenProps) {
+export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
+    const {user} = useAuthStore();
+
+    useEffect(() => {
+        // const response = ReimburseService.getReimburseBbmList(idUser)
+    }, []);
 
     const data = [
-        {id: '1', date: '2025-01-01', name: 'John Doe', status: 'Active'},
-        {id: '2', date: '2025-01-02', name: 'Jane Smith', status: 'Inactive'},
-        {id: '3', date: '2025-01-03', name: 'Sam Wilson', status: 'Active'},
-        {id: '4', date: '2025-01-04', name: 'Alex Johnson', status: 'Pending'},
-        {id: '5', date: '2025-01-05', name: 'Chris Lee', status: 'Active'},
+        {id: '1', date: '2025-01-01',  status: 'Draft'},
+        {id: '2', date: '2025-01-02',  status: 'Complete'},
+        {id: '3', date: '2025-01-03',  status: 'Complete'},
+        {id: '4', date: '2025-01-04',  status: 'Complete'},
+        {id: '5', date: '2025-01-05',  status: 'Complete'},
     ];
+
+    const checkedStatus =(data:any)=>{
+        if (data.status.toLocaleLowerCase() == 'draft'){
+            //show notification
+            //you still have data that should be inserted on date
+        }
+    }
 
     const renderItem = ({item}:{item:any}) => (
         <View style={styles.row}>
             <Text style={styles.text}>{item.date}</Text>
-            <Text style={styles.text}>{item.name}</Text>
             <Text style={styles.text}>{item.status}</Text>
+            <Icon
+                onPress={()=>navigation.navigate('ReimburseDetails')}
+                name={'eye'}
+                size={24}
+                color={Colors.buttonBackground}
+            />
         </View>
     );
 
@@ -43,16 +63,12 @@ export default function ReimburseScreen({
                         Reimburse
                     </Text>
 
-                    <TouchableOpacity style={styles.logoutButton} onPress={() => {
+                    <TouchableOpacity style={styles.Button} onPress={() => {
                     }}>
                         <Text style={styles.buttonText}>+</Text>
                     </TouchableOpacity>
                 </View>
-                <View style={{paddingHorizontal:width * 0.05,
-                    borderWidth:0.5,
-                    borderColor:'gray',
-                    paddingVertical: height * 0.01,
-                    alignContent:'center'}}>
+                <View style={styles.listContainer}>
                     <FlatList
                         data={data}
                         renderItem={renderItem}
@@ -76,11 +92,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: width * 0.05,
         marginBottom: height * 0.02,
     },
+    listContainer: {
+        paddingHorizontal: width * 0.05,
+        paddingVertical: height * 0.02,
+    },
     greeting: {
         fontSize: 30,
         fontWeight: "bold",
     },
-    logoutButton: {
+    Button: {
         backgroundColor: Colors.buttonBackground,
         paddingVertical: height * 0.01,
         paddingHorizontal: width * 0.05,
