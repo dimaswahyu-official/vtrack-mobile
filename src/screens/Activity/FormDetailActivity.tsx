@@ -269,7 +269,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     </View>
                 </View>
             </View>
-            {!(status === activityDatas?.status) && (
+            {(!(status === activityDatas?.status) || activityDatas?.status === 100) && (
                 <TouchableOpacity style={activityStyles.button} onPress={() => {
                     status === 100 && activityDatas ? navigation.navigate('FormDetailSio', { item, activity: activityDatas }) : setVisible(true);
                 }}>
