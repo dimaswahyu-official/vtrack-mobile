@@ -7,12 +7,14 @@ import {MainTabParamList} from "./MainNavigator";
 import UpdateProfileForm from "../screens/Profile/UpdateProfileForm";
 import AttendanceScreen from "../screens/Attendance/AttendanceScreen";
 import ReimburseScreen from "../screens/Reimburse/ReimburseScreen";
+import ReimburseDetailsScreen from "../screens/Reimburse/DetailReimburseScreen";
 // Declare your param list for the Profile stack
 export type ProfileStackParamList = {
     Profile: undefined;
     UpdateProfile: { profile: { name: string; email: string; photo: string; } };
     Attendance: { profile: { name: string; email: string; photo: string; } };
     Reimburse: undefined;
+    ReimburseDetails: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -54,6 +56,11 @@ const ProfileNavigator = () => {
             <Stack.Screen
                 name="Reimburse"
                 component={ReimburseScreen}
+                options={{headerTitle: ''}}
+            />
+            <Stack.Screen
+                name="ReimburseDetails"
+                component={ReimburseDetailsScreen}
                 options={{headerTitle: ''}}
             />
 
