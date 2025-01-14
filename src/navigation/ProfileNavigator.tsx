@@ -14,7 +14,7 @@ export type ProfileStackParamList = {
     UpdateProfile: { profile: { name: string; email: string; photo: string; } };
     Attendance: { profile: { name: string; email: string; photo: string; } };
     Reimburse: undefined;
-    ReimburseDetails: undefined;
+    ReimburseDetails: { bbmItem: any; };
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -61,7 +61,7 @@ const ProfileNavigator = () => {
             <Stack.Screen
                 name="ReimburseDetails"
                 component={ReimburseDetailsScreen}
-                options={{headerTitle: ''}}
+                options={{headerTitle: '', headerBackVisible: false}}
             />
 
         </Stack.Navigator>

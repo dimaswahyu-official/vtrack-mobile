@@ -1,4 +1,5 @@
 import {
+    Alert,
     Dimensions,
     FlatList,
     Image,
@@ -12,7 +13,15 @@ import {
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import Colors from "../../utils/Colors";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
+import * as ImagePicker from "expo-image-picker";
+import {useAuthStore} from "../../store/useAuthStore";
+import ReimburseService from "../../services/reimburseService";
+import Toast from "react-native-toast-message";
+import {MaterialIcons} from "@expo/vector-icons";
+import activityStyles from "../../utils/ActivityStyles";
+import ActivityStyles from "../../utils/ActivityStyles";
+import {useLoadingStore} from "../../store/useLoadingStore";
 
 const {width, height} = Dimensions.get("window");
 
@@ -20,7 +29,7 @@ const {width, height} = Dimensions.get("window");
 type RootStackParamList = {
 
     Profile: undefined;
-    ReimburseDetails: undefined;
+    ReimburseDetails: { bbmItem: any; };
 };
 
 type ReimburseDetailsScreenProps = NativeStackScreenProps<
@@ -28,12 +37,17 @@ type ReimburseDetailsScreenProps = NativeStackScreenProps<
     "ReimburseDetails"
 >;
 
-export default function ReimburseDetailsScreen({navigation,}: ReimburseDetailsScreenProps) {
-
-    const [inputValue, setInputValue] = useState('');
-    const [input1, setInput1] = useState({ raw: null, formatted: '' });
-    const [input2, setInput2] = useState({ raw: null, formatted: '' });
-
+export default function ReimburseDetailsScreen({route, navigation}: ReimburseDetailsScreenProps) {
+    const {user} = useAuthStore();
+    const userId = user?.id || '';
+    const {bbmItem} = route.params || {};
+    const { setLoading } = useLoadingStore();
+    const activityStyles = ActivityStyles();
+    const [result, setResult] = useState(0);
+    const [input1, setInput1] = useState(0);
+    const [input2, setInput2] = useState(0);
+    const [photoIn, setPhotoIn] = useState<any | null>(null);
+    const [photoOut, setPhotoOut] = useState<any | null>(null);
 
     const handleTextChange = (text: string, setInput: Function) => {
         const numericValue = text.replace(/\D/g, ''); // Remove non-numeric characters
@@ -44,13 +58,137 @@ export default function ReimburseDetailsScreen({navigation,}: ReimburseDetailsSc
         });
     };
 
-    const checkedStatus = (data: any) => {
-        if (data.status.toLocaleLowerCase() == 'draft') {
-            //show notification
-            //you still have data that should be inserted on date
+    useEffect(() => {
+        setInput1(bbmItem.kilometer_in)
+        setResult(input2-input1)
+    }, [input2]);
+
+    const handleSave = async () => {
+        setLoading(true)
+        try {
+            //handle if BBM Reimburse first time
+            if (!bbmItem) {
+                const formData = new FormData();
+                formData.append('user_id', userId);
+                formData.append('date_in', Date.now().toString());
+                formData.append('kilometer_in', input1.toString());
+                formData.append('description', '');
+                // If there is a photo, handle the file
+                if (photoIn) {
+                    const fetchImage = await fetch(photoIn.uri);
+                    const blob = await fetchImage.blob();
+                    // @ts-ignore
+                    formData.append('photo_in', {
+                        uri: photoIn.uri,
+                        type: blob.type || 'image/jpeg',
+                        name: photoIn.fileName || 'image.jpg',
+                    });
+                }
+                const response = await ReimburseService.initialReimburse(formData);
+                // Handle the response
+                if (response.statusCode === 200) {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Success',
+                        text2: `Update Successful`,
+                    });
+                    // Optionally navigate back or refresh the profile
+                    navigation.goBack();
+                } else {
+                    Alert.alert('Error', response.message || 'Failed to Reimburse');
+                    console.error('Update Error:', response);
+                }
+            } else {
+                const formData = new FormData();
+                formData.append('user_id', userId);
+                formData.append('date_out', Date.now().toString());
+                formData.append('kilometer_out', input2.toString());
+                formData.append('description', '');
+                // If there is a photo, handle the file
+                if (photoOut) {
+                    const fetchImage = await fetch(photoOut.uri);
+                    const blob = await fetchImage.blob();
+                    // @ts-ignore
+                    formData.append('photo_out', {
+                        uri: photoOut.uri,
+                        type: blob.type || 'image/jpeg',
+                        name: photoOut.fileName || 'image.jpg',
+                    });
+                }
+                const response = await ReimburseService.finalReimburse(formData);
+                // Handle the response
+                if (response.statusCode === 200) {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Success',
+                        text2: `Update Successful`,
+                    });
+                    // Optionally navigate back or refresh the profile
+                    navigation.goBack();
+                } else {
+                    Alert.alert('Error', response.message || 'Failed to update profile');
+                    console.error('Update Error:', response);
+                }
+
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 
+    const PhotoKilometerIn = async () => {
+        // Request camera permissions
+        const permissionResult =
+            await ImagePicker.requestCameraPermissionsAsync();
+        if (!permissionResult.granted) {
+            Alert.alert(
+                'Permission required',
+                'Please grant permission to access the camera.'
+            );
+            return;
+        }
+        // Launch the camera
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: false,
+            quality: 1,
+        });
+        if (!result.canceled) {
+            setPhotoIn(result.assets[0].uri);
+        }
+    };
+
+    const clearPhoto = () => {
+        const newItem = {...bbmItem};
+        if (!bbmItem) {
+            newItem.photo_in = '';
+            setPhotoIn(newItem);
+        } else {
+            newItem.photo_out = '';
+            setPhotoOut(newItem);
+        }
+
+    };
+
+    const PhotoKilometerOut = async () => {
+        // Request camera permissions
+        const permissionResult =
+            await ImagePicker.requestCameraPermissionsAsync();
+        if (!permissionResult.granted) {
+            Alert.alert(
+                'Permission required',
+                'Please grant permission to access the camera.'
+            );
+            return;
+        }
+        // Launch the camera
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: false,
+            quality: 1,
+        });
+        if (!result.canceled) {
+            setPhotoOut(result.assets[0].uri);
+        }
+    };
     return (
         <ScrollView>
             <View style={styles.container}>
@@ -66,50 +204,137 @@ export default function ReimburseDetailsScreen({navigation,}: ReimburseDetailsSc
                         <TextInput
                             style={styles.input}
                             placeholder="Masukan Kilometer Awal"
-                            value={input1.formatted}
+                            value={input1.toString()}
+                            editable={!bbmItem.kilometer_in}
                             keyboardType={'numeric'}
-                            onChangeText={(text) => handleTextChange(text, setInput1)}
-                            />
-                    </View>
-                    <View style={styles.imageContainer}>
-                        <Image
-                            style={styles.image}
-                            source={{uri: 'https://via.placeholder.com/200'}}>
-                        </Image>
-                    </View>
-                </View>
-                {/*KM AKHIR*/}
-                <View style={styles.card}>
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Kilometer Akhir:</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Masukan Kilometer Awal"
-                            value={input2.formatted}
-                            keyboardType={'numeric'}
-                            onChangeText={(text) => handleTextChange(text, setInput2)}
+                            onChangeText={(text) => setInput1(Number(text))}
                         />
                     </View>
-                    <View style={styles.imageContainer}>
+                    <View style={{flex: 1, alignItems: 'center',}}>
                         <Image
+                            source={{
+                                uri: bbmItem.photo_in || 'https://via.placeholder.com/200',
+                            }}
                             style={styles.image}
-                            source={{uri: 'https://via.placeholder.com/200'}}>
-                        </Image>
+                        />
+                        {bbmItem.photoIn === '' ? (
+                            <>
+                                <TouchableOpacity
+                                    style={activityStyles.photoButton}
+                                    onPress={() =>
+                                        PhotoKilometerIn()
+                                    }>
+                                    <MaterialIcons
+                                        name="camera-alt"
+                                        size={24}
+                                        color="#fff"
+                                    />
+                                    <Text
+                                        style={[
+                                            activityStyles.label,
+                                            {color: 'white'},
+                                        ]}>
+                                        new photo
+                                    </Text>
+                                </TouchableOpacity>
+                            </>
+                        ) : (
+                            <>
+                                { bbmItem ? <></> : <TouchableOpacity
+                                    style={activityStyles.clearButton}
+                                    onPress={() =>
+                                        clearPhoto()
+                                    }>
+                                    <MaterialIcons
+                                        name="delete"
+                                        size={15}
+                                        color="#fff"
+                                    />
+                                </TouchableOpacity>}
+
+                            </>
+                        )}
+
                     </View>
-                </View>
-                <View style={styles.card}>
-                    <Text style={styles.label}>Jumlah Kilometer Yang Ditempuh</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={inputValue}
-                        editable={false}
-                        keyboardType="numeric"
-                    />
 
                 </View>
+
+                {bbmItem && (<>
+                        {/*KM AKHIR*/}
+                        <View style={styles.card}>
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Kilometer Akhir:</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Masukan Kilometer Akhir"
+                                    value={input2.toString()}
+                                    editable={!bbmItem.kilometer_out}
+                                    keyboardType={'numeric'}
+                                    onChangeText={(text) => setInput2(Number(text))}
+                                />
+                            </View>
+                            <View style={{flex: 1, alignItems: 'center',}}>
+                                <Image
+                                    source={{
+                                        uri: photoOut || 'https://via.placeholder.com/200',
+                                    }}
+                                    style={styles.image}
+                                />
+                                {bbmItem.photo_out === '' ? (
+                                    <>
+                                        <TouchableOpacity
+                                            style={activityStyles.photoButton}
+                                            onPress={() =>
+                                                PhotoKilometerOut()
+                                            }>
+                                            <MaterialIcons
+                                                name="camera-alt"
+                                                size={24}
+                                                color="#fff"
+                                            />
+                                            <Text
+                                                style={[
+                                                    activityStyles.label,
+                                                    {color: 'white'},
+                                                ]}>
+                                                new photo
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </>
+                                ) : (
+                                    <>
+                                         <TouchableOpacity
+                                            style={activityStyles.clearButton}
+                                            onPress={() =>
+                                                clearPhoto()
+                                            }>
+                                            <MaterialIcons
+                                                name="delete"
+                                                size={15}
+                                                color="#fff"
+                                            />
+                                        </TouchableOpacity>
+
+                                    </>
+                                )}
+
+                            </View>
+                        </View>
+                        <View style={styles.card}>
+                            <Text style={styles.label}>Jumlah Kilometer Yang Ditempuh</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={result.toString()}
+                                editable={false}
+                                keyboardType="numeric"
+                            />
+
+                        </View>
+                    </>
+                )}
                 <View>
                     <TouchableOpacity style={styles.button} onPress={() => {
-
+                        handleSave()
                     }}>
                         <Text style={styles.buttonText}>SUBMIT</Text>
                     </TouchableOpacity>

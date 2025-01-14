@@ -1,10 +1,13 @@
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import {Dimensions, ScrollView, Text, StyleSheet, TouchableOpacity, View, FlatList} from "react-native";
 import Colors from "../../utils/Colors";
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import ReimburseService from "../../services/reimburseService";
 import {useAuthStore} from "../../store/useAuthStore";
+import {Activity2} from "../ActivityScreen2";
+import {formatDate, formatDateWithTime} from "../../utils/DateHelper";
+import Toast from "react-native-toast-message";
 
 const {width, height} = Dimensions.get("window");
 
@@ -12,7 +15,7 @@ const {width, height} = Dimensions.get("window");
 type RootStackParamList = {
     Profile: undefined;
     Reimburse: undefined;
-    ReimburseDetails: undefined;
+    ReimburseDetails: { bbmItem: any };
 };
 
 type ReimburseScreenProps = NativeStackScreenProps<
@@ -20,35 +23,67 @@ type ReimburseScreenProps = NativeStackScreenProps<
     "Reimburse",
     'ReimburseDetails'
 >;
+type BbmItem = {
+    "id": number,
+    "photo_in": string,
+    "photo_out": string,
+    "kilometer_in": number,
+    "kilometer_out": number,
+    "date_in": string,
+    "date_out": string,
+    "total_kilometer": number,
+    "description": string,
+    "status": number,
+};
+
 
 export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
     const {user} = useAuthStore();
+    const userId = user?.id || '';
+    const [bbmList, setBbmList] = useState<BbmItem[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchBbmList = async () => {
+        try {
+            setLoading(true); // Start loading
+            setError(null); // Reset error state
+
+            const response = await ReimburseService.getReimburseBbmList(userId); // Replace with your API URL
+            setBbmList(response.data);
+
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch data reimburse');
+        } finally {
+            setLoading(false); // Stop loading
+        }
+    };
 
     useEffect(() => {
-        // const response = ReimburseService.getReimburseBbmList(idUser)
-    }, []);
+        fetchBbmList();
+    }, [userId]);
 
-    const data = [
-        {id: '1', date: '2025-01-01',  status: 'Draft'},
-        {id: '2', date: '2025-01-02',  status: 'Complete'},
-        {id: '3', date: '2025-01-03',  status: 'Complete'},
-        {id: '4', date: '2025-01-04',  status: 'Complete'},
-        {id: '5', date: '2025-01-05',  status: 'Complete'},
-    ];
 
-    const checkedStatus =(data:any)=>{
-        if (data.status.toLocaleLowerCase() == 'draft'){
-            //show notification
-            //you still have data that should be inserted on date
-        }
+    const checkDraft = (data: any) => {
+        // navigation.navigate('ReimburseDetails', {bbmItem: {}})
+        data.forEach((item: any) => {
+            if (item.kilometer_out === 0) {
+                Toast.show({type: 'error', text1: `Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`})
+                console.log(`Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`);
+                // Handle your logic here, e.g., skip, display message, or set a flag
+            }
+        })
     }
 
-    const renderItem = ({item}:{item:any}) => (
+
+    const renderItem = ({item}: { item: any }) => (
         <View style={styles.row}>
-            <Text style={styles.text}>{item.date}</Text>
-            <Text style={styles.text}>{item.status}</Text>
+            <Text style={styles.text}>{formatDate(item.date_in)}</Text>
+            <Text style={styles.text}>{item.date_out ?? 'Not yet'}</Text>
+            <Text style={styles.text}>{item.status === 1 ? "Completed" : "Pending"}</Text>
             <Icon
-                onPress={()=>navigation.navigate('ReimburseDetails')}
+                style={{flex: 1, textAlign: "center"}}
+                onPress={() => navigation.navigate('ReimburseDetails', {bbmItem: item})}
                 name={'eye'}
                 size={24}
                 color={Colors.buttonBackground}
@@ -56,32 +91,64 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
         </View>
     );
 
-    return (
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.greeting}>
-                        Reimburse
-                    </Text>
-
-                    <TouchableOpacity style={styles.Button} onPress={() => {
-                    }}>
-                        <Text style={styles.buttonText}>+</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.listContainer}>
-                    <FlatList
-                        data={data}
-                        renderItem={renderItem}
-                        keyExtractor={(item) => item.id}
-                    />
-                </View>
+    if (loading) {
+        return (
+            <View style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+            }}>
+                <Text>Loading...</Text>
             </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+            }}>
+                <Text>Error: {error}</Text>
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.greeting}>
+                    Reimburse
+                </Text>
+
+                <TouchableOpacity style={styles.Button} onPress={() => {
+                    checkDraft(bbmList)
+                }}>
+                    <Text style={styles.buttonText}>+</Text>
+                </TouchableOpacity>
+            </View>
+            <View style={styles.listContainer}>
+                <FlatList
+                    data={bbmList}
+                    renderItem={renderItem}
+                    ListHeaderComponent={
+                        <View style={styles.headerRow}>
+                            <Text style={styles.headerText}>Date In</Text>
+                            <Text style={styles.headerText}>Date Out</Text>
+                            <Text style={styles.headerText}>Status</Text>
+                            <Text style={styles.headerText}>Detail</Text>
+                        </View>
+                    }
+                    keyExtractor={(item) => item.id.toString()}
+                />
+            </View>
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
         paddingVertical: height * 0.02,
         width: "100%",
     },
@@ -110,11 +177,6 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: width * 0.04,
     },
-    // container: {
-    //     flex: 1,
-    //     padding: 20,
-    //     backgroundColor: '#f7f7f7',
-    // },
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -126,7 +188,22 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     text: {
+        flex: 1,
         fontSize: 14,
         color: '#333',
+        textAlign: 'center',
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+    },
+    headerText: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: 'bold',
+        width: '23%', // Adjust width as necessary
+        textAlign: 'center',
     },
 })
