@@ -28,7 +28,7 @@ class ReimburseService {
 
     static async finalReimburse(formData:any) :Promise<any> {
         try{
-            const response = await axiosInstance.post(`/reimburse-bbm`, formData ,
+            const response = await axiosInstance.put(`/reimburse-bbm`, formData ,
                 {
                     headers: {
                         'Content-Type': 'multipart/form-data',
