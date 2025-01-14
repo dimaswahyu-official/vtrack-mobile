@@ -6,6 +6,7 @@ export interface ActivityProgram {
     name: string;
     description: string;
     photo: string;
+    is_sync: number;
 }
 
 
@@ -20,6 +21,7 @@ export const createTableActivityProgram = async (db: SQLite.SQLiteDatabase): Pro
             name TEXT,
             photo TEXT,
             description TEXT,
+            is_sync INTEGER DEFAULT 0,
             FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity(call_plan_schedule_id)
         )
     `);
@@ -33,16 +35,17 @@ export const ActivityProgramModel = {
             call_plan_schedule_id,
             name,
             description,
-            photo
+            photo,
+            is_sync
         } = params;
 
         // Log the parameters to verify they are correct
         console.log('Inserting Activity Program with parameters:', params);
         try {
             const result = await db.runAsync(
-                `INSERT INTO ActivityProgram (call_plan_schedule_id, name, description, photo)
-                 VALUES (?, ?, ?, ?)`,
-                [call_plan_schedule_id, name, description, photo]
+                `INSERT INTO ActivityProgram (call_plan_schedule_id, name, description, photo, is_sync)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [call_plan_schedule_id, name, description, photo, is_sync]
             );
             const insertId = result.lastInsertRowId as number;
 

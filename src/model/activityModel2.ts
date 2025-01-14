@@ -74,6 +74,7 @@ export const dropTableExisting = async (db: SQLite.SQLiteDatabase): Promise<void
     await db.runAsync('DROP TABLE IF EXISTS ActivitySog');
     await db.runAsync('DROP TABLE IF EXISTS ActivityBranch');
     await db.runAsync('DROP TABLE IF EXISTS ActivityProgram');
+    await db.runAsync('DROP TABLE IF EXISTS ActivityOutlet');
     console.log('All tables dropped successfully');
 }
 

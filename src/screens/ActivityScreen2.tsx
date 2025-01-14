@@ -34,6 +34,7 @@ import {
 	createTableActivitySog,
 	createTableActivityBranch,
 	createTableActivityProgram,
+	createTableActivityOutlet,
 } from '../model';
 
 const { width, height } = Dimensions.get('window');
@@ -146,13 +147,16 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 				setRefreshing(false);
 				return;
 			}
-			// await dropTableExisting(db);
+			await dropTableExisting(db);
 			await createTableActivity(db);
 			await createTableActivitySio(db);
 			await createTableActivitySog(db);
 			await createTableActivityBranch(db);
 			await createTableActivityProgram(db);
-			// // Fetch latest schedule data from API
+			await createTableActivityOutlet(db);
+			
+
+			// Fetch latest schedule data from API
 			const response = await ActivityService.getListingSchedule(userId);
 			const data: Activity2[] = await response.data;
 
