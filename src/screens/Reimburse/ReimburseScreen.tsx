@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
-import {Dimensions, ScrollView, Text, StyleSheet, TouchableOpacity, View, FlatList} from "react-native";
+import {Dimensions, ScrollView, Text, StyleSheet, TouchableOpacity, View, FlatList, RefreshControl} from "react-native";
 import Colors from "../../utils/Colors";
 import React, {useEffect, useState} from "react";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -43,8 +43,9 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
     const [bbmList, setBbmList] = useState<BbmItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-
+    const [refreshing, setRefreshing] = useState(false);
     const fetchBbmList = async () => {
+        setRefreshing(true);
         try {
             setLoading(true); // Start loading
             setError(null); // Reset error state
@@ -55,31 +56,36 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
         } catch (err: any) {
             setError(err.message || 'Failed to fetch data reimburse');
         } finally {
+            setRefreshing(false);
             setLoading(false); // Stop loading
         }
     };
 
     useEffect(() => {
         fetchBbmList();
-    }, [userId]);
+    }, []);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchBbmList();
+    };
 
 
     const checkDraft = (data: any) => {
-        // navigation.navigate('ReimburseDetails', {bbmItem: {}})
         data.forEach((item: any) => {
             if (item.kilometer_out === 0) {
                 Toast.show({type: 'error', text1: `Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`})
                 console.log(`Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`);
-                // Handle your logic here, e.g., skip, display message, or set a flag
             }
         })
+        navigation.navigate('ReimburseDetails', {bbmItem: {}})
     }
 
 
     const renderItem = ({item}: { item: any }) => (
         <View style={styles.row}>
             <Text style={styles.text}>{formatDate(item.date_in)}</Text>
-            <Text style={styles.text}>{item.date_out ?? 'Not yet'}</Text>
+            <Text style={styles.text}>{formatDate(item.date_out) ?? 'Belum Input'}</Text>
             <Text style={styles.text}>{item.status === 1 ? "Completed" : "Pending"}</Text>
             <Icon
                 style={{flex: 1, textAlign: "center"}}
@@ -141,6 +147,9 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
                         </View>
                     }
                     keyExtractor={(item) => item.id.toString()}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
                 />
             </View>
         </View>

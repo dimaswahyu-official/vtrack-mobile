@@ -17,7 +17,9 @@
         "NSCameraUsageDescription": "This app requires access to the camera.",
         "NSMicrophoneUsageDescription": "This app requires access to the microphone.",
         "NSPhotoLibraryUsageDescription": "This app requires access to the photo library.",
-        "UIBackgroundModes": ["fetch"]
+        "UIBackgroundModes": [
+          "fetch"
+        ]
       }
     },
     "android": {
@@ -30,7 +32,9 @@
         "RECORD_AUDIO",
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE",
-        "BACKGROUND_FETCH"
+        "BACKGROUND_FETCH",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ],
       "package": "com.nna.vtrack.mobile"
     },
@@ -63,11 +67,11 @@
         }
       ]
     ],
+    "owner": "dewedev",
     "extra": {
       "eas": {
-        "projectId": "92388322-b51e-42c5-b27b-ea68763cb50d"
+        "projectId": "3636e3f0-915e-4798-ae34-291cbf59b90c"
       }
-    },
-    "owner": "bagasmmra"
+    }
   }
 }

@@ -57,9 +57,16 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
             formatted, // Store formatted string
         });
     };
+    console.log(bbmItem)
 
     useEffect(() => {
-        setInput1(bbmItem.kilometer_in)
+        setInput1(bbmItem.kilometer_in ?? 0)
+        setInput2(bbmItem.kilometer_out ?? 0)
+        setPhotoOut(bbmItem.photo_out ?? '')
+        setPhotoIn(bbmItem.photo_in ?? '')
+    }, [bbmItem]);
+
+    useEffect(() => {
         setResult(input2-input1)
     }, [input2]);
 
@@ -67,24 +74,53 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
         setLoading(true)
         try {
             //handle if BBM Reimburse first time
-            if (!bbmItem) {
+            if (Object.keys(bbmItem).length === 0) {
+                const dateNow = new Date();
                 const formData = new FormData();
                 formData.append('user_id', userId);
-                formData.append('date_in', Date.now().toString());
-                formData.append('kilometer_in', input1.toString());
+                formData.append('date_in', dateNow.toISOString() ?? '');
+                formData.append('kilometer_in', String(input1) );
                 formData.append('description', '');
                 // If there is a photo, handle the file
                 if (photoIn) {
-                    const fetchImage = await fetch(photoIn.uri);
-                    const blob = await fetchImage.blob();
                     // @ts-ignore
                     formData.append('photo_in', {
-                        uri: photoIn.uri,
-                        type: blob.type || 'image/jpeg',
+                        uri: photoIn,
+                        type: 'image/jpeg',
                         name: photoIn.fileName || 'image.jpg',
                     });
                 }
                 const response = await ReimburseService.initialReimburse(formData);
+                // Handle the response
+                if (response.statusCode === 200) {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Success',
+                        text2: `Update Successful`,
+                    });
+                    navigation.goBack();
+                } else {
+                    Alert.alert('Error', response.message || 'Failed to Reimburse');
+                    console.error('Update Error:', response);
+                }
+            } else {
+                const dateNow = new Date();
+                const formData = new FormData();
+                formData.append('id', bbmItem.id ?? 0);
+                formData.append('date_out', dateNow.toISOString() ?? '');
+                formData.append('kilometer_out', String(input2) );
+                formData.append('description', '');
+                // If there is a photo, handle the file
+                if (photoOut) {
+                    // @ts-ignore
+                    formData.append('photo_out', {
+                        uri: photoOut,
+                        type: 'image/jpeg',
+                        name: photoOut.fileName || 'image.jpg',
+                    });
+
+                }
+                const response = await ReimburseService.finalReimburse(formData);
                 // Handle the response
                 if (response.statusCode === 200) {
                     Toast.show({
@@ -98,41 +134,23 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     Alert.alert('Error', response.message || 'Failed to Reimburse');
                     console.error('Update Error:', response);
                 }
-            } else {
-                const formData = new FormData();
-                formData.append('user_id', userId);
-                formData.append('date_out', Date.now().toString());
-                formData.append('kilometer_out', input2.toString());
-                formData.append('description', '');
-                // If there is a photo, handle the file
-                if (photoOut) {
-                    const fetchImage = await fetch(photoOut.uri);
-                    const blob = await fetchImage.blob();
-                    // @ts-ignore
-                    formData.append('photo_out', {
-                        uri: photoOut.uri,
-                        type: blob.type || 'image/jpeg',
-                        name: photoOut.fileName || 'image.jpg',
-                    });
-                }
-                const response = await ReimburseService.finalReimburse(formData);
-                // Handle the response
-                if (response.statusCode === 200) {
-                    Toast.show({
-                        type: 'success',
-                        text1: 'Success',
-                        text2: `Update Successful`,
-                    });
-                    // Optionally navigate back or refresh the profile
-                    navigation.goBack();
-                } else {
-                    Alert.alert('Error', response.message || 'Failed to update profile');
-                    console.error('Update Error:', response);
-                }
 
             }
-        } catch (error) {
-            console.log(error);
+        } catch (error : any) {
+            // Handle errors
+            const { data } = error.response || {};
+            if (data?.statusCode === 404) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: `${data.message}`,
+                });
+            } else {
+                Alert.alert('Error', 'An unexpected error occurred while submit Reimburse');
+                console.error(error.response);
+            }
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -157,18 +175,6 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
         }
     };
 
-    const clearPhoto = () => {
-        const newItem = {...bbmItem};
-        if (!bbmItem) {
-            newItem.photo_in = '';
-            setPhotoIn(newItem);
-        } else {
-            newItem.photo_out = '';
-            setPhotoOut(newItem);
-        }
-
-    };
-
     const PhotoKilometerOut = async () => {
         // Request camera permissions
         const permissionResult =
@@ -189,6 +195,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
             setPhotoOut(result.assets[0].uri);
         }
     };
+
     return (
         <ScrollView>
             <View style={styles.container}>
@@ -204,7 +211,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                         <TextInput
                             style={styles.input}
                             placeholder="Masukan Kilometer Awal"
-                            value={input1.toString()}
+                            value={input1.toString() ?? ''}
                             editable={!bbmItem.kilometer_in}
                             keyboardType={'numeric'}
                             onChangeText={(text) => setInput1(Number(text))}
@@ -213,53 +220,35 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     <View style={{flex: 1, alignItems: 'center',}}>
                         <Image
                             source={{
-                                uri: bbmItem.photo_in || 'https://via.placeholder.com/200',
+                                uri: photoIn || 'https://via.placeholder.com/200',
                             }}
                             style={styles.image}
                         />
-                        {bbmItem.photoIn === '' ? (
-                            <>
-                                <TouchableOpacity
-                                    style={activityStyles.photoButton}
-                                    onPress={() =>
-                                        PhotoKilometerIn()
-                                    }>
-                                    <MaterialIcons
-                                        name="camera-alt"
-                                        size={24}
-                                        color="#fff"
-                                    />
-                                    <Text
-                                        style={[
-                                            activityStyles.label,
-                                            {color: 'white'},
-                                        ]}>
-                                        new photo
-                                    </Text>
-                                </TouchableOpacity>
-                            </>
-                        ) : (
-                            <>
-                                { bbmItem ? <></> : <TouchableOpacity
-                                    style={activityStyles.clearButton}
-                                    onPress={() =>
-                                        clearPhoto()
-                                    }>
-                                    <MaterialIcons
-                                        name="delete"
-                                        size={15}
-                                        color="#fff"
-                                    />
-                                </TouchableOpacity>}
+                        { photoIn === '' ? <TouchableOpacity
+                            style={activityStyles.photoButton}
+                            onPress={() =>
+                                PhotoKilometerIn()
+                            }>
+                            <MaterialIcons
+                                name="camera-alt"
+                                size={24}
+                                color="#fff"
+                            />
+                            <Text
+                                style={[
+                                    activityStyles.label,
+                                    {color: 'white'},
+                                ]}>
+                                new photo
+                            </Text>
+                        </TouchableOpacity>
+                        : null
+                        }
 
-                            </>
-                        )}
 
                     </View>
-
                 </View>
-
-                {bbmItem && (<>
+                { Object.keys(bbmItem).length === 0 ? null : (<>
                         {/*KM AKHIR*/}
                         <View style={styles.card}>
                             <View style={styles.row}>
@@ -267,7 +256,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Masukan Kilometer Akhir"
-                                    value={input2.toString()}
+                                    value={input2.toString() ?? ''}
                                     editable={!bbmItem.kilometer_out}
                                     keyboardType={'numeric'}
                                     onChangeText={(text) => setInput2(Number(text))}
@@ -280,7 +269,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                     }}
                                     style={styles.image}
                                 />
-                                {bbmItem.photo_out === '' ? (
+                                { photoOut === '' ? (
                                     <>
                                         <TouchableOpacity
                                             style={activityStyles.photoButton}
@@ -301,22 +290,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                             </Text>
                                         </TouchableOpacity>
                                     </>
-                                ) : (
-                                    <>
-                                         <TouchableOpacity
-                                            style={activityStyles.clearButton}
-                                            onPress={() =>
-                                                clearPhoto()
-                                            }>
-                                            <MaterialIcons
-                                                name="delete"
-                                                size={15}
-                                                color="#fff"
-                                            />
-                                        </TouchableOpacity>
-
-                                    </>
-                                )}
+                                ) : null}
 
                             </View>
                         </View>
@@ -324,7 +298,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                             <Text style={styles.label}>Jumlah Kilometer Yang Ditempuh</Text>
                             <TextInput
                                 style={styles.input}
-                                value={result.toString()}
+                                value={result.toString() ?? ''}
                                 editable={false}
                                 keyboardType="numeric"
                             />
@@ -332,13 +306,22 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                         </View>
                     </>
                 )}
-                <View>
+
+                {bbmItem.kilometer_out && bbmItem.kilometer_in !== 0 ? <View>
+                    <TouchableOpacity style={styles.button} onPress={() => {
+                        navigation.goBack()
+                    }}>
+                        <Text style={styles.buttonText}>Back</Text>
+                    </TouchableOpacity>
+                </View> :  <View>
                     <TouchableOpacity style={styles.button} onPress={() => {
                         handleSave()
                     }}>
                         <Text style={styles.buttonText}>SUBMIT</Text>
                     </TouchableOpacity>
-                </View>
+                </View>}
+
+
 
             </View>
         </ScrollView>
