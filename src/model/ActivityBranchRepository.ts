@@ -38,9 +38,7 @@ export const ActivityBranchModel = {
             notes,
             value
         } = params;
-
-        // Log the parameters to verify they are correct
-        console.log('Inserting SOG with parameters:', params);
+        console.log('Inserting Activity Branch with parameters:', params);
         try {
             const result = await db.runAsync(
                 `INSERT INTO ActivityBranch (call_plan_schedule_id, name, description, notes, value)
@@ -49,7 +47,6 @@ export const ActivityBranchModel = {
             );
             const insertId = result.lastInsertRowId as number;
 
-            // Log the insertId to confirm successful insertion
             console.log('Activity Branch inserted with ID:', insertId);
             return insertId;
 
