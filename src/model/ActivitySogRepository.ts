@@ -35,6 +35,7 @@ export const ActivitySogModel = {
             call_plan_schedule_id,
             name,
             description,
+            value,
             notes,
         } = params;
 
@@ -42,9 +43,9 @@ export const ActivitySogModel = {
         console.log('Inserting SOG with parameters:', params);
         try {
 			const result = await db.runAsync(
-				`INSERT INTO ActivitySog (call_plan_schedule_id, name, description, notes)
-                 VALUES (?, ?, ?, ?)`,
-				[call_plan_schedule_id, name, description, notes]
+				`INSERT INTO ActivitySog (call_plan_schedule_id, name, value, description, notes)
+                 VALUES (?, ?, ?, ?, ?)`,
+				[call_plan_schedule_id, name, value, description, notes]
 			);
 			const insertId = result.lastInsertRowId as number;
 
@@ -62,12 +63,12 @@ export const ActivitySogModel = {
 		db: SQLite.SQLiteDatabase,
 		params: ActivitySogUpdateParams
 	): Promise<void> => {
-		if (!params.call_plan_schedule_id) {
-			throw new Error('call_plan_schedule_id is required for update');
+		if (!params.id) {
+			throw new Error('id is required for update');
 		}
 
 		const entries = Object.entries(params).filter(
-			([key]) => key !== 'call_plan_schedule_id'
+			([key]) => key !== 'id'
 		);
 
 		if (entries.length === 0) {
@@ -78,8 +79,8 @@ export const ActivitySogModel = {
 		const values = entries.map(([_, value]) => value);
 
 		await db.runAsync(
-			`UPDATE ActivitySog SET ${fields} WHERE call_plan_schedule_id = ?`,
-			[...values, params.call_plan_schedule_id]
+			`UPDATE ActivitySog SET ${fields} WHERE id = ?`,
+			[...values, params.id]
 		);
 	},
 

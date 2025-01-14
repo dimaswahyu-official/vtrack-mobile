@@ -5,7 +5,6 @@ import {RouteProp, useNavigation} from "@react-navigation/native";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useState} from "react";
-import useConstantStore from "../../store/useConstantStore";
 import Colors from "../../utils/Colors";
 
 const {width, height} = Dimensions.get('window');
@@ -18,31 +17,15 @@ const activityStyles = ActivityStyles();
 
 export default function FormDetailOutlet({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item} = route.params || {};
+    const {item, activity} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
-    const [isFullActivity, setIsFullActivity] = useState(false);
-    const [userId, setUserId] = useState(1);
-    const [callPlanScheduleId, setCallPlanScheduleId] = useState(1);
-    const [callPlanId, setCallPlanId] = useState(1);
-    const [outletId, setOutletId] = useState(1);
-    const [status, setStatus] = useState(0);
-    const [area, setArea] = useState('Area A');
-    const [region, setRegion] = useState('Region X');
-    const [startTime, setStartTime] = useState('2023-01-01T10:00:00Z');
     const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
     type Outlet = {
         label: string;
         value: string;
     };
     useEffect(() => {
-        setUserId(item.user_id);
-        setCallPlanScheduleId(item.id);
-        setCallPlanId(item.call_plan_id);
-        setOutletId(item.outlet_id);
-        setStatus(item.status);
-        setArea(item.callPlanOutlet?.area);
-        setRegion(item.callPlanOutlet?.region);
-        setStartTime(item.start_time);
+        
         setEndTime(item.end_time);
 
     }, [item.id]);
