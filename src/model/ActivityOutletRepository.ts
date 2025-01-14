@@ -37,7 +37,7 @@ export const ActivityOutletModel = {
 			const result = await db.runAsync(
 				`INSERT INTO ActivityOutlet (call_plan_schedule_id, label, value, is_sync)
                  VALUES (?, ?, ?, ?)`,
-				[call_plan_schedule_id, label, value, is_sync]
+				[call_plan_schedule_id, label, value, is_sync ?? 0]
 			);
 			const insertId = result.lastInsertRowId as number;
 

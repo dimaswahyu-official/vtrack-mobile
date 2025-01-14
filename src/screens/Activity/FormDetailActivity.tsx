@@ -58,7 +58,9 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 console.error("Error fetching activity data:", error);
             }
         };
+
         fetchActivityData();
+        
     }, [item]);
 
 
@@ -101,7 +103,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             user_id: item.user_id ?? 0,
             call_plan_id: data.call_plan_id ?? 0,
             call_plan_schedule_id: item.id ?? 0,
-            outlet_id: data.outlet_id ?? 0,
+            outlet_id: data?.callPlanOutlet?.id ?? 0,
             status: status ?? 0,
             area: data?.callPlanOutlet?.area ?? data?.callPlanSurvey?.area ?? '',
             region: data?.callPlanOutlet?.region ?? data?.callPlanSurvey?.region ?? '',
@@ -114,6 +116,10 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             id_server: 0,
             photo_program: '',
             sale_outlet_weekly: 0,
+            latitude: '',
+            longitude: '',
+            survey_outlet_id: data?.callPlanSurvey?.id ?? 0,
+            program_id: data?.callPlanProgram?.id ?? 0,
         };
 
         try {

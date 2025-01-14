@@ -128,7 +128,6 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 		try {
 			if (!isOnline) {
 				const getDataOffline = await ActivityRepository.getAll(db);
-				// Load data from AsyncStorage if offline
 				const storedActivities = await AsyncStorage.getItem('activities');
 				if (storedActivities) {
 					setActivities(JSON.parse(storedActivities));
@@ -147,7 +146,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 				setRefreshing(false);
 				return;
 			}
-			await dropTableExisting(db);
+			// await dropTableExisting(db);
 			await createTableActivity(db);
 			await createTableActivitySio(db);
 			await createTableActivitySog(db);

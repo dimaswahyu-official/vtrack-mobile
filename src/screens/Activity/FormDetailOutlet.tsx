@@ -1,13 +1,20 @@
-import {Alert, Dimensions, FlatList, ScrollView, Text, TouchableOpacity, View} from "react-native";
-import {StackNavigationProp} from "@react-navigation/stack";
-import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
-import {RouteProp, useNavigation} from "@react-navigation/native";
-import ActivityStyles from "../../utils/ActivityStyles";
-import {useSQLiteContext} from "expo-sqlite";
-import React, {useEffect, useState} from "react";
+import {
+	FlatList,
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	View,
+    Alert
+} from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ActivityStackParamList } from '../../navigation/ActivityNavigator';
+import { RouteProp, useNavigation } from '@react-navigation/native';
+import ActivityStyles from '../../utils/ActivityStyles';
+import { useSQLiteContext } from 'expo-sqlite';
+import React, { useEffect, useState } from 'react';
 import Colors from "../../utils/Colors";
+import { ActivityOutletModel } from '../../model/ActivityOutletRepository';
 
-const {width, height} = Dimensions.get('window');
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailOutlet'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailOutlet'>;
 type FormActivityProps = {
@@ -19,31 +26,41 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const {item, activity} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
-    const [endTime, setEndTime] = useState('2023-01-01T11:00:00Z');
+    const [endTime, setEndTime] = useState(activity.end_time);
+    const [outletFacilities, setOutletFacilities] = useState<Outlet[]>([]);
+
     type Outlet = {
         label: string;
         value: string;
     };
     useEffect(() => {
-        
-        setEndTime(item.end_time);
-
-    }, [item.id]);
+        setEndTime(activity.end_time);
+    }, [activity.id]);
 
     useEffect(() => {
-        if (item.range_educational_facilities == 0 ||
-            item.range_health_facilities == 0 ||
-            item.range_playground_facilities == 0 ||
-            item.range_public_transportation_facilities == 0 ||
-            item.range_worship_facilities == 0 ||
-            item.range_work_place == 0
-        ) {
-            navigation.replace('Activity2')
-        }
+        
     }, []);
-    const checkOutData = () => {
-        // navigation.navigate('FormDetailSio', {item});
-        // setIsFullActivity(true); // Set state to true when button is clicked
+
+    const submitOutlet = async () => {
+        // const outletFacilities = await ActivityOutletModel.findByCallPlanScheduleId(db, item.id);
+        // console.log(outletFacilities);
+        Alert.alert(
+            "Success",
+            "Data has been saved successfully",
+            [
+                {
+                    text: "OK",
+                    onPress: () => {
+                        console.log("OK");
+                        // navigation.replace('Activity2');
+                        // navigation.reset({
+                        //     index: 0,
+                        //     routes: [{ name: 'Activity2' }],
+                        // });
+                    }
+                }
+            ]
+        );
     };
 
     const footer = () => {
@@ -199,17 +216,8 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                         marginHorizontal: 8,
                         backgroundColor: Colors.buttonBackground,
                     }}
-                    onPress={() => {
-                        console.log(selectedValues)
-                        navigation.replace('Activity2')
-                        navigation.reset({
-                            index: 0, // Sets the starting screen index
-                            routes: [{ name: 'Activity2' }], // Sets the new navigation stack
-                        });
-
-                    }}
-                >
-                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>Next</Text>
+                    onPress={submitOutlet}>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>Submit</Text>
                 </TouchableOpacity>
             </View>
             {footer()}

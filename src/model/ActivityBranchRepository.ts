@@ -1,21 +1,22 @@
 import * as SQLite from 'expo-sqlite';
 
 export interface ActivityBranch {
-    id?: number;
-    call_plan_schedule_id: number;
-    name: string;
-    value: number;
-    description: string;
-    notes: string;
-    is_sync: number;
+	id?: number;
+	call_plan_schedule_id: number;
+	name: string;
+	value: number;
+	description: string;
+	notes: string;
+	is_sync: number;
 }
-
 
 type ActivityBranchCreateParams = Omit<ActivityBranch, 'id'>;
 type ActivityBranchUpdateParams = Partial<ActivityBranch>;
 
-export const createTableActivityBranch = async (db: SQLite.SQLiteDatabase): Promise<void> => {
-    await db.execAsync(`
+export const createTableActivityBranch = async (
+	db: SQLite.SQLiteDatabase
+): Promise<void> => {
+	await db.execAsync(`
         CREATE TABLE IF NOT EXISTS ActivityBranch (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             call_plan_schedule_id INTEGER NOT NULL,
@@ -29,38 +30,45 @@ export const createTableActivityBranch = async (db: SQLite.SQLiteDatabase): Prom
     `);
 };
 
-
 export const ActivityBranchModel = {
-    // Insert Into
-    create: async (db: SQLite.SQLiteDatabase, params: ActivityBranchCreateParams): Promise<number> => {
-        const {
-            call_plan_schedule_id,
-            name,
-            description,
-            notes,
-            value,
-            is_sync
-        } = params;
-        console.log('Inserting Activity Branch with parameters:', params);
-        try {
-            const result = await db.runAsync(
-                `INSERT INTO ActivityBranch (call_plan_schedule_id, name, description, notes, value, is_sync)
+	// Insert Into
+	create: async (
+		db: SQLite.SQLiteDatabase,
+		params: ActivityBranchCreateParams
+	): Promise<number> => {
+		const {
+			call_plan_schedule_id,
+			name,
+			description,
+			notes,
+			value,
+			is_sync,
+		} = params;
+		console.log('Inserting Activity Branch with parameters:', params);
+		try {
+			const result = await db.runAsync(
+				`INSERT INTO ActivityBranch (call_plan_schedule_id, name, description, notes, value, is_sync)
                  VALUES (?, ?, ?, ?, ?, ?)`,
-                [call_plan_schedule_id, name, description, notes, value, is_sync]
-            );
-            const insertId = result.lastInsertRowId as number;
+				[
+					call_plan_schedule_id,
+					name,
+					description,
+					notes,
+					value,
+					is_sync ?? 0,
+				]
+			);
+			const insertId = result.lastInsertRowId as number;
 
-            console.log('Activity Branch inserted with ID:', insertId);
-            return insertId;
+			console.log('Activity Branch inserted with ID:', insertId);
+			return insertId;
+		} catch (error) {
+			console.error('Error inserting Activity Branch : ', error);
+			throw error;
+		}
+	},
 
-        } catch (error) {
-            console.error('Error inserting Activity Branch : ', error);
-            throw error;
-        }
-
-    },
-
-    update: async (
+	update: async (
 		db: SQLite.SQLiteDatabase,
 		params: ActivityBranchUpdateParams
 	): Promise<void> => {
@@ -68,9 +76,7 @@ export const ActivityBranchModel = {
 			throw new Error('id is required for update');
 		}
 
-		const entries = Object.entries(params).filter(
-			([key]) => key !== 'id'
-		);
+		const entries = Object.entries(params).filter(([key]) => key !== 'id');
 
 		if (entries.length === 0) {
 			return;
@@ -79,17 +85,20 @@ export const ActivityBranchModel = {
 		const fields = entries.map(([key]) => `${key} = ?`).join(', ');
 		const values = entries.map(([_, value]) => value);
 
-		await db.runAsync(
-			`UPDATE ActivityBranch SET ${fields} WHERE id = ?`,
-			[...values, params.id]
-		);
+		await db.runAsync(`UPDATE ActivityBranch SET ${fields} WHERE id = ?`, [
+			...values,
+			params.id,
+		]);
 	},
 
-    findByCallPlanScheduleId: async (db: SQLite.SQLiteDatabase, call_plan_schedule_id: number): Promise<ActivityBranch[]> => {
+	findByCallPlanScheduleId: async (
+		db: SQLite.SQLiteDatabase,
+		call_plan_schedule_id: number
+	): Promise<ActivityBranch[]> => {
 		const result = await db.getAllAsync<ActivityBranch>(
 			`SELECT * FROM ActivityBranch WHERE call_plan_schedule_id = ?`,
 			[call_plan_schedule_id]
 		);
 		return result;
 	},
-}
+};

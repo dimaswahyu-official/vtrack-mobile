@@ -23,8 +23,8 @@ interface Activity {
 	id_server: number;
 	photo_program?: string;
 	sale_outlet_weekly?: number;
-	latitude?: number;
-	longitude?: number;
+	latitude?: string;
+	longitude?: string;
 	survey_outlet_id?: number;
 	program_id?: number;
 }
@@ -47,8 +47,8 @@ interface ActivityWithDetail {
 	id_server: number;
 	photo_program?: string;
 	sale_outlet_weekly?: number;
-	latitude?: number;
-	longitude?: number;
+	latitude?: string;
+	longitude?: string;
 	survey_outlet_id?: number;
 	program_id?: number;
 	activity_sio?: ActivitySio[];
@@ -83,8 +83,8 @@ export const createTableActivity = async (
 			sale_outlet_weekly INTEGER DEFAULT 0,
             is_sync INTEGER DEFAULT 0,
             id_server INTEGER,
-			latitude INTEGER,
-			longitude INTEGER,
+			latitude TEXT,
+			longitude TEXT,
 			survey_outlet_id INTEGER,
 			program_id INTEGER
         )
@@ -138,8 +138,8 @@ export const ActivityRepository = {
 				sale_outlet_weekly ?? 0,
 				is_sync ?? 0,
 				id_server ?? 0,
-				latitude ?? 0,
-				longitude ?? 0,
+				latitude ?? '',
+				longitude ?? '',
 				survey_outlet_id ?? 0,
 				program_id ?? 0,
 			]

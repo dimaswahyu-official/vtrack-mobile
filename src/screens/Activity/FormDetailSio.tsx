@@ -46,6 +46,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 			photo: string;
 			photo_before: string;
 			photo_after: string;
+			is_sync : number
 		}[]
 	>([]);
 
@@ -59,6 +60,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 			photo: string;
 			photo_before: string;
 			photo_after: string;
+			is_sync: number;
 		}>[]
 	) => {
 		const initializedData = data.map((item) => ({
@@ -70,6 +72,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 			photo: item.photo ?? '',
 			photo_before: item.photo_before ?? '',
 			photo_after: item.photo_after ?? '',
+			is_sync: item.is_sync ?? 0,
 		}));
 		setActivitySio(initializedData);
 	};
@@ -97,6 +100,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 								photo: filteredSio[0].sioTypeGalery[i].photo,
 								photo_before: '',
 								photo_after: '',
+								is_sync: 0,
 							})
 						)
 					);
@@ -117,6 +121,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 								photo: filteredSio[0].sioTypeGalery[i].photo,
 								photo_before: '',
 								photo_after: '',
+								is_sync: 0,
 							})
 						)
 					);
@@ -289,12 +294,16 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 					ActivitySioModel.create(db, sio);
 				}
 			});
-
-			navigation.navigate('FormDetailProgram', { item, activity });
+	
 		} catch (error) {
 			console.error('Error inserting sio:', error);
 			Alert.alert('Error', 'Failed to save sio. Please try again.');
 		}
+	};
+
+	const goToFormDetailProgram = () => {
+		insertSioToSqlite(activitySio);
+		navigation.navigate('FormDetailProgram', { item, activity });
 	};
 
 	const toggleCollapse = (index: number) => {
@@ -519,7 +528,7 @@ export default function FormDetailSio({ route }: FormActivityProps) {
 					}}
 					onPress={() => {
 						if (areAllPhotosTaken(activitySio)) {
-							insertSioToSqlite(activitySio);
+							goToFormDetailProgram();
 						} else {
 							alert('Tolong Lengkapi Seluruh data photo');
 						}

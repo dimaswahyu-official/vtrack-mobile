@@ -66,7 +66,7 @@ export const ActivitySioModel = {
 					photo,
 					photo_before,
 					photo_after,
-					is_sync
+					is_sync ?? 0,
 				]
 			);
 			const insertId = result.lastInsertRowId as number;

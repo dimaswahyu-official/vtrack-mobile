@@ -1,21 +1,22 @@
 import * as SQLite from 'expo-sqlite';
 
 export interface ActivitySog {
-    id?: number;
-    call_plan_schedule_id: number;
-    name: string;
-    value: number;
-    description: string;
-    notes: string;
-    is_sync: number;
+	id?: number;
+	call_plan_schedule_id: number;
+	name: string;
+	value: number;
+	description: string;
+	notes: string;
+	is_sync: number;
 }
-
 
 type ActivitySogCreateParams = Omit<ActivitySog, 'id'>;
 type ActivitySogUpdateParams = Partial<ActivitySog>;
 
-export const createTableActivitySog = async (db: SQLite.SQLiteDatabase): Promise<void> => {
-    await db.execAsync(`
+export const createTableActivitySog = async (
+	db: SQLite.SQLiteDatabase
+): Promise<void> => {
+	await db.execAsync(`
         CREATE TABLE IF NOT EXISTS ActivitySog (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             call_plan_schedule_id INTEGER NOT NULL,
@@ -31,38 +32,47 @@ export const createTableActivitySog = async (db: SQLite.SQLiteDatabase): Promise
 
 // Model Untuk SOG
 export const ActivitySogModel = {
-    // Insert Into
-    create: async (db: SQLite.SQLiteDatabase, params: ActivitySogCreateParams): Promise<number> => {
-        const {
-            call_plan_schedule_id,
-            name,
-            description,
-            value,
-            notes,
-            is_sync
-        } = params;
+	// Insert Into
+	create: async (
+		db: SQLite.SQLiteDatabase,
+		params: ActivitySogCreateParams
+	): Promise<number> => {
+		const {
+			call_plan_schedule_id,
+			name,
+			description,
+			value,
+			notes,
+			is_sync,
+		} = params;
 
-        // Log the parameters to verify they are correct
-        console.log('Inserting SOG with parameters:', params);
-        try {
+		// Log the parameters to verify they are correct
+		console.log('Inserting SOG with parameters:', params);
+		try {
 			const result = await db.runAsync(
 				`INSERT INTO ActivitySog (call_plan_schedule_id, name, value, description, notes, is_sync)
                  VALUES (?, ?, ?, ?, ?, ?)`,
-				[call_plan_schedule_id, name, value, description, notes, is_sync]
+				[
+					call_plan_schedule_id,
+					name,
+					value,
+					description,
+					notes,
+					is_sync ?? 0,
+				]
 			);
 			const insertId = result.lastInsertRowId as number;
 
-            // Log the insertId to confirm successful insertion
-            console.log('Activity SOG inserted with ID:', insertId);
-            return insertId;
-
-        } catch (error) {
+			// Log the insertId to confirm successful insertion
+			console.log('Activity SOG inserted with ID:', insertId);
+			return insertId;
+		} catch (error) {
 			console.error('Error inserting Activity SOG : ', error);
 			throw error;
 		}
-    },
+	},
 
-    update: async (
+	update: async (
 		db: SQLite.SQLiteDatabase,
 		params: ActivitySogUpdateParams
 	): Promise<void> => {
@@ -70,9 +80,7 @@ export const ActivitySogModel = {
 			throw new Error('id is required for update');
 		}
 
-		const entries = Object.entries(params).filter(
-			([key]) => key !== 'id'
-		);
+		const entries = Object.entries(params).filter(([key]) => key !== 'id');
 
 		if (entries.length === 0) {
 			return;
@@ -81,17 +89,20 @@ export const ActivitySogModel = {
 		const fields = entries.map(([key]) => `${key} = ?`).join(', ');
 		const values = entries.map(([_, value]) => value);
 
-		await db.runAsync(
-			`UPDATE ActivitySog SET ${fields} WHERE id = ?`,
-			[...values, params.id]
-		);
+		await db.runAsync(`UPDATE ActivitySog SET ${fields} WHERE id = ?`, [
+			...values,
+			params.id,
+		]);
 	},
 
-    findByCallPlanScheduleId: async (db: SQLite.SQLiteDatabase, call_plan_schedule_id: number): Promise<ActivitySog[]> => {
+	findByCallPlanScheduleId: async (
+		db: SQLite.SQLiteDatabase,
+		call_plan_schedule_id: number
+	): Promise<ActivitySog[]> => {
 		const result = await db.getAllAsync<ActivitySog>(
 			`SELECT * FROM ActivitySog WHERE call_plan_schedule_id = ?`,
 			[call_plan_schedule_id]
 		);
 		return result;
 	},
-}
+};
