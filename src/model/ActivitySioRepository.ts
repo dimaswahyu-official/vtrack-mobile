@@ -9,6 +9,7 @@ export interface ActivitySio {
 	photo: string;
 	photo_before: string;
 	photo_after: string;
+	is_sync: number;
 }
 
 type ActivitySioCreateParams = Omit<ActivitySio, 'id'>;
@@ -28,6 +29,7 @@ export const createTableActivitySio = async (
             photo TEXT,
             photo_before TEXT,
             photo_after TEXT,
+            is_sync INTEGER DEFAULT 0,
             FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity (call_plan_schedule_id)
         )
     `);
@@ -47,14 +49,15 @@ export const ActivitySioModel = {
 			photo,
 			photo_before,
 			photo_after,
+			is_sync,
 		} = params;
 
 		// Log the parameters to verify they are correct
 		console.log('Inserting SIO with parameters:', params);
 		try {
 			const result = await db.runAsync(
-				`INSERT INTO ActivitySio (call_plan_schedule_id, name, description, notes, photo, photo_before, photo_after)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+				`INSERT INTO ActivitySio (call_plan_schedule_id, name, description, notes, photo, photo_before, photo_after, is_sync)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 				[
 					call_plan_schedule_id,
 					name,
@@ -63,6 +66,7 @@ export const ActivitySioModel = {
 					photo,
 					photo_before,
 					photo_after,
+					is_sync,
 				]
 			);
 			const insertId = result.lastInsertRowId as number;

@@ -7,6 +7,7 @@ export interface ActivityBranch {
     value: number;
     description: string;
     notes: string;
+    is_sync: number;
 }
 
 
@@ -22,6 +23,7 @@ export const createTableActivityBranch = async (db: SQLite.SQLiteDatabase): Prom
             value INTEGER NOT NULL,
             description TEXT,
             notes TEXT,
+            is_sync INTEGER DEFAULT 0,
             FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity(call_plan_schedule_id)
         )
     `);
@@ -36,14 +38,15 @@ export const ActivityBranchModel = {
             name,
             description,
             notes,
-            value
+            value,
+            is_sync
         } = params;
         console.log('Inserting Activity Branch with parameters:', params);
         try {
             const result = await db.runAsync(
-                `INSERT INTO ActivityBranch (call_plan_schedule_id, name, description, notes, value)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [call_plan_schedule_id, name, description, notes, value]
+                `INSERT INTO ActivityBranch (call_plan_schedule_id, name, description, notes, value, is_sync)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [call_plan_schedule_id, name, description, notes, value, is_sync]
             );
             const insertId = result.lastInsertRowId as number;
 

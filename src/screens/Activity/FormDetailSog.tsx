@@ -2,7 +2,6 @@ import {
 	Alert,
 	Dimensions,
 	ScrollView,
-	StyleSheet,
 	Text,
 	TextInput,
 	TouchableOpacity,
@@ -19,7 +18,6 @@ import Colors from '../../utils/Colors';
 import ActivityStyles from '../../utils/ActivityStyles';
 import { ActivitySogModel } from '../../model/ActivitySogRepository';
 
-const { width, height } = Dimensions.get('window');
 type NavigationProp = StackNavigationProp<
 	ActivityStackParamList,
 	'FormDetailSog'

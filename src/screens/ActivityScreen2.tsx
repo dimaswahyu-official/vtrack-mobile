@@ -1,8 +1,11 @@
 // Get screen dimensions
 import {
+	Alert,
 	Animated,
+	BackHandler,
 	Dimensions,
 	FlatList,
+	Image,
 	Linking,
 	RefreshControl,
 	StyleSheet,
@@ -34,6 +37,7 @@ import {
 	createTableActivitySog,
 	createTableActivityBranch,
 	createTableActivityProgram,
+	createTableActivityOutlet,
 } from '../model';
 
 const { width, height } = Dimensions.get('window');
@@ -126,7 +130,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 		setRefreshing(true);
 		try {
 			if (!isOnline) {
-				const getDataOffline = await ActivityRepository.getAll(db);
+				// const getDataOffline = await ActivityRepository.getAll(db);
 				// Load data from AsyncStorage if offline
 				const storedActivities = await AsyncStorage.getItem('activities');
 				if (storedActivities) {
@@ -146,29 +150,32 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 				setRefreshing(false);
 				return;
 			}
-			// await dropTableExisting(db);
+			console.log('db', db);
+			await dropTableExisting(db);
 			await createTableActivity(db);
+			await createTableActivityOutlet(db);
 			await createTableActivitySio(db);
 			await createTableActivitySog(db);
 			await createTableActivityBranch(db);
 			await createTableActivityProgram(db);
+			
 			// // Fetch latest schedule data from API
 			const response = await ActivityService.getListingSchedule(userId);
 			const data: Activity2[] = await response.data;
 
 			// Get locally stored activities with status updates
-			const dataActivity = await ActivityRepository.getAll(db);
-			// Create a map for faster lookups
-			const activityStatusMap = new Map(
-				dataActivity.map(activity => [activity.call_plan_schedule_id, activity.status])
-			);
-			// Merge API data with local status updates
-			const updatedData = data.map((item) => {
-				const localStatus = activityStatusMap.get(item.id);
-				return localStatus ? { ...item, status: localStatus } : item;
-			});
+			// const dataActivity = await ActivityRepository.getAll(db);
+			// // Create a map for faster lookups
+			// const activityStatusMap = new Map(
+			// 	dataActivity.map(activity => [activity.call_plan_schedule_id, activity.status])
+			// );
+			// // Merge API data with local status updates
+			// const updatedData = data.map((item) => {
+			// 	const localStatus = activityStatusMap.get(item.id);
+			// 	return localStatus ? { ...item, status: localStatus } : item;
+			// });
 			// Update state with merged data
-			setActivities(updatedData);
+			setActivities(data);
 
 			// Save to local storage for offline access
 			await AsyncStorage.setItem('activities', JSON.stringify(data));
@@ -275,6 +282,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 								{item.type === 1 ? 'Outlet Baru, ' : ''}
 								{getStatusLabel(item.status as any)}
 							</Text>
+							{/*<View style={[styles.row, {marginTop: height * 0.01, alignItems: 'center'}]}>*/}
 							<TouchableOpacity
 								style={styles.buttonWork}
 								onPress={() => openMaps(item.callPlanOutlet?.longitude ?? '', item.callPlanOutlet?.latitude ?? '')}>
@@ -293,6 +301,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 									color={Colors.buttonBackground}
 								/>
 							</TouchableOpacity>
+							{/*</View>*/}
 						</View>
 					</View>
 				</Animated.View>

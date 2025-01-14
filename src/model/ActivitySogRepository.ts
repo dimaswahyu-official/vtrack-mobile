@@ -7,6 +7,7 @@ export interface ActivitySog {
     value: number;
     description: string;
     notes: string;
+    is_sync: number;
 }
 
 
@@ -22,6 +23,7 @@ export const createTableActivitySog = async (db: SQLite.SQLiteDatabase): Promise
             value INTEGER NOT NULL,
             description TEXT,
             notes TEXT,
+            is_sync INTEGER DEFAULT 0,
             FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity(call_plan_schedule_id)
         )
     `);
@@ -37,15 +39,16 @@ export const ActivitySogModel = {
             description,
             value,
             notes,
+            is_sync,
         } = params;
 
         // Log the parameters to verify they are correct
         console.log('Inserting SOG with parameters:', params);
         try {
 			const result = await db.runAsync(
-				`INSERT INTO ActivitySog (call_plan_schedule_id, name, value, description, notes)
-                 VALUES (?, ?, ?, ?, ?)`,
-				[call_plan_schedule_id, name, value, description, notes]
+				`INSERT INTO ActivitySog (call_plan_schedule_id, name, value, description, notes, is_sync)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+				[call_plan_schedule_id, name, value, description, notes, is_sync]
 			);
 			const insertId = result.lastInsertRowId as number;
 
