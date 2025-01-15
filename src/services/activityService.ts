@@ -35,6 +35,51 @@ class ActivityService {
             throw new Error('Error: ' + error);
         }
     }
+
+    static async postActivity(formData: any): Promise<any> {
+        try {
+            const response = await axiosInstance.post(`/activity`, formData)
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
+
+    static async postSio(id: string, formData: any): Promise<any> {
+        try {
+            const response = await axiosInstance.post(`activity-sio/${id}`, formData)
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
+
+    static async postProgram(id: string, formData: any): Promise<any> {
+        try {
+            const response = await axiosInstance.post(`activity-program/${id}`, formData)
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
+
+    static async postBranch(id: string, formData:any): Promise<any> {
+        try {
+            const response = await axiosInstance.post(`activity-branch/${id}`, formData)
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
+
+    static async postSog(id: string, formData: any): Promise<any> {
+        try {
+            const response = await axiosInstance.post(`activity-sog/${id}`, formData)
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
 }
 
 export default ActivityService;
