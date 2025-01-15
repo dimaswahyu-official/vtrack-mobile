@@ -12,7 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { ActivityStackParamList } from '../../navigation/ActivityNavigator';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import useConstantStore from '../../store/useConstantStore';
 import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../../utils/Colors';
@@ -29,7 +29,8 @@ type FormActivityProps = {
 	route: FormActivityRouteProp;
 };
 const activityStyles = ActivityStyles();
-// Define the Brand type
+
+// Define the Brand type with proper validation
 type Brand = {
 	brand: string;
 	created_at: string;
@@ -41,56 +42,60 @@ type Brand = {
 	updated_at: string;
 };
 
+// Define ActivitySog type for better type safety
+type ActivitySog = {
+	id?: number;
+	call_plan_schedule_id: number;
+	name: string;
+	description: string;
+	value: number;
+	notes: string;
+};
+
 export default function FormDetailSog({ route }: FormActivityProps) {
 	const db = useSQLiteContext();
 	const { item, activity } = route.params || {};
 	const [brand, setBrand] = useState<Brand | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
 	const navigation = useNavigation<NavigationProp>();
 
-	const [activitySog, setActivitySog] = useState<
-		{
-			id?: number;
-			call_plan_schedule_id: number;
-			name: string;
-			description: string;
-			value: number;
-			notes: string;
-		}[]
-	>([]);
-
+	const [activitySog, setActivitySog] = useState<ActivitySog[]>([]);
 	const { brands } = useConstantStore();
+
+	// Enhanced initialization with proper error handling
 	useEffect(() => {
 		const initializeBrands = async () => {
 			try {
-				// Get initial data
+				setIsLoading(true);
 				const brandSource =
 					item.callPlanOutlet?.brand || item.callPlanSurvey?.brand;
+				
+				if (!brandSource) {
+					throw new Error('Brand source not found');
+				}
+
 				const existingSog = await ActivitySogModel.findByCallPlanScheduleId(
 					db,
 					activity.call_plan_schedule_id
 				);
+
 				if (brands.length === 0) {
-					setBrand(null);
-					return;
+					throw new Error('No brands available');
 				}
 
-				// Find matching brand from constants
 				const filteredBrand = brands.find((b) => b.brand === brandSource);
 				if (!filteredBrand) {
-					setBrand(null);
-					return;
+					throw new Error('Matching brand not found');
 				}
 
 				setBrand(filteredBrand);
 
-				// If existing brands found in SQLite, use those
 				if (existingSog.length > 0) {
 					setActivitySog(existingSog);
 					return;
 				}
 
-				const sogCount = filteredBrand.sog?.length;
-				if (sogCount) {
+				if (filteredBrand.sog?.length) {
 					const newActivitySog = filteredBrand.sog.map(
 						(sogName: string) => ({
 							call_plan_schedule_id: activity.call_plan_schedule_id,
@@ -104,48 +109,82 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 				}
 			} catch (error) {
 				console.error('Error initializing brands:', error);
+				Alert.alert('Error', error instanceof Error ? error.message : 'Failed to initialize brands');
+			} finally {
+				setIsLoading(false);
 			}
 		};
 
 		initializeBrands();
-	}, [item.id, brands, activity.call_plan_schedule_id]);
+	}, [item.id, brands, activity.call_plan_schedule_id, db]);
 
-	const insertSogToSqlite = async (data: any) => {
+	// Enhanced SQLite operations with proper validation
+	const insertSogToSqlite = async (data: ActivitySog[]) => {
 		try {
-			console.log(JSON.stringify(data) + ' Data Sog');
-			data.forEach(async (sog: any) => {
-				if (sog.id) {
-					await ActivitySogModel.update(db, sog);
-				} else {
-					await ActivitySogModel.create(db, sog);
-				}
-			});
+			setIsLoading(true);
+			await Promise.all(
+				data.map(async (sog) => {
+					if (!sog.name || sog.value < 0) {
+						throw new Error('Invalid SOG data');
+					}
+					
+					if (sog.id) {
+						await ActivitySogModel.update(db, sog);
+					} else {
+						await ActivitySogModel.create(db, {
+							...sog,
+							is_sync: 0
+						});
+					}
+				})
+			);
 		} catch (error) {
-			console.error('Error inserting sio:', error);
-			Alert.alert('Error', 'Failed to save sio. Please try again.');
+			console.error('Error inserting SOG:', error);
+			Alert.alert('Error', 'Failed to save SOG data. Please try again.');
+			throw error;
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
 	const goToOutlet = async () => {
-		await insertSogToSqlite(activitySog);
-		navigation.navigate('FormDetailOutlet', { item, activity });
-		// setIsFullActivity(true); // Set state to true when button is clicked
+		try {
+			if (isLoading) return;
+			
+			await insertSogToSqlite(activitySog);
+			
+			// Validate all required data is present
+			const isValid = activitySog.every(sog => sog.value >= 0);
+			if (!isValid) {
+				Alert.alert('Validation Error', 'Please ensure all values are valid');
+				return;
+			}
+
+			navigation.navigate('FormDetailOutlet', { item, activity });
+		} catch (error) {
+			console.error('Error navigating to outlet:', error);
+			Alert.alert('Error', 'Failed to proceed. Please try again.');
+		}
 	};
+
 	const [collapsedStates, setCollapsedStates] = useState<boolean[]>(
-		Array(brands.length).fill(false) // Initialize all items as collapsed
+		Array(brands.length).fill(false)
 	);
-	const toggleCollapse = (index: number) => {
+
+	const toggleCollapse = useCallback((index: number) => {
 		setCollapsedStates((prevStates) => {
 			const newStates = [...prevStates];
-			newStates[index] = !newStates[index]; // Toggle the specific index
+			newStates[index] = !newStates[index];
 			return newStates;
 		});
-	};
+	}, []);
+
 	if (!Array.isArray(activitySog)) {
 		console.warn('activitySog is not an array:', activitySog);
-		return null; // or return a fallback UI
+		return null;
 	}
-	const footer = () => {
+
+	const footer = useCallback(() => {
 		return (
 			<View
 				style={{
@@ -155,69 +194,32 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 					alignItems: 'center',
 					padding: 8,
 				}}>
-				<View
-					style={{
-						width: 10,
-						height: 10,
-						borderWidth: 0.5,
-						borderRadius: 5,
-						backgroundColor: Colors.buttonBackground,
-					}}
-				/>
-				<View
-					style={{
-						width: 50,
-						height: 2,
-						backgroundColor: Colors.buttonBackground,
-						marginHorizontal: 8,
-					}}
-				/>
-				<View
-					style={{
-						width: 10,
-						height: 10,
-						borderWidth: 0.5,
-						borderRadius: 5,
-						backgroundColor: Colors.buttonBackground,
-					}}
-				/>
-				<View
-					style={{
-						width: 50,
-						height: 2,
-						backgroundColor: Colors.buttonBackground,
-						marginHorizontal: 8,
-					}}
-				/>
-				<View
-					style={{
-						width: 10,
-						height: 10,
-						borderWidth: 0.5,
-						borderRadius: 5,
-						backgroundColor: Colors.buttonBackground,
-					}}
-				/>
-				<View
-					style={{
-						width: 50,
-						height: 2,
-						backgroundColor: 'grey',
-						marginHorizontal: 8,
-					}}
-				/>
-				<View
-					style={{
-						width: 10,
-						height: 10,
-						borderWidth: 0.5,
-						borderRadius: 5,
-						backgroundColor: 'white',
-					}}
-				/>
+				{[...Array(4)].map((_, index) => (
+					<React.Fragment key={index}>
+						<View
+							style={{
+								width: 10,
+								height: 10,
+								borderWidth: 0.5,
+								borderRadius: 5,
+								backgroundColor: index < 3 ? Colors.buttonBackground : 'white',
+							}}
+						/>
+						{index < 3 && (
+							<View
+								style={{
+									width: 50,
+									height: 2,
+									backgroundColor: index < 2 ? Colors.buttonBackground : 'grey',
+									marginHorizontal: 8,
+								}}
+							/>
+						)}
+					</React.Fragment>
+				))}
 			</View>
 		);
-	};
+	}, []);
 
 	return (
 		<ScrollView contentContainerStyle={activityStyles.container}>
@@ -227,7 +229,6 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 					key={index}
 					style={activityStyles.cardContainer}>
 					<View style={activityStyles.card}>
-						{/* Toggle Button as Icon */}
 						<Text style={activityStyles.toggleText}>{sog.name}</Text>
 						<TouchableOpacity
 							onPress={() => toggleCollapse(index)}
@@ -236,18 +237,13 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 								{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
 							]}>
 							<MaterialIcons
-								name={
-									collapsedStates[index]
-										? 'keyboard-arrow-down'
-										: 'keyboard-arrow-up'
-								}
+								name={collapsedStates[index] ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
 								size={24}
 								color="#333"
 							/>
 						</TouchableOpacity>
 						{!collapsedStates[index] && (
 							<View style={activityStyles.cardContent}>
-								{/* Text Fields */}
 								<View>
 									<Text
 										style={[
@@ -262,9 +258,14 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 										value={sog.value.toString()}
 										keyboardType="numeric"
 										onChangeText={(text) => {
-											const newActivitySog = [...activitySog];
-											newActivitySog[index].value = Number(text);
-											setActivitySog(newActivitySog);
+											const value = Number(text);
+											if (isNaN(value) || value < 0) return;
+											
+											setActivitySog(prev => {
+												const newSog = [...prev];
+												newSog[index] = { ...newSog[index], value };
+												return newSog;
+											});
 										}}
 									/>
 								</View>
@@ -288,6 +289,7 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 						marginHorizontal: 8,
 						backgroundColor: Colors.secondaryColor,
 					}}
+					disabled={isLoading}
 					onPress={() => navigation.goBack()}>
 					<Text
 						style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
@@ -302,11 +304,13 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 						alignItems: 'center',
 						marginHorizontal: 8,
 						backgroundColor: Colors.buttonBackground,
+						opacity: isLoading ? 0.7 : 1,
 					}}
+					disabled={isLoading}
 					onPress={goToOutlet}>
 					<Text
 						style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-						Next
+						{isLoading ? 'Loading...' : 'Next'}
 					</Text>
 				</TouchableOpacity>
 			</View>

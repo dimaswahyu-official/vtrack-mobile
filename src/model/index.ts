@@ -3,7 +3,7 @@ import { createTableActivitySio } from './ActivitySioRepository';
 import { createTableActivitySog } from './ActivitySogRepository';
 import { createTableActivityBranch } from './ActivityBranchRepository';
 import { createTableActivityProgram } from './ActivityProgramRepository';
-import { dropTableExisting } from './activityModel2';
+import { dropTableExisting } from './ActivityRepository';
 import { createTableActivityOutlet } from './ActivityOutletRepository';
 export {
     createTableActivity,

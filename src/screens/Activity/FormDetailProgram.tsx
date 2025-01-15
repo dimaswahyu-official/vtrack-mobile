@@ -129,8 +129,8 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 			</View>
 		);
 	};
+	
 	const validatePhotos = (program: any) => {
-		// Check if main program photo is missing
 		if (!program[0]?.photo) {
 			return {
 				name: 'Main Program',
@@ -246,25 +246,6 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 		setActivityProgramCompetitor(newActivityProgram);
 	};
 
-	const handleUpdateProgramCompetitor = async (
-		index: number,
-		updatedProgram: {
-			name: string;
-			photo: string;
-			description: string;
-			id?: number;
-			call_plan_schedule_id: number;
-		}
-	) => {
-		const newActivityProgram = [...activityProgramCompetitor];
-		newActivityProgram[index] = {
-			...updatedProgram,
-			call_plan_schedule_id: activity.call_plan_schedule_id,
-		};
-		setActivityProgramCompetitor(newActivityProgram);
-		await insertProgramCompetitor(newActivityProgram);
-	};
-
 	const insertProgramCompetitor = async (
 		data: {
 			name: string;
@@ -310,7 +291,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 	return (
 		<ScrollView contentContainerStyle={activityStyles.container}>
 			{/* Program Section */}
-			{activity.program_id && (
+			{activity?.program_id ? (
 				<>
 					<Text style={activityStyles.title}>Program</Text>
 					<View style={activityStyles.cardContainer}>
@@ -353,7 +334,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 										}}
 										style={styles.image}
 									/>
-									{!activityProgram.photo_program ? (
+									{!activityProgram?.photo_program ? (
 										<TouchableOpacity
 											style={activityStyles.photoButton}
 											onPress={handleTakePhoto}>
@@ -386,11 +367,11 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 						</View>
 					</View>
 				</>
-			)}
+			) : null}
 
 			{/* Competitor Program Section */}
 			<Text style={activityStyles.title}>Program Competitor</Text>
-			{activityProgramCompetitor.map((program, index) => (
+			{activityProgramCompetitor?.map((program, index) => (
 				<View style={activityStyles.cardContainer} key={index}>
 					<View style={activityStyles.card}>
 						<TouchableOpacity
@@ -410,7 +391,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 							<TextInput
 								style={[activityStyles.input, { flex: 1 }]}
 								placeholder="Nama Program"
-								value={program?.name}
+								value={program?.name || ''}
 								onChangeText={(text) => {
 									const newActivityCompetitor = [
 										...activityProgramCompetitor,
@@ -429,7 +410,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 							<TextInput
 								style={[activityStyles.input, { flex: 1 }]}
 								placeholder="Deskripsi Program"
-								value={program?.description}
+								value={program?.description || ''}
 								onChangeText={(text) => {
 									const newActivityCompetitor = [
 										...activityProgramCompetitor,
@@ -448,10 +429,10 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 							{/* Image Section */}
 							<View style={activityStyles.imageContainer}>
 								<Image
-									source={{ uri: program.photo || defaultImage }}
+									source={{ uri: program?.photo || defaultImage }}
 									style={styles.image}
 								/>
-								{!program?.photo[index] ? (
+								{!program?.photo ? (
 									<TouchableOpacity
 										style={activityStyles.photoButton}
 										onPress={() => handleTakePhotoCompetitor(index)}>
@@ -527,12 +508,14 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 					}}
 					onPress={() => {
 						const missingPhoto = validatePhotos(activityProgram);
-						if (missingPhoto && activity.program_id) {
-							alert(
+						if (missingPhoto && activity?.program_id) {
+							Alert.alert(
+								'Missing Photo',
 								`Missing photo for:\nProgram: ${missingPhoto.name}\nDescription: ${missingPhoto.description}`
 							);
+							return;
 						}
-						if (activityProgramCompetitor.length > 0) {
+						if (activityProgramCompetitor?.length > 0) {
 							insertProgramCompetitor(activityProgramCompetitor);
 						}
 						navigation.navigate('FormDetailBrand', { item, activity });

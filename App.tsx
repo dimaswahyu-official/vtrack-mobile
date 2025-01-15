@@ -10,7 +10,6 @@ import { Platform } from 'react-native';
 import { Paths } from 'expo-file-system/next';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
-import { syncActivitiesInBatches } from './src/model/activityModel'; // Adjust the import path
 import { getDatabaseInstance } from './src/config/db';
 import { BackgroundFetchStatus } from 'expo-background-fetch';
 
@@ -20,7 +19,7 @@ const BACKGROUND_FETCH_TASK = 'SYNC_ACTIVITIES_TASK';
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
     try {
         const now = Date.now();
-        console.log(`Got background fetch call at ${new Date(now).toISOString()}`); // Log for debugging
+        console.log(`Got background fetch call at ${new Date(now).toISOString()}`);
         Toast.show({ type: "info", text1: "Got background fetch call", text2: `${new Date(now).toISOString()}` });
         
         const db = getDatabaseInstance();
@@ -30,7 +29,6 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
         }
 
         console.log('Starting syncActivitiesInBatches...');
-        await syncActivitiesInBatches(db);
         console.log('syncActivitiesInBatches completed successfully.');
 
         return BackgroundFetch.BackgroundFetchResult.NewData;

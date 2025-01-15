@@ -48,4 +48,40 @@ export const ActivityOutletModel = {
 			throw error;
 		}
 	},
+
+	update: async (
+		db: SQLite.SQLiteDatabase,
+		params: ActivityOutlet
+	): Promise<void> => {
+		if (!params.id) {
+			throw new Error('id is required for update');
+		}
+
+		const entries = Object.entries(params).filter(
+			([key]) => key !== 'call_plan_schedule_id'
+		);
+
+		if (entries.length === 0) {
+			return;
+		}
+
+		const fields = entries.map(([key]) => `${key} = ?`).join(', ');
+		const values = entries.map(([_, value]) => value);
+
+		await db.runAsync(
+			`UPDATE ActivityOutlet SET ${fields} WHERE id = ?`,
+			[...values, params.id]
+		);
+	},
+
+	findByCallPlanScheduleId: async (
+		db: SQLite.SQLiteDatabase,
+		call_plan_schedule_id: number
+	): Promise<ActivityOutlet[]> => {
+		const result = await db.getAllAsync<ActivityOutlet>(
+			`SELECT * FROM ActivityOutlet WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
+		);
+		return result;
+	},
 };

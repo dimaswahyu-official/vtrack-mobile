@@ -58,6 +58,16 @@ interface ActivityWithDetail {
 	activity_outlet?: ActivityOutlet[];
 }
 
+export const dropTableExisting = async (db: SQLite.SQLiteDatabase): Promise<void> => {
+    await db.runAsync('DROP TABLE IF EXISTS Activity');
+    await db.runAsync('DROP TABLE IF EXISTS ActivitySio');
+    await db.runAsync('DROP TABLE IF EXISTS ActivitySog');
+    await db.runAsync('DROP TABLE IF EXISTS ActivityBranch');
+    await db.runAsync('DROP TABLE IF EXISTS ActivityProgram');
+    await db.runAsync('DROP TABLE IF EXISTS ActivityOutlet');
+    console.log('All tables dropped successfully');
+}
+
 type ActivityCreateParams = Omit<Activity, 'id'>;
 type ActivityUpdateParams = Partial<Activity>;
 
