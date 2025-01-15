@@ -57,6 +57,7 @@ export const ActivitySogModel = {
 					name,
 					value,
 					description,
+					value,
 					notes,
 					is_sync ?? 0,
 				]

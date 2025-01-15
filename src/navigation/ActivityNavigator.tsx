@@ -1,8 +1,6 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import ActivityScreen from "../screens/ActivityScreen";
 import ActivityScreen2 from "../screens/ActivityScreen2";
-import FormActivityNormal from "../screens/Activity/FormActivityNormal";
 import FormDetailActivity from "../screens/Activity/FormDetailActivity";
 import FormDetailSio from "../screens/Activity/FormDetailSio";
 import FormDetailBrand from "../screens/Activity/FormDetailBrand";
@@ -33,16 +31,7 @@ const ActivityNavigator = () => {
                 component={ActivityScreen2}
                 options={{ headerTitle: '' }}
             />
-            {/*<Stack.Screen*/}
-            {/*    name="Activity"*/}
-            {/*    component={ActivityScreen}*/}
-            {/*    options={{ headerTitle: '' }}*/}
-            {/*/>*/}
-            <Stack.Screen
-                name="FormActivityNormal"
-                component={FormActivityNormal}
-                options={{ headerTitle: '' }}
-            />
+        
             <Stack.Screen
                 name="FormDetailActivity"
                 component={FormDetailActivity}

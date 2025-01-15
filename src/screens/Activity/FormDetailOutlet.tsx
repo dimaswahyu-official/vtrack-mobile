@@ -4,223 +4,304 @@ import {
 	Text,
 	TouchableOpacity,
 	View,
-    Alert
+	Alert,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ActivityStackParamList } from '../../navigation/ActivityNavigator';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import ActivityStyles from '../../utils/ActivityStyles';
 import { useSQLiteContext } from 'expo-sqlite';
-import React, { useEffect, useState } from 'react';
-import Colors from "../../utils/Colors";
+import React, { useEffect, useState, useCallback } from 'react';
+import Colors from '../../utils/Colors';
 import { ActivityOutletModel } from '../../model/ActivityOutletRepository';
+import { ActivityRepository } from '../../model/ActivityRepository';
 
-type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailOutlet'>;
-type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailOutlet'>;
+type NavigationProp = StackNavigationProp<
+	ActivityStackParamList,
+	'FormDetailOutlet'
+>;
+type FormActivityRouteProp = RouteProp<
+	ActivityStackParamList,
+	'FormDetailOutlet'
+>;
 type FormActivityProps = {
-    route: FormActivityRouteProp;
+	route: FormActivityRouteProp;
 };
+
+type Outlet = {
+	id?: number;
+	label: string;
+	value: number;
+};
+
 const activityStyles = ActivityStyles();
 
-export default function FormDetailOutlet({route}: FormActivityProps) {
-    const db = useSQLiteContext();
-    const {item, activity} = route.params || {};
-    const navigation = useNavigation<NavigationProp>();
-    const [endTime, setEndTime] = useState(activity.end_time);
-    const [outletFacilities, setOutletFacilities] = useState<Outlet[]>([]);
+export default function FormDetailOutlet({ route }: FormActivityProps) {
+	const db = useSQLiteContext();
+	const { item, activity } = route.params || {};
+	const navigation = useNavigation<NavigationProp>();
+	const [outletFacilities, setOutletFacilities] = useState<Outlet[]>([]);
+	const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+	const [selectedValues, setSelectedValues] = useState<string[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
 
-    type Outlet = {
-        label: string;
-        value: string;
-    };
-    useEffect(() => {
-        setEndTime(activity.end_time);
-    }, [activity.id]);
+	// Initialize outlet facilities from existing data
+	useEffect(() => {
+		const initializeOutletFacilities = async () => {
+			try {
+				const existingFacilities = await ActivityOutletModel.findByCallPlanScheduleId(
+					db,
+					activity.call_plan_schedule_id
+				);
 
-    useEffect(() => {
-        
-    }, []);
+				if (existingFacilities.length > 0) {
+                    console.log('existingFacilities',existingFacilities);
+					setOutletFacilities(existingFacilities);
+					setSelectedValues(
+						existingFacilities
+							.filter(facility => facility.value === 1)
+							.map(facility => facility.label)
+					);
+				} else {
+					// Set default facilities if none exist
+					const defaultFacilities = [
+						'range_health_facilities',
+						'range_educational_facilities',
+						'range_playground_facilities',
+						'range_worship_facilities',
+						'range_public_transportation_facilities',
+						'range_work_place',
+					].map(label => ({
+						label,
+						value: item?.callPlanOutlet?.[label] || item?.callPlanSurvey?.[label] || 0
+					}));
+					setOutletFacilities(defaultFacilities);
+				}
+			} catch (error) {
+				console.error('Error initializing facilities:', error);
+				Alert.alert('Error', 'Failed to load facility data');
+			}
+		};
 
-    const submitOutlet = async () => {
-        // const outletFacilities = await ActivityOutletModel.findByCallPlanScheduleId(db, item.id);
-        // console.log(outletFacilities);
-        Alert.alert(
-            "Success",
-            "Data has been saved successfully",
-            [
-                {
-                    text: "OK",
-                    onPress: () => {
-                        console.log("OK");
-                        // navigation.replace('Activity2');
-                        // navigation.reset({
-                        //     index: 0,
-                        //     routes: [{ name: 'Activity2' }],
-                        // });
-                    }
-                }
-            ]
-        );
-    };
+		initializeOutletFacilities();
+	}, [activity.call_plan_schedule_id, db, item]);
 
-    const footer = () => {
-        return (
-            <View style={{
-                flexDirection: 'row',
-                justifyContent: 'center',
-                marginVertical: 8,
-                alignItems: 'center',
-                padding: 8,
-            }}>
-                <View style={{
-                    width: 10,
-                    height: 10,
-                    borderWidth: 0.5,
-                    borderRadius: 5,
-                    backgroundColor: Colors.buttonBackground,
-                }}/>
-                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
-                <View style={{
-                    width: 10,
-                    height: 10,
-                    borderWidth: 0.5,
-                    borderRadius: 5,
-                    backgroundColor: Colors.buttonBackground,
-                }}/>
-                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
-                <View style={{
-                    width: 10,
-                    height: 10,
-                    borderWidth: 0.5,
-                    borderRadius: 5,
-                    backgroundColor: Colors.buttonBackground
-                }}/>
-                <View style={{width: 50, height: 2, backgroundColor: Colors.buttonBackground, marginHorizontal: 8,}}/>
-                <View style={{
-                    width: 10,
-                    height: 10,
-                    borderWidth: 0.5,
-                    borderRadius: 5,
-                    backgroundColor: Colors.buttonBackground,
-                }}/>
-            </View>
-        )
-    }
+	const toggleSelection = useCallback((value: string) => {
+		setSelectedValues(prev => 
+			prev.includes(value) 
+				? prev.filter(item => item !== value)
+				: [...prev, value]
+		);
+	}, []);
 
-    //NEW CUSTOM CHECKBOX
-    const CustomCheckbox = ({isChecked, onPress}: { isChecked: any, onPress: any }) => (
-        <TouchableOpacity
-            style={[
-                activityStyles.customCheckbox,
-                {backgroundColor: isChecked ? '#007bff' : '#fff'},
-            ]}
-            onPress={onPress}
-        >
-            {isChecked && (
-                <Text style={{color: '#fff', fontWeight: 'bold', fontSize: 10}}>✔</Text> // Display checkmark
-            )}
-        </TouchableOpacity>
-    );
-    const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-    const [selectedValues, setSelectedValues] = useState<string[]>([]);
-    const outlet: Outlet[] = [
-        {label: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)', value: 'range_health_facilities'},
-        {label: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)', value: 'range_educational_facilities'},
-        {label: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)', value: 'range_playground_facilities'},
-        {
-            label: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
-            value: 'range_worship_facilities'
-        },
-        {
-            label: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
-            value: 'range_public_transportation_facilities'
-        },
-        {label: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)', value: 'range_work_place'},
-    ];
-    const toggleSelection = (value: string) => {
-        setSelectedValues((prev) => {
-            if (prev.includes(value)) {
-                // Deselect the item if it's already selected
-                return prev.filter((item) => item !== value);
-            } else {
-                // Add the item to the selection
-                return [...prev, value];
-            }
-        });
-    };
+	const submitOutlet = async () => {
+		if (isLoading) return;
+		
+		setIsLoading(true);
+		try {
+			const updatedFacilities = outletFacilities.map(facility => ({
+				...facility,
+				value: selectedValues.includes(facility.label) ? 1 : 0,
+				call_plan_schedule_id: activity.call_plan_schedule_id,
+				is_sync: 0
+			}));
 
-    const renderOption = ({item}: { item: any }) => (
-        <TouchableOpacity
-            style={activityStyles.optionContainer}
-            onPress={() => toggleSelection(item.value)}
-        >
-            <CustomCheckbox
-                isChecked={selectedValues.includes(item.value)}
-                onPress={() => toggleSelection(item.value)}
-            />
-            <Text style={[activityStyles.optionLabel, {paddingRight: 6}]}>{item.label}</Text>
-        </TouchableOpacity>
-    );
-    return (
-        <ScrollView contentContainerStyle={activityStyles.container}>
-            <View style={activityStyles.cardContainer}>
-                <View style={activityStyles.card}>
-                    <View style={{padding: 6, justifyContent: "flex-start", alignItems: "flex-start"}}>
-                        <Text style={[activityStyles.label, {marginBottom: 6}]}>
-                            Pastikan Outlet berada di jarak aman dari jarak berikut:
-                        </Text>
-                        <TouchableOpacity
-                            style={activityStyles.dropdownButton}
-                            onPress={() => setIsDropdownVisible((prev) => !prev)}
-                        >
-                            <Text style={activityStyles.buttonText}>
-                                {selectedValues.length > 0
-                                    ? `Area yang dipilih: ${selectedValues.length} Area`
-                                    : 'Pilihan Area'}
-                            </Text>
-                        </TouchableOpacity>
+			await Promise.all(
+				updatedFacilities.map(facility => 
+					facility.id
+						? ActivityOutletModel.update(db, facility)
+						: ActivityOutletModel.create(db, facility)
+				)
+			);
 
-                        {isDropdownVisible && (
-                            <View style={activityStyles.dropdown}>
-                                <FlatList
-                                    scrollEnabled={false}
-                                    data={outlet}
-                                    keyExtractor={(item) => item.value}
-                                    renderItem={renderOption}
-                                />
-                            </View>
-                        )}
-                    </View>
-                </View>
-            </View>
-            <View style={{flexDirection: 'row', justifyContent: 'space-between', padding: 16}}>
-                <TouchableOpacity
-                    style={{
-                        flex: 1,
-                        padding: 12,
-                        borderRadius: 8,
-                        alignItems: 'center',
-                        marginHorizontal: 8,
-                        backgroundColor: Colors.secondaryColor,
-                    }}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={{
-                        flex: 1,
-                        padding: 12,
-                        borderRadius: 8,
-                        alignItems: 'center',
-                        marginHorizontal: 8,
-                        backgroundColor: Colors.buttonBackground,
-                    }}
-                    onPress={submitOutlet}>
-                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 16}}>Submit</Text>
-                </TouchableOpacity>
-            </View>
-            {footer()}
-        </ScrollView>
-    )
+            const submitToServer = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id);
+            console.log('submitToServer', JSON.stringify(submitToServer));
+			Alert.alert(
+				'Success',
+				'Data has been saved successfully',
+				[{ text: 'OK', onPress: () => navigation.goBack() }]
+			);
+		} catch (error) {
+			console.error('Error saving facilities:', error);
+			Alert.alert('Error', 'Failed to save data. Please try again.');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const outlet = [
+		{
+			title: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
+			label: 'range_health_facilities',
+		},
+		{
+			title: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)',
+			label: 'range_educational_facilities',
+		},
+		{
+			title: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)',
+			label: 'range_playground_facilities',
+		},
+		{
+			title: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
+			label: 'range_worship_facilities',
+		},
+		{
+			title: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
+			label: 'range_public_transportation_facilities',
+		},
+		{
+			title: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)',
+			label: 'range_work_place',
+		},
+	];
+
+	const CustomCheckbox = ({
+		isChecked,
+		onPress,
+	}: {
+		isChecked: boolean;
+		onPress: () => void;
+	}) => (
+		<TouchableOpacity
+			style={[
+				activityStyles.customCheckbox,
+				{ backgroundColor: isChecked ? Colors.buttonBackground : '#fff' },
+			]}
+			onPress={onPress}>
+			{isChecked && (
+				<Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 10 }}>
+					✔
+				</Text>
+			)}
+		</TouchableOpacity>
+	);
+
+	const renderOption = useCallback(({ item }: { item: any }) => (
+		<TouchableOpacity
+			style={activityStyles.optionContainer}
+			onPress={() => toggleSelection(item.label)}>
+			<CustomCheckbox
+				isChecked={selectedValues.includes(item.label)}
+				onPress={() => toggleSelection(item.label)}
+			/>
+			<Text style={[activityStyles.optionLabel, { paddingRight: 6 }]}>
+				{item.title}
+			</Text>
+		</TouchableOpacity>
+	), [selectedValues, toggleSelection]);
+
+	const footer = () => (
+		<View
+			style={{
+				flexDirection: 'row',
+				justifyContent: 'center',
+				marginVertical: 8,
+				alignItems: 'center',
+				padding: 8,
+			}}>
+			{[...Array(4)].map((_, index) => (
+				<React.Fragment key={index}>
+					<View
+						style={{
+							width: 10,
+							height: 10,
+							borderWidth: 0.5,
+							borderRadius: 5,
+							backgroundColor: Colors.buttonBackground,
+						}}
+					/>
+					{index < 3 && (
+						<View
+							style={{
+								width: 50,
+								height: 2,
+								backgroundColor: Colors.buttonBackground,
+								marginHorizontal: 8,
+							}}
+						/>
+					)}
+				</React.Fragment>
+			))}
+		</View>
+	);
+
+	return (
+		<ScrollView contentContainerStyle={activityStyles.container}>
+			<View style={activityStyles.cardContainer}>
+				<View style={activityStyles.card}>
+					<View
+						style={{
+							padding: 6,
+							justifyContent: 'flex-start',
+							alignItems: 'flex-start',
+						}}>
+						<Text style={[activityStyles.label, { marginBottom: 6 }]}>
+							Pastikan Outlet berada di jarak aman dari jarak berikut:
+						</Text>
+						<TouchableOpacity
+							style={activityStyles.dropdownButton}
+							onPress={() => setIsDropdownVisible(prev => !prev)}>
+							<Text style={activityStyles.buttonText}>
+                                    {selectedValues.length > 0
+									? `Area yang dipilih: ${selectedValues.length} Area`
+									: 'Pilihan Area'}
+							</Text>
+						</TouchableOpacity>
+
+						{isDropdownVisible && (
+							<View style={activityStyles.dropdown}>
+								<FlatList
+									scrollEnabled={false}
+									data={outlet}
+									keyExtractor={item => item.label}
+									renderItem={renderOption}
+								/>
+							</View>
+						)}
+					</View>
+				</View>
+			</View>
+			<View
+				style={{
+					flexDirection: 'row',
+					justifyContent: 'space-between',
+					padding: 16,
+				}}>
+				<TouchableOpacity
+					style={{
+						flex: 1,
+						padding: 12,
+						borderRadius: 8,
+						alignItems: 'center',
+						marginHorizontal: 8,
+						backgroundColor: Colors.secondaryColor,
+					}}
+					onPress={() => navigation.goBack()}
+					disabled={isLoading}>
+					<Text
+						style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+						Back
+					</Text>
+				</TouchableOpacity>
+				<TouchableOpacity
+					style={{
+						flex: 1,
+						padding: 12,
+						borderRadius: 8,
+						alignItems: 'center',
+						marginHorizontal: 8,
+						backgroundColor: isLoading ? Colors.light.background : Colors.buttonBackground,
+					}}
+					onPress={submitOutlet}
+					disabled={isLoading}>
+					<Text
+						style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+						{isLoading ? 'Submitting...' : 'Submit'}
+					</Text>
+				</TouchableOpacity>
+			</View>
+			{footer()}
+		</ScrollView>
+	);
 }
