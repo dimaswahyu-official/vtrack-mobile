@@ -70,23 +70,34 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
         await fetchBbmList();
     };
 
-
     const checkDraft = (data: any) => {
-        data.forEach((item: any) => {
-            if (item.kilometer_out === 0) {
-                Toast.show({type: 'error', text1: `Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`})
-                console.log(`Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`);
-            }
-        })
-        navigation.navigate('ReimburseDetails', {bbmItem: {}})
-    }
+        let hasZeroKilometerOut = false;
+        if (!data || data.length === 0) {
+            Toast.show({type: 'info', text1: 'No data to process.'});
+            return;
+        } else {
+            data.forEach((item: any) => {
+                if (item.kilometer_out === 0) {
+                    hasZeroKilometerOut = true;
+                    Toast.show({
+                        type: 'error',
+                        text1: `Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`,
+                    });
+                    console.log(`Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`);
+                }
+            });
 
+            if (!hasZeroKilometerOut) {
+                navigation.navigate('ReimburseDetails', {bbmItem: {}});
+            }
+        }
+
+    };
 
     const renderItem = ({item}: { item: any }) => (
         <View style={styles.row}>
             <Text style={styles.text}>{formatDate(item.date_in)}</Text>
-            <Text style={styles.text}>{formatDate(item.date_out) ?? 'Belum Input'}</Text>
-            <Text style={styles.text}>{item.status === 1 ? "Completed" : "Pending"}</Text>
+            <Text style={styles.text}>{item.kilometer_out === 0 ? "Draft" : "Terupload"}</Text>
             <Icon
                 style={{flex: 1, textAlign: "center"}}
                 onPress={() => navigation.navigate('ReimburseDetails', {bbmItem: item})}
@@ -140,15 +151,14 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
                     renderItem={renderItem}
                     ListHeaderComponent={
                         <View style={styles.headerRow}>
-                            <Text style={styles.headerText}>Date In</Text>
-                            <Text style={styles.headerText}>Date Out</Text>
+                            <Text style={styles.headerText}>Date</Text>
                             <Text style={styles.headerText}>Status</Text>
                             <Text style={styles.headerText}>Detail</Text>
                         </View>
                     }
                     keyExtractor={(item) => item.id.toString()}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
                     }
                 />
             </View>

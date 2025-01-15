@@ -294,16 +294,15 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
 
                             </View>
                         </View>
-                        <View style={styles.card}>
-                            <Text style={styles.label}>Jumlah Kilometer Yang Ditempuh</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={result.toString() ?? ''}
-                                editable={false}
-                                keyboardType="numeric"
-                            />
-
-                        </View>
+                            <View style={styles.card}>
+                                <Text style={styles.label}>Jumlah Kilometer Yang Ditempuh</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={photoOut ==='' ? '' :  result.toString()}
+                                    editable={false}
+                                    keyboardType="numeric"
+                                />
+                            </View>
                     </>
                 )}
 

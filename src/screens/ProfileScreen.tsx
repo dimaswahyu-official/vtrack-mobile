@@ -12,6 +12,7 @@ import {useLoadingStore} from "../store/useLoadingStore";
 import Toast from "react-native-toast-message";
 import useConstantStore from '../store/useConstantStore';
 import Colors from "../utils/Colors";
+import colors from "../utils/Colors";
 
 const {width, height} = Dimensions.get('window');
 
@@ -94,11 +95,14 @@ export default function ProfileScreen() {
                     <View style={styles.containerCard}>
                         <Image source={require('../../assets/cover-profile.png')} style={styles.coverPhoto}/>
                         <Image source={require('../../assets/logo-nna-white.png')} style={styles.logo}/>
+                        <Ionicons style={styles.iconEdit} name={"pencil"} size={22} color='white'  onPress={() => {
+                            toUpdateProfileScreen();
+                        }}/>
                         <View style={styles.avatarContainer}>
                             <Image source={{uri: profile.photo}} style={styles.avatar}/>
                             <Text style={styles.name}>{profile.name}</Text>
                             <Text style={styles.roles}>{profile.roles}</Text>
-                            <Text style={styles.username}>{profile.username}</Text>
+                            <Text style={styles.email}>{profile.email}</Text>
 
                         </View>
                         <View style={styles.verticalView}>
@@ -107,50 +111,28 @@ export default function ProfileScreen() {
                     </View>
 
                     <View style={styles.row}>
-                        <Text style={[styles.email, {color: 'gray',}]}>Email </Text>
-                        <Text style={[styles.email, {fontWeight: 'bold',}]}>{profile.email}</Text>
+                        <View style={[styles.row,{width:'100%'}]}>
+                            <ButtonComponent
+                                title={'Reimburse'}
+                                onPress={() => {
+                                    navigation.navigate('Reimburse');
+                                }}
+                                buttonStyle={styles.buttonSync}
+                                textStyle={globalStyles.buttonText}
+                            />
+                            <ButtonComponent
+                                title={'Ambil Absen'}
+                                onPress={() => {
+                                    toAttendanceScreen();
+                                }}
+                                buttonStyle={styles.buttonSync}
+                                textStyle={globalStyles.buttonText}
+                            />
                     </View>
-                    <View style={[styles.row,{width:'100%'}]}>
-                        <ButtonComponent
-                            title={'Reimburse'}
-                            onPress={() => {
-                                navigation.navigate('Reimburse');
-                            }}
-                            buttonStyle={styles.buttonSync}
-                            textStyle={globalStyles.buttonText}
-                        />
-                        <ButtonComponent
-                            title={'Data not Sync'}
-                            onPress={() => {
 
-                            }}
-                            buttonStyle={styles.buttonSync}
-                            textStyle={globalStyles.buttonText}
-                        />
                     </View>
-                    <ButtonComponent
-                        title={'Update Profile'}
-                        onPress={() => {
-                            toUpdateProfileScreen();
-                        }}
-                        buttonStyle={styles.buttonUpdateProfile}
-                        textStyle={globalStyles.buttonText}
-                    />
-                    <ButtonComponent
-                        title={'Ambil Absen'}
-                        onPress={() => {
-                            toAttendanceScreen();
-                        }}
-                        buttonStyle={globalStyles.button}
-                        textStyle={globalStyles.buttonText}
-                    />
-                </View>
-                <View style={{alignItems: "center", padding: 20}}>
-                    <Text style={{color: 'gray', marginVertical: 8}}>active since</Text>
-                    <Text style={{color: Colors.buttonBackground, fontWeight: 'bold'}}>28/06/2024</Text>
                 </View>
             </View>
-
         </ScrollView>
     );
 }
@@ -161,6 +143,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     containerCard: {
+        position:'relative',
         width: '80%',
         marginTop: 10,
         marginBottom: 10,
@@ -182,6 +165,12 @@ const styles = StyleSheet.create({
         width: 90,
         height: 80,
         resizeMode: 'contain'
+    },
+    iconEdit:{
+        top: 10, // Adjust for vertical positioning
+        right: 10,
+        position: 'absolute',
+        zIndex: 16,
     },
     avatarContainer: {
         alignItems: 'center',
@@ -208,9 +197,11 @@ const styles = StyleSheet.create({
     roles: {
         fontSize: 20,
         fontWeight: 'bold',
+        color:colors.secondaryColor
     },
     email: {
-
+        fontWeight:'bold',
+        color:colors.buttonBackground,
         fontSize: 20,
         alignItems: 'center',
         justifyContent: 'center',
