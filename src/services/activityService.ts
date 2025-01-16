@@ -37,6 +37,7 @@ class ActivityService {
     }
 
     static async postActivity(formData: any): Promise<any> {
+        console.log('formData',formData);
         try {
             const response = await axiosInstance.post(`/activity`, formData,
                 {

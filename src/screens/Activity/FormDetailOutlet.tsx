@@ -117,61 +117,71 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
             );
 
             const submitToServer = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id)
-            console.log('submitToServer', submitToServer);
-
-            // Alert.alert(
-            //     'Success',
-            //     'Data has been saved successfully',
-            //     [{text: 'OK', onPress: () => navigation.goBack()}]
-            // );
+            console.log('submitToServer', JSON.stringify(submitToServer));
 
             const formData = new FormData();
             formData.append('user_id', submitToServer[0].user_id);
             formData.append('call_plan_id', submitToServer[0].call_plan_id.toString());
             formData.append('call_plan_schedule_id', submitToServer[0].call_plan_schedule_id.toString());
-            if (submitToServer[0].outlet_id || submitToServer[0].survey_outlet_id){
+            if (submitToServer[0].outlet_id){
                 formData.append('outlet_id', submitToServer[0].outlet_id.toString());
             }
             if(submitToServer[0].survey_outlet_id){
-                formData.append('survey_outlet_id', submitToServer[0].survey_outlet_id ? submitToServer[0].survey_outlet_id.toString() : '');
+                formData.append('survey_outlet_id', submitToServer[0].survey_outlet_id.toString());
             }
             if(submitToServer[0].program_id){
-                formData.append('program_id', submitToServer[0].program_id ? submitToServer[0].program_id.toString() : '');
+                formData.append('program_id', submitToServer[0].program_id.toString());
             }
             formData.append('status', submitToServer[0].status.toString());
-            formData.append('area', submitToServer[0].area.toString());
-            formData.append('region', submitToServer[0].region.toString());
-            formData.append('brand', submitToServer[0].brand.toString());
-            formData.append('type_sio', submitToServer[0].type_sio.toString());
-            formData.append('start_time', '2025-01-16T03:48:44.412Z');
-            formData.append('end_time', '2025-01-16T03:48:44.412Z');
-            formData.append('latitude', submitToServer[0].latitude ? submitToServer[0].latitude.toString() : '');
-            formData.append('longitude', submitToServer[0].longitude ? submitToServer[0].longitude.toString() : '');
-            // formData.append('notes', '');
-            formData.append('sale_outlet_weekly', submitToServer[0].sale_outlet_weekly ? submitToServer[0].sale_outlet_weekly.toString() : '');
-            // formData.append('range_facility', '');
-            // @ts-ignore
-            formData.append('files', {
-                'photo_program' : {
+            formData.append('area', submitToServer[0].area);
+            formData.append('region', submitToServer[0].region);
+            formData.append('brand', submitToServer[0].brand);
+            formData.append('type_sio', submitToServer[0].type_sio);
+            formData.append('start_time', submitToServer[0].start_time ? new Date(submitToServer[0].start_time).toISOString() : '');
+            formData.append('end_time', submitToServer[0].end_time ? new Date(submitToServer[0].end_time).toISOString() : '');
+            formData.append('latitude', submitToServer[0].latitude || '');
+            formData.append('longitude', submitToServer[0].longitude || '');
+            formData.append('sale_outlet_weekly', submitToServer[0].sale_outlet_weekly?.toString() || '');
+
+            // Add range_facility data
+            const rangeFacility = {
+                range_health_facilities: selectedValues.includes('range_health_facilities') ? 1 : 0,
+                range_work_place: selectedValues.includes('range_work_place') ? 1 : 0,
+                range_public_transportation_facilities: selectedValues.includes('range_public_transportation_facilities') ? 1 : 0,
+                range_worship_facilities: selectedValues.includes('range_worship_facilities') ? 1 : 0,
+                range_playground_facilities: selectedValues.includes('range_playground_facilities') ? 1 : 0,
+                range_educational_facilities: selectedValues.includes('range_educational_facilities') ? 1 : 0
+            };
+            formData.append('range_facility', JSON.stringify(rangeFacility));
+
+            // Handle photos
+            if (submitToServer[0].photo_program) {
+                // @ts-ignore
+                formData.append('photo_program', {
                     uri: submitToServer[0].photo_program,
                     type: 'image/jpeg',
-                    name: submitToServer[0].photo_program ? submitToServer[0].photo_program.fileName || 'image.jpg' : 'image.jpg',
-                },
-                'photos' : {
+                    name: submitToServer[0].photo_program.fileName || 'program.jpg'
+                });
+            }
+
+            if (submitToServer[0].photo) {
+                // @ts-ignore
+                formData.append('photos', {
                     uri: submitToServer[0].photo,
-                    type: 'image/jpeg',
-                    name: submitToServer[0].photo.fileName || 'image.jpg',
-                }
-            });
+                    type: 'image/jpeg', 
+                    name: submitToServer[0].photo.fileName || 'photo.jpg'
+                });
+            }
 
             const responseActivity = await ActivityService.postActivity(formData)
+            console.log('responseActivity', responseActivity);
             if (responseActivity.statusCode === 200) {
                 Toast.show({
                     type: 'success',
                     text1: 'Success',
-                    text2: `Update Successful`,
+                    text2: 'Update Successful',
                 });
-                const responseSio = await ActivityService.postSio(submitToServer[0].call_plan_schedule_id, formData)
+                // await ActivityService.postSio(submitToServer[0].call_plan_schedule_id, formData);
             }
         } catch (error) {
             console.error('Error saving facilities:', error);
