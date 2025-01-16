@@ -198,6 +198,13 @@ export const ActivityRepository = {
 		return result;
 	},
 
+	findUnsyncedActivities: async (
+		db: SQLite.SQLiteDatabase
+	): Promise<Activity[]> => {
+		const result = await db.getAllAsync<Activity>(`SELECT * FROM Activity WHERE is_sync = 0`);
+		return result;
+	},
+
 	findActivityWithDetail: async (
 		db: SQLite.SQLiteDatabase,
 		call_plan_schedule_id: number

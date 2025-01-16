@@ -15,25 +15,122 @@ import ConstantService from '../services/constantService';
 import useConstantStore from '../store/useConstantStore';
 import {useOffline} from '../context/OfflineProvider';
 import {useSQLiteContext} from 'expo-sqlite';
-import {countSyncedActivities, countNotSyncedActivities} from '../model/activityModel';
-import {SafeAreaView} from "react-native-safe-area-context";
 import Colors from "../utils/Colors";
 import {useNavigation} from "@react-navigation/native";
 import {BottomTabNavigationProp} from "@react-navigation/bottom-tabs";
 import {MainTabParamList} from "../navigation/MainNavigator";
+import { BackgroundFetchStatus } from 'expo-background-fetch';
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
+import { ActivityRepository } from '../model/ActivityRepository';
 
 const {width, height} = Dimensions.get('window');
 
+
 export default function HomeScreen() {
-    const db = useSQLiteContext();
     const {setBrands, setSio, brands, sio} = useConstantStore();
     const {isOnline, isWifi} = useOffline();
-
     // State to track sync status and counts
     const [syncStatus, setSyncStatus] = useState<string>('');
     const [syncedCount, setSyncedCount] = useState<number>(0);
     const [notSyncedCount, setNotSyncedCount] = useState<number>(0);
+    const [checkStatus, setCheckStatus] = useState<string>('');
     const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+
+
+    const db = useSQLiteContext();
+const BACKGROUND_FETCH_TASK = 'SYNC_ACTIVITIES_TASK';
+
+TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+    try {
+        const now = Date.now();
+        console.log(`[Background Fetch] Started at ${new Date(now).toISOString()}`);
+        
+        if (!db) {
+            console.error('[Background Fetch] Database instance is null');
+            return BackgroundFetch.BackgroundFetchResult.Failed;
+        }
+
+        console.log('[Background Fetch] Fetching unsynced activities...');
+        const activities = await ActivityRepository.findUnsyncedActivities(db);
+        console.log(`[Background Fetch] Found ${activities.length} unsynced activities`);
+        
+        if (activities.length === 0) {
+            console.log('[Background Fetch] No activities to sync');
+            return BackgroundFetch.BackgroundFetchResult.NoData;
+        }
+
+        for (const activity of activities) {
+            try {
+                console.log(`[Background Fetch] Processing activity ID: ${activity.id}`);
+                await ActivityRepository.update(db, {
+                    call_plan_schedule_id: activity.call_plan_schedule_id,
+                    is_sync: 1
+                });
+                console.log(`[Background Fetch] Successfully processed activity ID: ${activity.id}`);
+            } catch (error) {
+                console.error('[Background Fetch] Failed to sync activity:', error);
+                continue;
+            }
+        }
+
+        console.log('[Background Fetch] Completed successfully');
+        return BackgroundFetch.BackgroundFetchResult.NewData;
+    } catch (error: any) {
+        console.error('[Background Fetch] Fatal error:', error);
+        return BackgroundFetch.BackgroundFetchResult.Failed;
+    }
+});
+
+const [isRegistered, setIsRegistered] = useState(false);
+    const [status, setStatus] = useState<BackgroundFetchStatus | null>(null);
+
+    const checkStatusAsync = async () => {
+        try {
+            const status = await BackgroundFetch.getStatusAsync();
+            const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+            console.log('[Background Fetch] Current status:', BackgroundFetch.BackgroundFetchStatus[status as any]);
+            console.log('[Background Fetch] Is registered:', isRegistered);
+            setStatus(status);
+            setIsRegistered(isRegistered);
+            return { status, isRegistered };
+        } catch (error) {
+            console.error('[Background Fetch] Error checking status:', error);
+            return null;
+        }
+    };
+
+    const registerBackgroundFetch = async () => {
+        try {
+            const { status, isRegistered } = await checkStatusAsync() || {};
+            
+            if (!isRegistered) {
+                console.log('[Background Fetch] Registering task...');
+                await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+                    minimumInterval: 3 * 60, // 5 minutes
+                    stopOnTerminate: false,
+                    startOnBoot: true,
+                });
+
+                const newStatus = await checkStatusAsync();
+                if (newStatus?.isRegistered) {
+                    console.log('[Background Fetch] Task registered successfully');
+                } else {
+                    console.error('[Background Fetch] Task registration failed');
+                }
+            } else {
+                console.log('[Background Fetch] Task already registered');
+            }
+        } catch (error: any) {
+            console.error('[Background Fetch] Registration error:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (isOnline || isWifi) {
+            registerBackgroundFetch();
+        }
+    }, [isOnline, isWifi]);
 
 
     const data = [

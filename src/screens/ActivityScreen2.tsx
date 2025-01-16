@@ -21,7 +21,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import ActivityService from '../services/activityService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import { getStatusLabel, getStatusLabelNew } from '../constants/status';
+import { getStatusLabel } from '../constants/status';
 import { formatDate } from '../utils/DateHelper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Colors from '../utils/Colors';
