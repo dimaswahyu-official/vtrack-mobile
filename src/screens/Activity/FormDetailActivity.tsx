@@ -114,12 +114,12 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             photo: image ?? '',
             is_sync: 0,
             id_server: 0,
-            photo_program: '',
-            sale_outlet_weekly: 0,
-            latitude: '',
-            longitude: '',
+            photo_program: data.photo_program ?? '',
+            sale_outlet_weekly: data?.sale_outlet_weekly ?? 0,
+            latitude: data.callPlanOutlet?.latitude ?? data?.callPlanSurvey?.latitude ?? '',
+            longitude: data.callPlanOutlet?.longitude ?? data?.callPlanSurvey?.longitude ?? '',
             survey_outlet_id: data?.callPlanSurvey?.id ?? 0,
-            program_id: data?.callPlanProgram?.id ?? 0,
+            program_id: data?.program_id ?? 0,
         };
 
         try {

@@ -4,10 +4,10 @@
     "slug": "vtrackMobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo-nna.png",
+    "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/logo-nna.png",
+      "image": "./assets/nna-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -24,7 +24,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo-nna.png",
+        "foregroundImage": "./assets/nna-icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -39,7 +39,7 @@
       "package": "com.nna.vtrack.mobile"
     },
     "web": {
-      "favicon": "./assets/logo-nna.png"
+      "favicon": "./assets/nna-icon.png"
     },
     "plugins": [
       [

@@ -42,10 +42,10 @@ interface ActivityWithDetail {
 	type_sio: string;
 	start_time: string;
 	end_time: string;
-	photo: string;
+	photo: any;
 	is_sync: number;
 	id_server: number;
-	photo_program?: string;
+	photo_program?: any;
 	sale_outlet_weekly?: number;
 	latitude?: string;
 	longitude?: string;

@@ -38,32 +38,47 @@ class ActivityService {
 
     static async postActivity(formData: any): Promise<any> {
         try {
-            const response = await axiosInstance.post(`/activity`, formData)
+            const response = await axiosInstance.post(`/activity`, formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
             return response.data
         } catch (error: any) {
             throw new Error('Error: ' + error);
         }
     }
 
-    static async postSio(id: string, formData: any): Promise<any> {
+    static async postSio(id: number, formData: any): Promise<any> {
         try {
-            const response = await axiosInstance.post(`activity-sio/${id}`, formData)
+            const response = await axiosInstance.post(`activity-sio/${id}`, formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                })
             return response.data
         } catch (error: any) {
             throw new Error('Error: ' + error);
         }
     }
 
-    static async postProgram(id: string, formData: any): Promise<any> {
+    static async postProgram(id: number, formData: any): Promise<any> {
         try {
-            const response = await axiosInstance.post(`activity-program/${id}`, formData)
+            const response = await axiosInstance.post(`activity-program/${id}`, formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                })
             return response.data
         } catch (error: any) {
             throw new Error('Error: ' + error);
         }
     }
 
-    static async postBranch(id: string, formData:any): Promise<any> {
+    static async postBranch(id: number, formData:any): Promise<any> {
         try {
             const response = await axiosInstance.post(`activity-branch/${id}`, formData)
             return response.data
@@ -72,7 +87,7 @@ class ActivityService {
         }
     }
 
-    static async postSog(id: string, formData: any): Promise<any> {
+    static async postSog(id: number, formData: any): Promise<any> {
         try {
             const response = await axiosInstance.post(`activity-sog/${id}`, formData)
             return response.data
