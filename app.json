@@ -7,7 +7,7 @@
     "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/nna-icon.png",
+      "image": "./assets/logo-nna.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

@@ -11,6 +11,7 @@ import {ActivityStackParamList} from '../../navigation/ActivityNavigator';
 import {RouteProp, useNavigation} from '@react-navigation/native';
 import ActivityStyles from '../../utils/ActivityStyles';
 import {useSQLiteContext} from 'expo-sqlite';
+import * as Location from "expo-location";
 import React, {useEffect, useState, useCallback} from 'react';
 import Colors from '../../utils/Colors';
 import {ActivityOutletModel} from '../../model/ActivityOutletRepository';
@@ -38,14 +39,16 @@ type Outlet = {
 
 const activityStyles = ActivityStyles();
 
-export default function FormDetailOutlet({ route }: FormActivityProps) {
-	const db = useSQLiteContext();
-	const { item, activity } = route.params || {};
-	const navigation = useNavigation<NavigationProp>();
-	const [outletFacilities, setOutletFacilities] = useState<Outlet[]>([]);
-	const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-	const [selectedValues, setSelectedValues] = useState<string[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
+export default function FormDetailOutlet({route}: FormActivityProps) {
+    const db = useSQLiteContext();
+    const {item, activity} = route.params || {};
+    const navigation = useNavigation<NavigationProp>();
+    const [outletFacilities, setOutletFacilities] = useState<Outlet[]>([]);
+    const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+    const [selectedValues, setSelectedValues] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [latitude, setLatitude] = useState("");
+    const [longitude, setLongitude] = useState("");
 
     // Initialize outlet facilities from existing data
     useEffect(() => {
@@ -117,19 +120,34 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
             );
 
             const submitToServer = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id)
-            console.log('submitToServer', JSON.stringify(submitToServer));
+            // console.log('submitToServer', submitToServer);
+
+            // Alert.alert(
+            //     'Success',
+            //     'Data has been saved successfully',
+            //     [{text: 'OK', onPress: () => navigation.goBack()}]
+            // );
+            const {coords} = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.High,
+            });
+
+            if (coords) {
+                const {latitude, longitude} = coords;
+                setLatitude(latitude.toString());
+                setLongitude(longitude.toString());
+            }
 
             const formData = new FormData();
             formData.append('user_id', submitToServer[0].user_id);
             formData.append('call_plan_id', submitToServer[0].call_plan_id.toString());
             formData.append('call_plan_schedule_id', submitToServer[0].call_plan_schedule_id.toString());
-            if (submitToServer[0].outlet_id){
+            if (submitToServer[0].outlet_id) {
                 formData.append('outlet_id', submitToServer[0].outlet_id.toString());
             }
-            if(submitToServer[0].survey_outlet_id){
+            if (submitToServer[0].survey_outlet_id) {
                 formData.append('survey_outlet_id', submitToServer[0].survey_outlet_id.toString());
             }
-            if(submitToServer[0].program_id){
+            if (submitToServer[0].program_id) {
                 formData.append('program_id', submitToServer[0].program_id.toString());
             }
             formData.append('status', submitToServer[0].status.toString());
@@ -139,8 +157,8 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
             formData.append('type_sio', submitToServer[0].type_sio);
             formData.append('start_time', submitToServer[0].start_time ? new Date(submitToServer[0].start_time).toISOString() : '');
             formData.append('end_time', submitToServer[0].end_time ? new Date(submitToServer[0].end_time).toISOString() : '');
-            formData.append('latitude', submitToServer[0].latitude || '');
-            formData.append('longitude', submitToServer[0].longitude || '');
+            formData.append('latitude', latitude);
+            formData.append('longitude', longitude);
             formData.append('sale_outlet_weekly', submitToServer[0].sale_outlet_weekly?.toString() || '');
 
             // Add range_facility data
@@ -168,21 +186,84 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
                 // @ts-ignore
                 formData.append('photos', {
                     uri: submitToServer[0].photo,
-                    type: 'image/jpeg', 
+                    type: 'image/jpeg',
                     name: submitToServer[0].photo.fileName || 'photo.jpg'
                 });
             }
 
-            const responseActivity = await ActivityService.postActivity(formData)
-            console.log('responseActivity', responseActivity);
-            if (responseActivity.statusCode === 200) {
-                Toast.show({
-                    type: 'success',
-                    text1: 'Success',
-                    text2: 'Update Successful',
-                });
-                // await ActivityService.postSio(submitToServer[0].call_plan_schedule_id, formData);
-            }
+            // const responseActivity = await ActivityService.postActivity(formData)
+            // console.log('responseActivity', responseActivity);
+            // if (responseActivity.statusCode === 200) {
+            //     Toast.show({
+            //         type: 'success',
+            //         text1: 'Success',
+            //         text2: 'Update Successful',
+            //     });
+            // }
+
+
+            //Hit SIO to API
+            const formDataSio = new FormData();
+            submitToServer[0].activity_sio?.forEach((data, index) => {
+                formDataSio.append('name', data.name);
+                formDataSio.append('description', data.description);
+                formDataSio.append('notes', data.notes);
+                // @ts-ignore
+                formDataSio.append('files', {
+                        'photo_before': {
+                            uri: data.photo_before,
+                            type: 'image/jpeg',
+                            name: data.photo_before.fileName || 'photo.jpg'
+                        },
+                        'photo_after': {
+                            uri: data.photo_after,
+                            type: 'image/jpeg',
+                            name: data.photo_after.fileName || 'photo.jpg'
+                        }
+                    });
+                console.log(JSON.stringify(formDataSio), 'testtt');
+                const response = ActivityService.postSio(submitToServer[0].call_plan_schedule_id, formDataSio)
+            })
+
+            // //Hit PROGRAM to API
+            // const formDataProgram = new FormData();
+            // submitToServer[0].activity_program?.forEach((data, index) => {
+            //     formDataProgram.append('name', data.name);
+            //     formDataProgram.append('description', data.description);
+            //     // @ts-ignore
+            //     formDataProgram.append('file', {
+            //         uri: data.photo,
+            //         type: 'image/jpeg',
+            //         name: data.photo.fileName || 'image.jpg',
+            //     });
+            //     const responseProgram = ActivityService.postProgram(submitToServer[0].call_plan_schedule_id, formDataProgram)
+            //     console.log('responseProgram', responseProgram);
+            // })
+
+            // //Hit BRANCH to API
+            // submitToServer[0].activity_branch?.forEach((data) => {
+            //     const jsonPayload = {
+            //         name: data.name,
+            //         description: data.description,
+            //         value: data.value,
+            //         notes: data.notes,
+            //     };
+            //     const responseBranch = ActivityService.postBranch(submitToServer[0].call_plan_schedule_id, jsonPayload)
+            // })
+
+            // //Hit SOG to API
+            // submitToServer[0].activity_sog?.forEach((data, index) => {
+            //     const sogData = {
+            //                 name: data.name,
+            //                 description: data.description,
+            //                 value: data.value,
+            //                 notes: data.notes,
+            //             };
+            //     const responseSog = ActivityService.postSog(submitToServer[0].call_plan_schedule_id, sogData)
+            //     console.log('responseSog', responseSog);
+            // })
+
+
         } catch (error) {
             console.error('Error saving facilities:', error);
             Alert.alert('Error', 'Failed to save data. Please try again.');
