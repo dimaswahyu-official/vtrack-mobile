@@ -16,6 +16,7 @@ import {useLoadingStore} from "../store/useLoadingStore";
 import ConstantService from '../services/constantService';
 import useConstantStore from '../store/useConstantStore';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import colors from "../utils/Colors";
 
 type FormData = {
     email: string;
@@ -210,13 +211,21 @@ export default function LoginScreen() {
                     marginRight: 10,}}>
                     <View style={rememberMe ? { width: 20,
                         height: 20,
-                        backgroundColor: '#007bff',
+                        alignItems:'center',
+                        backgroundColor: colors.buttonBackground,
                         borderRadius: 5,} : {width: 20,
                         height: 20,
                         backgroundColor: '#fff',
                         borderWidth: 1,
                         borderColor: '#ccc',
-                        borderRadius: 5,}} />
+                        borderRadius: 5,}}
+                    >
+                        {rememberMe ? <Text style={{color: '#fff', fontWeight: 'bold', fontSize: 10}}>
+                            ✔
+                        </Text> : null}
+                    </View>
+
+
                 </TouchableOpacity>
                 <Text style={{ fontSize: 16,
                     color: '#333',}}>Remember Me</Text>

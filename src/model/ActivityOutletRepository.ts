@@ -9,20 +9,21 @@ export interface ActivityOutlet {
 }
 
 type ActivityOutletCreateParams = Omit<ActivityOutlet, 'id'>;
+type ActivityOutletUpdateParams = Partial<ActivityOutlet>;
 
 export const createTableActivityOutlet = async (
 	db: SQLite.SQLiteDatabase
 ): Promise<void> => {
 	await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS ActivityOutlet (
-            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-            call_plan_schedule_id INTEGER NOT NULL,
-            label TEXT NOT NULL,
-            value INTEGER NOT NULL,
-            is_sync INTEGER DEFAULT 0,
-            FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity(call_plan_schedule_id)
-        )
-    `);
+		CREATE TABLE IF NOT EXISTS ActivityOutlet (
+													  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+													  call_plan_schedule_id INTEGER NOT NULL,
+													  label TEXT NOT NULL,
+													  value INTEGER NOT NULL,
+													  is_sync INTEGER DEFAULT 0,
+													  FOREIGN KEY (call_plan_schedule_id) REFERENCES Activity(call_plan_schedule_id)
+			)
+	`);
 };
 
 export const ActivityOutletModel = {
@@ -36,7 +37,7 @@ export const ActivityOutletModel = {
 		try {
 			const result = await db.runAsync(
 				`INSERT INTO ActivityOutlet (call_plan_schedule_id, label, value, is_sync)
-                 VALUES (?, ?, ?, ?)`,
+				 VALUES (?, ?, ?, ?)`,
 				[call_plan_schedule_id, label, value, is_sync ?? 0]
 			);
 			const insertId = result.lastInsertRowId as number;
@@ -51,7 +52,7 @@ export const ActivityOutletModel = {
 
 	update: async (
 		db: SQLite.SQLiteDatabase,
-		params: ActivityOutlet
+		params: ActivityOutletUpdateParams
 	): Promise<void> => {
 		if (!params.id) {
 			throw new Error('id is required for update');

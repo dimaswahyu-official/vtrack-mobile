@@ -127,6 +127,14 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
             //     'Data has been saved successfully',
             //     [{text: 'OK', onPress: () => navigation.goBack()}]
             // );
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== "granted") {
+                Alert.alert(
+                    "Permission Denied",
+                    "Location permission is required for attendance"
+                );
+                return;
+            }
             const {coords} = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.High,
             });
@@ -191,77 +199,77 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                 });
             }
 
-            // const responseActivity = await ActivityService.postActivity(formData)
-            // console.log('responseActivity', responseActivity);
-            // if (responseActivity.statusCode === 200) {
-            //     Toast.show({
-            //         type: 'success',
-            //         text1: 'Success',
-            //         text2: 'Update Successful',
-            //     });
-            // }
+            const responseActivity = await ActivityService.postActivity(formData)
+            console.log('responseActivity', responseActivity);
+            if (responseActivity.statusCode === 200) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Success',
+                    text2: 'Update Successful',
+                });
+            }
 
 
             //Hit SIO to API
-            const formDataSio = new FormData();
-            submitToServer[0].activity_sio?.forEach((data, index) => {
+            submitToServer[0].activity_sio?.forEach((data) => {
+                const formDataSio = new FormData();
                 formDataSio.append('name', data.name);
                 formDataSio.append('description', data.description);
                 formDataSio.append('notes', data.notes);
                 // @ts-ignore
-                formDataSio.append('files', {
-                        'photo_before': {
-                            uri: data.photo_before,
-                            type: 'image/jpeg',
-                            name: data.photo_before.fileName || 'photo.jpg'
-                        },
-                        'photo_after': {
-                            uri: data.photo_after,
-                            type: 'image/jpeg',
-                            name: data.photo_after.fileName || 'photo.jpg'
-                        }
-                    });
-                console.log(JSON.stringify(formDataSio), 'testtt');
+                formDataSio.append('photo_before', {
+                    uri: data.photo_before,
+                    type: 'image/jpeg',
+                    name: data.photo_before.fileName || 'photo.jpg'
+                });
+                // @ts-ignore
+                formDataSio.append('photo_after', {
+                    uri: data.photo_after,
+                    type: 'image/jpeg',
+                    name: data.photo_after.fileName || 'photo.jpg'
+                });
                 const response = ActivityService.postSio(submitToServer[0].call_plan_schedule_id, formDataSio)
+                console.log('response', response);
             })
 
-            // //Hit PROGRAM to API
-            // const formDataProgram = new FormData();
-            // submitToServer[0].activity_program?.forEach((data, index) => {
-            //     formDataProgram.append('name', data.name);
-            //     formDataProgram.append('description', data.description);
-            //     // @ts-ignore
-            //     formDataProgram.append('file', {
-            //         uri: data.photo,
-            //         type: 'image/jpeg',
-            //         name: data.photo.fileName || 'image.jpg',
-            //     });
-            //     const responseProgram = ActivityService.postProgram(submitToServer[0].call_plan_schedule_id, formDataProgram)
-            //     console.log('responseProgram', responseProgram);
-            // })
+            //Hit PROGRAM to API
 
-            // //Hit BRANCH to API
-            // submitToServer[0].activity_branch?.forEach((data) => {
-            //     const jsonPayload = {
-            //         name: data.name,
-            //         description: data.description,
-            //         value: data.value,
-            //         notes: data.notes,
-            //     };
-            //     const responseBranch = ActivityService.postBranch(submitToServer[0].call_plan_schedule_id, jsonPayload)
-            // })
+            submitToServer[0].activity_program?.forEach((data, index) => {
+                const formDataProgram = new FormData();
+                formDataProgram.append('name', data.name);
+                formDataProgram.append('description', data.description);
+                // @ts-ignore
+                formDataProgram.append('file', {
+                    uri: data.photo,
+                    type: 'image/jpeg',
+                    name: data.photo.fileName || 'image.jpg',
+                });
+                const responseProgram = ActivityService.postProgram(submitToServer[0].call_plan_schedule_id, formDataProgram)
+                console.log('responseProgram', responseProgram);
+            })
 
-            // //Hit SOG to API
-            // submitToServer[0].activity_sog?.forEach((data, index) => {
-            //     const sogData = {
-            //                 name: data.name,
-            //                 description: data.description,
-            //                 value: data.value,
-            //                 notes: data.notes,
-            //             };
-            //     const responseSog = ActivityService.postSog(submitToServer[0].call_plan_schedule_id, sogData)
-            //     console.log('responseSog', responseSog);
-            // })
+            //Hit BRANCH to API
+            submitToServer[0].activity_branch?.forEach((data) => {
+                const jsonPayload = {
+                    name: data.name,
+                    description: data.description,
+                    value: data.value,
+                    notes: data.notes,
+                };
+                const responseBranch = ActivityService.postBranch(submitToServer[0].call_plan_schedule_id, jsonPayload)
+            })
+
+            //Hit SOG to API
+            submitToServer[0].activity_sog?.forEach((data, index) => {
+                const sogData = {
+                    name: data.name,
+                    description: data.description,
+                    value: data.value,
+                    notes: data.notes,
+                };
+                const responseSog = ActivityService.postSog(submitToServer[0].call_plan_schedule_id, sogData)
+                console.log('responseSog', responseSog);
+            })
 
 
         } catch (error) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, Dimensions, View, Text} from 'react-native';
 import {useOffline} from '../context/OfflineProvider';
-import LottieView from 'lottie-react-native';
+
 
 // Get the screen dimensions
 const {width, height} = Dimensions.get('window');
@@ -14,16 +14,14 @@ const OfflineIndicator = () => {
 
     if (!isOnline) {
         // <View style={{borderWidth:1,borderColor:'red',width:'100%'}}></View>
-        animationSource = require('../../assets/lottie/offline.json');
         statusColor = 'red';
         statusText = 'offline'
     } else if (isOnline && !isWifi) {
         // <View style={{borderWidth:1,borderColor:'green',width:'100%'}}></View>
-        animationSource = require('../../assets/lottie/online.json');
+
         statusColor = 'orange';
     } else {
         // <View style={{borderWidth:1,borderColor:'green',width:'100%'}}></View>
-        animationSource = require('../../assets/lottie/online.json');
         statusColor = 'green';
         statusText = 'online'
     }
