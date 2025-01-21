@@ -69,6 +69,7 @@ export default function LoginScreen() {
         const { email, password } = data;
         if (email && password) {
             try {
+                setLoading(true);
                 const response = await AuthServices.login(email, password);
                 if (response.statusCode === 200){
                     if (rememberMe) {
@@ -113,6 +114,8 @@ export default function LoginScreen() {
                         text2: `${data.message}`,
                     });
                 }
+            }finally {
+                setLoading(false);
             }
         }
     };

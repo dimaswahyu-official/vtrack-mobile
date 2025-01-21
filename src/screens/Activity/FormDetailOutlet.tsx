@@ -119,14 +119,6 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                 )
             );
 
-            const submitToServer = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id)
-            // console.log('submitToServer', submitToServer);
-
-            // Alert.alert(
-            //     'Success',
-            //     'Data has been saved successfully',
-            //     [{text: 'OK', onPress: () => navigation.goBack()}]
-            // );
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== "granted") {
                 Alert.alert(
@@ -135,7 +127,8 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                 );
                 return;
             }
-            const {coords} = await Location.getCurrentPositionAsync({
+
+            const { coords } = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.High,
             });
 
@@ -145,138 +138,19 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
                 setLongitude(longitude.toString());
             }
 
-            const formData = new FormData();
-            formData.append('user_id', submitToServer[0].user_id);
-            formData.append('call_plan_id', submitToServer[0].call_plan_id.toString());
-            formData.append('call_plan_schedule_id', submitToServer[0].call_plan_schedule_id.toString());
-            if (submitToServer[0].outlet_id) {
-                formData.append('outlet_id', submitToServer[0].outlet_id.toString());
-            }
-            if (submitToServer[0].survey_outlet_id) {
-                formData.append('survey_outlet_id', submitToServer[0].survey_outlet_id.toString());
-            }
-            if (submitToServer[0].program_id) {
-                formData.append('program_id', submitToServer[0].program_id.toString());
-            }
-            formData.append('status', submitToServer[0].status.toString());
-            formData.append('area', submitToServer[0].area);
-            formData.append('region', submitToServer[0].region);
-            formData.append('brand', submitToServer[0].brand);
-            formData.append('type_sio', submitToServer[0].type_sio);
-            formData.append('start_time', submitToServer[0].start_time ? new Date(submitToServer[0].start_time).toISOString() : '');
-            formData.append('end_time', submitToServer[0].end_time ? new Date(submitToServer[0].end_time).toISOString() : '');
-            formData.append('latitude', latitude);
-            formData.append('longitude', longitude);
-            formData.append('sale_outlet_weekly', submitToServer[0].sale_outlet_weekly?.toString() || '');
-
-            // Add range_facility data
-            const rangeFacility = {
-                range_health_facilities: selectedValues.includes('range_health_facilities') ? 1 : 0,
-                range_work_place: selectedValues.includes('range_work_place') ? 1 : 0,
-                range_public_transportation_facilities: selectedValues.includes('range_public_transportation_facilities') ? 1 : 0,
-                range_worship_facilities: selectedValues.includes('range_worship_facilities') ? 1 : 0,
-                range_playground_facilities: selectedValues.includes('range_playground_facilities') ? 1 : 0,
-                range_educational_facilities: selectedValues.includes('range_educational_facilities') ? 1 : 0
-            };
-            formData.append('range_facility', JSON.stringify(rangeFacility));
-
-            // Handle photos
-            if (submitToServer[0].photo_program) {
-                // @ts-ignore
-                formData.append('photo_program', {
-                    uri: submitToServer[0].photo_program,
-                    type: 'image/jpeg',
-                    name: submitToServer[0].photo_program.fileName || 'program.jpg'
-                });
-            }
-
-            if (submitToServer[0].photo) {
-                // @ts-ignore
-                formData.append('photos', {
-                    uri: submitToServer[0].photo,
-                    type: 'image/jpeg',
-                    name: submitToServer[0].photo.fileName || 'photo.jpg'
-                });
-            }
-
-            const responseActivity = await ActivityService.postActivity(formData)
-            console.log('responseActivity', responseActivity);
-            if (responseActivity.statusCode === 200) {
-                Toast.show({
-                    type: 'success',
-                    text1: 'Success',
-                    text2: 'Update Successful',
-                });
-            }
-
-
-            //Hit SIO to API
-            submitToServer[0].activity_sio?.forEach((data) => {
-                const formDataSio = new FormData();
-                formDataSio.append('name', data.name);
-                formDataSio.append('description', data.description);
-                formDataSio.append('notes', data.notes);
-                // @ts-ignore
-                formDataSio.append('photo_before', {
-                    uri: data.photo_before,
-                    type: 'image/jpeg',
-                    name: data.photo_before.fileName || 'photo.jpg'
-                });
-                // @ts-ignore
-                formDataSio.append('photo_after', {
-                    uri: data.photo_after,
-                    type: 'image/jpeg',
-                    name: data.photo_after.fileName || 'photo.jpg'
-                });
-                const response = ActivityService.postSio(submitToServer[0].call_plan_schedule_id, formDataSio)
-                console.log('response', response);
+            //update status activity to sqlite into 200
+            await ActivityRepository.update(db, {
+                status: 200,
+                latitude: latitude,
+                longitude: longitude,
             })
-
-            //Hit PROGRAM to API
-
-            submitToServer[0].activity_program?.forEach((data, index) => {
-                const formDataProgram = new FormData();
-                formDataProgram.append('name', data.name);
-                formDataProgram.append('description', data.description);
-                // @ts-ignore
-                formDataProgram.append('file', {
-                    uri: data.photo,
-                    type: 'image/jpeg',
-                    name: data.photo.fileName || 'image.jpg',
-                });
-                const responseProgram = ActivityService.postProgram(submitToServer[0].call_plan_schedule_id, formDataProgram)
-                console.log('responseProgram', responseProgram);
-            })
-
-            //Hit BRANCH to API
-            submitToServer[0].activity_branch?.forEach((data) => {
-                const jsonPayload = {
-                    name: data.name,
-                    description: data.description,
-                    value: data.value,
-                    notes: data.notes,
-                };
-                const responseBranch = ActivityService.postBranch(submitToServer[0].call_plan_schedule_id, jsonPayload)
-            })
-
-            //Hit SOG to API
-            submitToServer[0].activity_sog?.forEach((data, index) => {
-                const sogData = {
-                    name: data.name,
-                    description: data.description,
-                    value: data.value,
-                    notes: data.notes,
-                };
-                const responseSog = ActivityService.postSog(submitToServer[0].call_plan_schedule_id, sogData)
-                console.log('responseSog', responseSog);
-            })
-
 
         } catch (error) {
             console.error('Error saving facilities:', error);
             Alert.alert('Error', 'Failed to save data. Please try again.');
         } finally {
             setIsLoading(false);
+            navigation.replace('Activity2')
         }
     };
 

@@ -66,11 +66,6 @@ export default function HomeScreen() {
                     console.log(`[Background Fetch] Processing activity ID: ${activity.id}`);
                     //Sync Data On Background
                     await sendOfflineData(activity);
-                    // await ActivityRepository.update(db, {
-                    //     call_plan_schedule_id: activity.call_plan_schedule_id,
-                    //     is_sync: 1
-                    // });
-                    // console.log(`[Background Fetch] Successfully processed activity ID: ${activity.id}`);
                 } catch (error) {
                     console.error('[Background Fetch] Failed to sync activity:', error);
                     continue;
@@ -194,40 +189,15 @@ export default function HomeScreen() {
         }
     }
 
-    // const fetchActivityCounts = async () => {
-    //     try {
-    //         const syncedQuery = await countSyncedActivities(db);
-    //         setSyncedCount(syncedQuery);
-    //         const notSyncedQuery = await countNotSyncedActivities(db);
-    //         setNotSyncedCount(notSyncedQuery);
-    //     } catch (error) {
-    //         console.error('Error fetching activity counts:', error);
-    //     }
-    // }
-
     useEffect(() => {
         if ((isOnline || isWifi) && !brands.length && !sio.length) {
             fetchConstants();
         }
-        // fetchActivityCounts();
     }, [isOnline, isWifi, brands, sio]);
 
 
     return (
         <View style={styles.container}>
-            {/*<Text style={styles.header}>Dashboard</Text>*/}
-            {/*<View style={styles.statusContainer}>*/}
-            {/*    <Text style={styles.syncStatus}>*/}
-            {/*        Sync Status: {syncStatus}*/}
-            {/*    </Text>*/}
-            {/*    <Text style={styles.countText}>*/}
-            {/*        Synced Activities: {syncedCount}*/}
-            {/*    </Text>*/}
-            {/*    <Text style={styles.countText}>*/}
-            {/*        Not Synced Activities: {notSyncedCount}*/}
-            {/*    </Text>*/}
-            {/*</View>*/}
-
             <FlatList
                 style={styles.list}
                 contentContainerStyle={styles.listContainer}

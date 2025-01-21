@@ -166,7 +166,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
 
     // Helper function to handle navigation logic
     const handleNavigation = (status: number, activity: any) => {
-        if (status !== 100) {
+        if (status !== 100 && status !== 202) {
             navigation.replace('Activity2');
         } else {
             navigation.navigate('FormDetailSio', { item, activity });

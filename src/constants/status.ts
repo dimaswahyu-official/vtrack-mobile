@@ -22,7 +22,7 @@ export const EXISTING_SURVEY_STATUS = {
   [STATUS_PERM_CLOSED]: 'Outlet Tutup Permanen',
   [STATUS_NOT_FOUND]: 'Outlet Tidak Ditemukan',
   // [STATUS_CANCELLED]: 'Schedule Dibatalkan',
-  // [STATUS_VISITED]: 'Sudah Dikunjungi',
+  [STATUS_VISITED]: 'Sudah Dikunjungi',
   // [STATUS_COMPLETED]: 'Selesai',
 };
 
@@ -35,6 +35,7 @@ export const NEW_SURVEY_STATUS = {
   [STATUS_PERM_CLOSED]: 'Outlet Tutup Permanen',
   [STATUS_NOT_FOUND]: 'Outlet Tidak Ditemukan',
   [STATUS_REJECTED]: 'Outlet Menolak',
+  [STATUS_VISITED]: 'Sudah Dikunjungi',
   // [STATUS_PIC_REJECTED]: 'Ditolak PIC',
   // [STATUS_HO_PROCESSING]: 'Proses HO',
   // [STATUS_HO_REJECTED]: 'Ditolak HO',
