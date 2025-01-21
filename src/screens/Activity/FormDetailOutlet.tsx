@@ -140,6 +140,7 @@ export default function FormDetailOutlet({route}: FormActivityProps) {
 
             //update status activity to sqlite into 200
             await ActivityRepository.update(db, {
+                call_plan_schedule_id: activity.call_plan_schedule_id,
                 status: 200,
                 latitude: latitude,
                 longitude: longitude,

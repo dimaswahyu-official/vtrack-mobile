@@ -34,7 +34,17 @@ export const sendOfflineData = async (activity: any) => {
         formData.append('latitude', activity.latitude);
         formData.append('longitude', activity.longitude);
         formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '');
-        formData.append('range_facility', JSON.stringify(activity.rangeFacility));
+        // Add range_facility data
+        const rangeFacility = {
+            range_health_facilities: activity.activity_outlet.includes('range_health_facilities') ? 1 : 0,
+            range_work_place: activity.activity_outlet('range_work_place') ? 1 : 0,
+            range_public_transportation_facilities: activity.activity_outlet('range_public_transportation_facilities') ? 1 : 0,
+            range_worship_facilities: activity.activity_outlet('range_worship_facilities') ? 1 : 0,
+            range_playground_facilities: activity.activity_outlet('range_playground_facilities') ? 1 : 0,
+            range_educational_facilities: activity.activity_outlet('range_educational_facilities') ? 1 : 0
+        };
+
+        formData.append('range_facility', JSON.stringify(rangeFacility));
 
         // Add photos
         if (activity.photo_program) {

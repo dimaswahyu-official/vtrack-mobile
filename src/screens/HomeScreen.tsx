@@ -65,7 +65,8 @@ export default function HomeScreen() {
                 try {
                     console.log(`[Background Fetch] Processing activity ID: ${activity.id}`);
                     //Sync Data On Background
-                    await sendOfflineData(activity);
+                    const dataSend = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id);
+                    await sendOfflineData(dataSend);
                 } catch (error) {
                     console.error('[Background Fetch] Failed to sync activity:', error);
                     continue;
@@ -105,7 +106,7 @@ export default function HomeScreen() {
             if (!isRegistered) {
                 console.log('[Background Fetch] Registering task...');
                 await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-                    minimumInterval: 3 * 60, // 5 minutes
+                    minimumInterval: 3 * 60,
                     stopOnTerminate: false,
                     startOnBoot: true,
                 });
