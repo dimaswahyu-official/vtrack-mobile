@@ -102,9 +102,12 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
         //     })
         // ]);
 
+        console.log('activityService', JSON.stringify(activity));
+
         // Handle SIO data submission
-        if (activity.activity_sio?.length) {
+        if (activity.activity_sio) {
             await Promise.all(activity.activity_sio.map(async (data: any) => {
+                console.log(data);
                 const formDataSio = new FormData();
                 ['name', 'description', 'notes'].forEach(field => 
                     formDataSio.append(field, data[field])
@@ -121,7 +124,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
                     }
                 });
 
-                const responseSio = await ActivityService.postSio(activity.call_plan_schedule_id, formDataSio);
+                const responseSio = ActivityService.postSio(activity.call_plan_schedule_id, formDataSio);
                 // if (responseSio.statusCode === 200) {
                 //     await ActivitySioModel.update(db, {
                 //         id: data.id,
@@ -133,7 +136,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
         }
 
         // Handle program data submission
-        if (activity.activity_program?.length) {
+        if (activity.activity_program) {
             await Promise.all(activity.activity_program.map(async (data: any) => {
                 const formDataProgram = new FormData();
                 formDataProgram.append('name', data.name);
@@ -147,7 +150,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
                     });
                 }
 
-                const responseProgram = await ActivityService.postProgram(activity.call_plan_schedule_id, formDataProgram);
+                const responseProgram = ActivityService.postProgram(activity.call_plan_schedule_id, formDataProgram);
                 // if (responseProgram.statusCode === 200) {
                 //     await ActivityProgramModel.update(db, {
                 //         id: data.id,
@@ -159,7 +162,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
         }
 
         // Handle branch data submission
-        if (activity.activity_branch?.length) {
+        if (activity.activity_branch) {
             await Promise.all(activity.activity_branch.map(async (data: any) => {
                 const jsonPayload = {
                     name: data.name,
@@ -168,7 +171,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
                     notes: data.notes,
                 };
 
-                const responseBranch = await ActivityService.postBranch(activity.call_plan_schedule_id, jsonPayload);
+                const responseBranch = ActivityService.postBranch(activity.call_plan_schedule_id, jsonPayload);
                 // if (responseBranch.statusCode === 200) {
                 //     await ActivityBranchModel.update(db, {
                 //         id: data.id,
@@ -180,7 +183,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
         }
 
         // Handle SOG data submission
-        if (activity.activity_sog?.length) {
+        if (activity.activity_sog) {
             await Promise.all(activity.activity_sog.map(async (data: any) => {
                 const sogData = {
                     name: data.name,
@@ -189,7 +192,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
                     notes: data.notes,
                 };
 
-                const responseSog = await ActivityService.postSog(activity.call_plan_schedule_id, sogData);
+                const responseSog = ActivityService.postSog(activity.call_plan_schedule_id, sogData);
                 // if (responseSog.statusCode === 200) {
                 //     await ActivitySogModel.update(db, {
                 //         id: data.id,
