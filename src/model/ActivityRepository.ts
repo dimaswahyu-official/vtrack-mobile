@@ -55,7 +55,7 @@ interface ActivityWithDetail {
 	activity_sog?: ActivitySog[];
 	activity_branch?: ActivityBranch[];
 	activity_program?: ActivityProgram[];
-	activity_outlet?: ActivityOutlet[];
+	range_facility?: ActivityOutlet[];
 }
 
 export const dropTableExisting = async (db: SQLite.SQLiteDatabase): Promise<void> => {

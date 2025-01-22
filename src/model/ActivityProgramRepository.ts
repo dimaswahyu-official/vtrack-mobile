@@ -5,7 +5,7 @@ export interface ActivityProgram {
 	call_plan_schedule_id: number;
 	name: string;
 	description: string;
-	photo: any;
+	photo: string;
 	is_sync: number;
 }
 

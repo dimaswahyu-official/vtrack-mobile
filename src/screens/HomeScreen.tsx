@@ -66,7 +66,7 @@ export default function HomeScreen() {
                     console.log(`[Background Fetch] Processing activity ID: ${activity.id}`);
                     //Sync Data On Background
                     const dataSend = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id);
-                    await sendOfflineData(dataSend);
+                    // await sendOfflineData(dataSend);
                 } catch (error) {
                     console.error('[Background Fetch] Failed to sync activity:', error);
                     continue;
@@ -127,7 +127,7 @@ export default function HomeScreen() {
 
     useEffect(() => {
         if (isOnline || isWifi) {
-            registerBackgroundFetch();
+            // registerBackgroundFetch();
         }
     }, [isOnline, isWifi]);
 

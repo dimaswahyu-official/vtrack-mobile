@@ -1,141 +1,166 @@
 import Toast from "react-native-toast-message";
 import ActivityService from "./activityService";
 import {ActivityRepository} from "../model/ActivityRepository";
-import {useSQLiteContext} from "expo-sqlite";
 import {ActivitySioModel} from "../model/ActivitySioRepository";
 import {ActivityProgramModel} from "../model/ActivityProgramRepository";
 import {ActivityBranchModel} from "../model/ActivityBranchRepository";
 import {ActivitySogModel} from "../model/ActivitySogRepository";
 import {ActivityOutletModel} from "../model/ActivityOutletRepository";
+import {SQLiteDatabase} from "expo-sqlite";
 
-
-export const sendOfflineData = async (activity: any) => {
-
-    const db = useSQLiteContext();
+export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
     try {
-        if (!activity || !activity.length) {
-            throw new Error('No data to submit');
+        
+        if (!activity) {
+            throw new Error('Activity data is required');
         }
+
         // Prepare the main activity payload
         const formData = new FormData();
-        formData.append('user_id', activity.user_id);
-        formData.append('call_plan_id', activity.call_plan_id.toString());
-        formData.append('call_plan_schedule_id', activity.call_plan_schedule_id.toString());
-        if (activity.outlet_id) formData.append('outlet_id', activity.outlet_id.toString());
-        if (activity.survey_outlet_id) formData.append('survey_outlet_id', activity.survey_outlet_id.toString());
-        if (activity.program_id) formData.append('program_id', activity.program_id.toString());
-        formData.append('status', activity.status.toString());
-        formData.append('area', activity.area);
-        formData.append('region', activity.region);
-        formData.append('brand', activity.brand);
-        formData.append('type_sio', activity.type_sio);
+        const requiredFields = ['user_id', 'call_plan_id', 'call_plan_schedule_id', 'status', 'area', 'region', 'brand', 'type_sio'];
+        
+        // Validate required fields
+        for (const field of requiredFields) {
+            if (!activity[field]) {
+                throw new Error(`Missing required field: ${field}`);
+            }
+            formData.append(field, activity[field].toString());
+        }
+
+        // Optional fields
+        const optionalFields = ['outlet_id', 'survey_outlet_id', 'program_id'];
+        for (const field of optionalFields) {
+            if (activity[field]) {
+                formData.append(field, activity[field].toString());
+            }
+        }
+
+        // Handle timestamps
         formData.append('start_time', activity.start_time ? new Date(activity.start_time).toISOString() : '');
         formData.append('end_time', activity.end_time ? new Date(activity.end_time).toISOString() : '');
+
+        // Location data
+        if (!activity.latitude || !activity.longitude) {
+            throw new Error('Location data is required');
+        }
         formData.append('latitude', activity.latitude);
         formData.append('longitude', activity.longitude);
-        formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '');
-        // Add range_facility data
-        const rangeFacility = {
-            range_health_facilities: activity.activity_outlet.includes('range_health_facilities') ? 1 : 0,
-            range_work_place: activity.activity_outlet('range_work_place') ? 1 : 0,
-            range_public_transportation_facilities: activity.activity_outlet('range_public_transportation_facilities') ? 1 : 0,
-            range_worship_facilities: activity.activity_outlet('range_worship_facilities') ? 1 : 0,
-            range_playground_facilities: activity.activity_outlet('range_playground_facilities') ? 1 : 0,
-            range_educational_facilities: activity.activity_outlet('range_educational_facilities') ? 1 : 0
-        };
+        formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '0');
+
+        // Handle range facility data
+        const facilityTypes = [
+            'range_health_facilities',
+            'range_work_place', 
+            'range_public_transportation_facilities',
+            'range_worship_facilities',
+            'range_playground_facilities',
+            'range_educational_facilities'
+        ];
+
+        const rangeFacility = facilityTypes.reduce((acc, facility) => ({
+            ...acc,
+            [facility]: activity.activity_outlet?.includes(facility) ? 1 : 0
+        }), {});
 
         formData.append('range_facility', JSON.stringify(rangeFacility));
 
-        // Add photos
-        if (activity.photo_program) {
-            // @ts-ignore
-            formData.append('photo_program', {
-                uri: activity.photo_program,
-                type: 'image/jpeg',
-                name: activity.photo_program.fileName || 'program.jpg',
-            });
-        }
+        // Handle photo uploads
+        const photoFields = [
+            {key: 'photo_program', fileName: 'program.jpg'},
+            {key: 'photos', fileName: 'photo.jpg', fieldName: 'photo'}
+        ];
 
-        if (activity.photo) {
-            // @ts-ignore
-            formData.append('photos', {
-                uri: activity.photo,
-                type: 'image/jpeg',
-                name: activity.photo.fileName || 'photo.jpg',
-            });
-        }
-
-        // Post MAIN Activity
-        const responseActivity = await ActivityService.postActivity(formData);
-        console.log('responseActivity', responseActivity);
-        if (responseActivity.statusCode === 200) {
-            await ActivityRepository.update(db, {
-                call_plan_schedule_id: activity.call_plan_schedule_id,
-                is_sync: 1
-            });
-            await ActivityOutletModel.update(db, {
-                call_plan_schedule_id: activity.call_plan_schedule_id,
-                is_sync: 1,
-            });
-        }
-
-        // Post SIO data
-        if (activity.activity_sio?.length) {
-            for (const data of activity.activity_sio) {
-                const formDataSio = new FormData();
-                formDataSio.append('name', data.name);
-                formDataSio.append('description', data.description);
-                formDataSio.append('notes', data.notes);
+        for (const {key, fileName, fieldName} of photoFields) {
+            const photoData = activity[fieldName || key];
+            if (photoData) {
                 // @ts-ignore
-                formDataSio.append('photo_before', {
-                    uri: data.photo_before,
+                formData.append(key, {
+                    uri: photoData,
                     type: 'image/jpeg',
-                    name: data.photo_before.fileName || 'photo.jpg',
+                    name: photoData.fileName || fileName,
                 });
-                // @ts-ignore
-                formDataSio.append('photo_after', {
-                    uri: data.photo_after,
-                    type: 'image/jpeg',
-                    name: data.photo_after.fileName || 'photo.jpg',
+            }
+        }
+
+        // Submit main activity
+        const responseActivity = await ActivityService.postActivity(formData);
+        if (responseActivity.statusCode !== 200) {
+            throw new Error('Failed to submit main activity');
+        }
+
+        // Update sync status for main activity
+        // await Promise.all([
+        //     ActivityRepository.update(db, {
+        //         id: activity.id,
+        //         call_plan_schedule_id: activity.call_plan_schedule_id,
+        //         is_sync: 1
+        //     }),
+        //     ActivityOutletModel.update(db, {
+        //         id: activity.activity_outlet?.id,
+        //         call_plan_schedule_id: activity.call_plan_schedule_id,
+        //         is_sync: 1,
+        //     })
+        // ]);
+
+        // Handle SIO data submission
+        if (activity.activity_sio?.length) {
+            await Promise.all(activity.activity_sio.map(async (data: any) => {
+                const formDataSio = new FormData();
+                ['name', 'description', 'notes'].forEach(field => 
+                    formDataSio.append(field, data[field])
+                );
+
+                ['photo_before', 'photo_after'].forEach(photo => {
+                    if (data[photo]) {
+                        // @ts-ignore
+                        formDataSio.append(photo, {
+                            uri: data[photo],
+                            type: 'image/jpeg',
+                            name: data[photo].fileName || 'photo.jpg',
+                        });
+                    }
                 });
 
                 const responseSio = await ActivityService.postSio(activity.call_plan_schedule_id, formDataSio);
-                if (responseSio.statusCode === 200) {
-                    await ActivitySioModel.update(db, {
-                        call_plan_schedule_id: activity.call_plan_schedule_id,
-                        is_sync: 1,
-                    });
-                }
-            }
+                // if (responseSio.statusCode === 200) {
+                //     await ActivitySioModel.update(db, {
+                //         id: data.id,
+                //         call_plan_schedule_id: activity.call_plan_schedule_id,
+                //         is_sync: 1,
+                //     });
+                // }
+            }));
         }
 
-
-        // Post PROGRAM data
+        // Handle program data submission
         if (activity.activity_program?.length) {
-            for (const data of activity.activity_program) {
+            await Promise.all(activity.activity_program.map(async (data: any) => {
                 const formDataProgram = new FormData();
                 formDataProgram.append('name', data.name);
                 formDataProgram.append('description', data.description);
-                // @ts-ignore
-                formDataProgram.append('file', {
-                    uri: data.photo,
-                    type: 'image/jpeg',
-                    name: data.photo.fileName || 'image.jpg',
-                });
-
-                const responseProgram = await ActivityService.postProgram(activity.call_plan_schedule_id, formDataProgram);
-                if (responseProgram.statusCode === 200) {
-                    await ActivityProgramModel.update(db, {
-                        call_plan_schedule_id: activity.call_plan_schedule_id,
-                        is_sync: 1,
+                if (data.photo) {
+                    // @ts-ignore
+                    formDataProgram.append('file', {
+                        uri: data.photo,
+                        type: 'image/jpeg',
+                        name: data.photo.fileName || 'image.jpg',
                     });
                 }
-            }
+
+                const responseProgram = await ActivityService.postProgram(activity.call_plan_schedule_id, formDataProgram);
+                // if (responseProgram.statusCode === 200) {
+                //     await ActivityProgramModel.update(db, {
+                //         id: data.id,
+                //         call_plan_schedule_id: activity.call_plan_schedule_id,
+                //         is_sync: 1,
+                //     });
+                // }
+            }));
         }
 
-        // Post BRANCH data
+        // Handle branch data submission
         if (activity.activity_branch?.length) {
-            for (const data of activity.activity_branch) {
+            await Promise.all(activity.activity_branch.map(async (data: any) => {
                 const jsonPayload = {
                     name: data.name,
                     description: data.description,
@@ -144,18 +169,19 @@ export const sendOfflineData = async (activity: any) => {
                 };
 
                 const responseBranch = await ActivityService.postBranch(activity.call_plan_schedule_id, jsonPayload);
-                if (responseBranch.statusCode === 200) {
-                    await ActivityBranchModel.update(db, {
-                        call_plan_schedule_id: activity.call_plan_schedule_id,
-                        is_sync: 1,
-                    });
-                }
-            }
+                // if (responseBranch.statusCode === 200) {
+                //     await ActivityBranchModel.update(db, {
+                //         id: data.id,
+                //         call_plan_schedule_id: activity.call_plan_schedule_id,
+                //         is_sync: 1,
+                //     });
+                // }
+            }));
         }
 
-        // Post SOG data
+        // Handle SOG data submission
         if (activity.activity_sog?.length) {
-            for (const data of activity.activity_sog) {
+            await Promise.all(activity.activity_sog.map(async (data: any) => {
                 const sogData = {
                     name: data.name,
                     description: data.description,
@@ -164,21 +190,29 @@ export const sendOfflineData = async (activity: any) => {
                 };
 
                 const responseSog = await ActivityService.postSog(activity.call_plan_schedule_id, sogData);
-                if (responseSog.statusCode === 200) {
-                    await ActivitySogModel.update(db, {
-                        call_plan_schedule_id: activity.call_plan_schedule_id,
-                        is_sync: 1,
-                    });
-                }
-            }
+                // if (responseSog.statusCode === 200) {
+                //     await ActivitySogModel.update(db, {
+                //         id: data.id,
+                //         call_plan_schedule_id: activity.call_plan_schedule_id,
+                //         is_sync: 1,
+                //     });
+                // }
+            }));
         }
 
-    } catch (error) {
+        Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Data successfully synchronized'
+        });
+
+    } catch (error: any) {
         console.error('Error submitting activity:', error);
         Toast.show({
             type: 'error',
             text1: 'Error',
-            text2: 'Failed to submit activity.',
+            text2: error.message || 'Failed to submit data'
         });
+        throw error;
     }
 };

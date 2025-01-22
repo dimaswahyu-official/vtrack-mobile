@@ -7,8 +7,8 @@ export interface ActivitySio {
 	description: string;
 	notes: string;
 	photo: string;
-	photo_before: any;
-	photo_after: any;
+	photo_before: string;
+	photo_after: string;
 	is_sync: number;
 }
 

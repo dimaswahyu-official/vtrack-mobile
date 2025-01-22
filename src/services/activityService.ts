@@ -53,7 +53,6 @@ class ActivityService {
 
     static async postSio(id: number, formData: any): Promise<any> {
         try {
-            console.log('formData',formData);
             const response = await axiosInstance.post(`activity-sio/${id}`, formData,
                 {
                     headers: {
@@ -82,7 +81,6 @@ class ActivityService {
 
     static async postBranch(id: number, formData:any): Promise<any> {
         try {
-            console.log('branch',formData);
             const response = await axiosInstance.post(`activity-branch/${id}`, formData)
             return response.data
         } catch (error: any) {

@@ -140,29 +140,6 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 		return null;
 	};
 
-	const handleAddProgramCompetitor = () => {
-		setActivityProgramCompetitor((prev) => [
-			...prev,
-			{
-				name: '',
-				photo: '',
-				description: '',
-				call_plan_schedule_id: activity.call_plan_schedule_id,
-			},
-		]);
-		insertProgramCompetitor(activityProgramCompetitor);
-	};
-
-	const handleDeleteProgramCompetitor = (index: number) => {
-		const findDataByIndex = activityProgramCompetitor[index];
-		if (findDataByIndex.id) {
-			ActivityProgramModel.delete(db, findDataByIndex.id);
-		}
-		setActivityProgramCompetitor((prev) =>
-			prev.filter((_, i) => i !== index)
-		);
-	};
-
 	const updateActivityProgram = async (data: any) => {
 		const activities = await ActivityRepository.findByCallPlanScheduleId(
 			db,
@@ -201,10 +178,35 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 		}
 	};
 
+	const handleClearPhoto = () => {
+		const newActivityProgram = { ...activityProgram };
+		newActivityProgram.photo_program = '';
+		setActivityProgram(newActivityProgram);
+	};
+
+	const handleDeleteProgramCompetitor = async (index: number) => {
+		const findDataByIndex = activityProgramCompetitor[index];
+		if (findDataByIndex.id) {
+			await ActivityProgramModel.delete(db, findDataByIndex.id);
+		}
+		setActivityProgramCompetitor((prev) =>
+			prev.filter((_, i) => i !== index)
+		);
+	};
+
+	const handleAddProgramCompetitor = () => {
+		const newCompetitor = {
+			name: '',
+			photo: '',
+			description: '',
+			call_plan_schedule_id: activity.call_plan_schedule_id,
+		};
+		setActivityProgramCompetitor((prev) => [...prev, newCompetitor]);
+	};
+
 	const handleTakePhotoCompetitor = async (index: number) => {
 		// Request camera permissions
-		const permissionResult =
-			await ImagePicker.requestCameraPermissionsAsync();
+		const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 		if (!permissionResult.granted) {
 			Alert.alert(
 				'Permission required',
@@ -220,30 +222,21 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 		});
 
 		if (!result.canceled) {
-			const newActivityProgram = [...activityProgramCompetitor];
-			newActivityProgram[index].photo = result.assets[0].uri;
-			setActivityProgramCompetitor(newActivityProgram);
-
+			const photoUri = result.assets[0].uri;
 			setActivityProgramCompetitor((prev) =>
 				prev.map((program, i) =>
-					i === index
-						? { ...program, photo: result.assets[0].uri }
-						: program
+					i === index ? { ...program, photo: photoUri } : program
 				)
 			);
 		}
 	};
 
-	const handleClearPhoto = () => {
-		const newActivityProgram = { ...activityProgram };
-		newActivityProgram.photo_program = '';
-		setActivityProgram(newActivityProgram);
-	};
-
 	const handleClearPhotoCompetitor = (index: number) => {
-		const newActivityProgram = [...activityProgramCompetitor];
-		newActivityProgram[index].photo = '';
-		setActivityProgramCompetitor(newActivityProgram);
+		setActivityProgramCompetitor((prev) =>
+			prev.map((program, i) =>
+				i === index ? { ...program, photo: '' } : program
+			)
+		);
 	};
 
 	const insertProgramCompetitor = async (
@@ -257,13 +250,18 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 	) => {
 		try {
 			if (data.length > 0) {
-				data.forEach((program: any) => {
-					if (program.id) {
-						ActivityProgramModel.update(db, program);
-					} else {
-						ActivityProgramModel.create(db, program);
-					}
-				});
+				await Promise.all(
+					data.map(async (program) => {
+						if (program.id) {
+							await ActivityProgramModel.update(db, program);
+						} else {
+							await ActivityProgramModel.create(db, {
+								...program,
+								is_sync: 0,
+							});
+						}
+					})
+				);
 			}
 		} catch (error) {
 			console.error('Error processing Program Competitors:', error);
