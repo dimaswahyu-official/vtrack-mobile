@@ -21,6 +21,7 @@ import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {EXISTING_SURVEY_STATUS, NEW_SURVEY_STATUS} from "../../constants/status";
 import { ActivityRepository } from "../../model/ActivityRepository";
+import ActivityService from "../../services/activityService";
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -165,8 +166,86 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     };
 
     // Helper function to handle navigation logic
-    const handleNavigation = (status: number, activity: any) => {
+    const handleNavigation = async (status: number, activity: any) => {
         if (status !== 100 && status !== 202) {
+            try {
+                if (!activity) {
+                    throw new Error('Activity data is required');
+                }
+
+                // Prepare the main activity payload
+                const formData = new FormData();
+                const requiredFields = ['user_id', 'call_plan_id', 'call_plan_schedule_id', 'status', 'area', 'region', 'brand', 'type_sio'];
+
+                // Validate required fields
+                for (const field of requiredFields) {
+                    if (!activity[field]) {
+                        throw new Error(`Missing required field: ${field}`);
+                    }
+                    formData.append(field, activity[field].toString());
+                }
+
+                // Optional fields
+                const optionalFields = ['outlet_id', 'survey_outlet_id', 'program_id'];
+                for (const field of optionalFields) {
+                    if (activity[field]) {
+                        formData.append(field, activity[field].toString());
+                    }
+                }
+
+                // Handle timestamps
+                formData.append('start_time', activity.start_time ? new Date(activity.start_time).toISOString() : '');
+                formData.append('end_time', activity.end_time ? new Date(activity.end_time).toISOString() : '');
+
+                // Location data
+                if (!activity.latitude || !activity.longitude) {
+                    throw new Error('Location data is required');
+                }
+                formData.append('latitude', activity.latitude);
+                formData.append('longitude', activity.longitude);
+                formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '0');
+
+                // Handle range facility data
+                const facilityTypes = [
+                    'range_health_facilities',
+                    'range_work_place',
+                    'range_public_transportation_facilities',
+                    'range_worship_facilities',
+                    'range_playground_facilities',
+                    'range_educational_facilities'
+                ];
+
+                const rangeFacility = facilityTypes.reduce((acc, facility) => ({
+                    ...acc,
+                    [facility]: activity.activity_outlet?.includes(facility) ? 1 : 0
+                }), {});
+
+                formData.append('range_facility', JSON.stringify(rangeFacility));
+
+                // Handle photo uploads
+                const photoFields = [
+                    {key: 'photo_program', fileName: 'program.jpg'},
+                    {key: 'photos', fileName: 'photo.jpg', fieldName: 'photo'}
+                ];
+
+                for (const {key, fileName, fieldName} of photoFields) {
+                    const photoData = activity[fieldName || key];
+                    if (photoData) {
+                        // @ts-ignore
+                        formData.append(key, {
+                            uri: photoData,
+                            type: 'image/jpeg',
+                            name: photoData.fileName || fileName,
+                        });
+                    }
+                }
+
+                // Submit main activity
+                const responseActivity = await ActivityService.postActivity(formData);
+                console.log('response :',responseActivity);
+            }catch (error) {
+                console.error(error);
+            }
             navigation.replace('Activity2');
         } else {
             navigation.navigate('FormDetailSio', { item, activity });
