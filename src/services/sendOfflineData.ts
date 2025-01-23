@@ -8,24 +8,40 @@ import {ActivitySogModel} from "../model/ActivitySogRepository";
 import {ActivityOutletModel} from "../model/ActivityOutletRepository";
 import {SQLiteDatabase} from "expo-sqlite";
 
-export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
+export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteDatabase) => {
     try {
-        
+
         if (!activity) {
             throw new Error('Activity data is required');
         }
 
+        if (isFull === 1) {
+            const updateActivity = await ActivityRepository.update(db, {
+                call_plan_schedule_id: activity.call_plan_schedule_id,
+                status: 200
+            });
+        }
+
         // Prepare the main activity payload
         const formData = new FormData();
-        const requiredFields = ['user_id', 'call_plan_id', 'call_plan_schedule_id', 'status', 'area', 'region', 'brand', 'type_sio'];
-        
+        const requiredFields = ['user_id', 'call_plan_id', 'call_plan_schedule_id', 'area', 'region', 'brand', 'type_sio'];
+
+        if (isFull === 1) {
+            formData.append("status", '200');
+        } else {
+            formData.append("status", activity.status.toString());
+        }
+
         // Validate required fields
         for (const field of requiredFields) {
             if (!activity[field]) {
                 throw new Error(`Missing required field: ${field}`);
             }
             formData.append(field, activity[field].toString());
+
+
         }
+
 
         // Optional fields
         const optionalFields = ['outlet_id', 'survey_outlet_id', 'program_id'];
@@ -50,7 +66,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
         // Handle range facility data
         const facilityTypes = [
             'range_health_facilities',
-            'range_work_place', 
+            'range_work_place',
             'range_public_transportation_facilities',
             'range_worship_facilities',
             'range_playground_facilities',
@@ -109,7 +125,7 @@ export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
             await Promise.all(activity.activity_sio.map(async (data: any) => {
                 console.log(data);
                 const formDataSio = new FormData();
-                ['name', 'description', 'notes'].forEach(field => 
+                ['name', 'description', 'notes'].forEach(field =>
                     formDataSio.append(field, data[field])
                 );
 

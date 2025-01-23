@@ -7,6 +7,7 @@ import FormDetailBrand from "../screens/Activity/FormDetailBrand";
 import FormDetailSog from "../screens/Activity/FormDetailSog";
 import FormDetailOutlet from "../screens/Activity/FormDetailOutlet";
 import FormDetailProgram from "../screens/Activity/FormDetailProgram";
+import HistoryScreen from "../screens/History/HistoryScreen";
 
 export type ActivityStackParamList = {
     Activity2: undefined;
@@ -18,6 +19,7 @@ export type ActivityStackParamList = {
     FormDetailBrand: { item: any;activity: any; };
     FormDetailSog: { item: any;activity: any;};
     FormDetailOutlet: { item: any ;activity: any;};
+    History: undefined;
 };
 
 const Stack = createNativeStackNavigator<ActivityStackParamList>();
@@ -60,6 +62,11 @@ const ActivityNavigator = () => {
             <Stack.Screen
                 name="FormDetailOutlet"
                 component={FormDetailOutlet}
+                options={{ headerTitle: '' , headerBackVisible: false  }}
+            />
+            <Stack.Screen
+                name="History"
+                component={HistoryScreen}
                 options={{ headerTitle: '' , headerBackVisible: false  }}
             />
         </Stack.Navigator>

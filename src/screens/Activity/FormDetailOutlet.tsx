@@ -130,7 +130,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 			);
 
             if (submitToServer[0]) {
-                await sendOfflineData(submitToServer[0], db);
+                await sendOfflineData(submitToServer[0],1, db);
             }
 
 		} catch (error) {

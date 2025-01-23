@@ -27,8 +27,8 @@ const {width, height} = Dimensions.get("window");
 
 
 type RootStackParamList = {
-
     Profile: undefined;
+    Reimburse: undefined;
     ReimburseDetails: { bbmItem: any; };
 };
 
@@ -70,6 +70,8 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
         setResult(input2-input1)
     }, [input2]);
 
+
+
     const handleSave = async () => {
         setLoading(true)
         try {
@@ -98,7 +100,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                         text1: 'Success',
                         text2: `Update Successful`,
                     });
-                    navigation.goBack();
+                    navigation.replace('Reimburse');
                 } else {
                     Alert.alert('Error', response.message || 'Failed to Reimburse');
                     console.error('Update Error:', response);
@@ -129,7 +131,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                         text2: `Update Successful`,
                     });
                     // Optionally navigate back or refresh the profile
-                    navigation.goBack();
+                    navigation.replace("Reimburse");
                 } else {
                     Alert.alert('Error', response.message || 'Failed to Reimburse');
                     console.error('Update Error:', response);
@@ -224,7 +226,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                             }}
                             style={styles.image}
                         />
-                        { photoIn === '' ? <TouchableOpacity
+                        { Object.keys(bbmItem).length === 0  ? <TouchableOpacity
                             style={activityStyles.photoButton}
                             onPress={() =>
                                 PhotoKilometerIn()
@@ -239,7 +241,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                     activityStyles.label,
                                     {color: 'white'},
                                 ]}>
-                                new photo
+                                take a new photo
                             </Text>
                         </TouchableOpacity>
                         : null
@@ -269,7 +271,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                     }}
                                     style={styles.image}
                                 />
-                                { photoOut === '' ? (
+                                { bbmItem.photo_out === '' ? (
                                     <>
                                         <TouchableOpacity
                                             style={activityStyles.photoButton}
@@ -286,7 +288,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                                     activityStyles.label,
                                                     {color: 'white'},
                                                 ]}>
-                                                new photo
+                                                take a new photo
                                             </Text>
                                         </TouchableOpacity>
                                     </>

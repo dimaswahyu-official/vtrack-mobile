@@ -36,6 +36,7 @@ import {
 	createTableActivityProgram,
 	createTableActivityOutlet,
 } from '../model';
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const { width, height } = Dimensions.get('window');
 
@@ -318,7 +319,15 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 
 	return (
 		<View style={styles.container}>
-			<Text style={styles.header}>Route's Schedule Plan</Text>
+			<View style={styles.rowHeader}>
+				<Text style={styles.header}>Route's Schedule Plan</Text>
+				<TouchableOpacity style={styles.historyContainer} onPress={()=>{
+					navigation.navigate('History')
+				}}>
+					<Ionicons name="time-outline" style={{marginBottom: height * 0.02}} size={20} color="black" />
+					<Text style={styles.headerHistory}>History</Text>
+				</TouchableOpacity>
+			</View>
 			<FlatList
 				data={activities}
 				renderItem={renderItem}
@@ -422,5 +431,21 @@ const styles = StyleSheet.create({
 		flex: 1,
 		alignItems: 'flex-end',
 		justifyContent: 'center',
+	},
+	headerHistory: {
+		fontSize: width > 400 ? 20 : 16,
+		fontWeight: 'bold',
+		color: 'black',
+		marginBottom: height * 0.02,
+		textAlign: 'right',
+	},
+	historyContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
+	rowHeader: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+
 	},
 });

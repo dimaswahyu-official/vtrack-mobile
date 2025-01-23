@@ -62,6 +62,7 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
     };
 
     useEffect(() => {
+        setRefreshing(true);
         fetchBbmList();
     }, []);
 
