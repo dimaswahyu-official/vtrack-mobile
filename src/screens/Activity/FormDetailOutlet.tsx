@@ -129,7 +129,9 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 				activity.call_plan_schedule_id
 			);
 
-            sendOfflineData(submitToServer[0], db);
+            if (submitToServer[0]) {
+                await sendOfflineData(submitToServer[0], db);
+            }
 
 		} catch (error) {
 			console.error('Error saving facilities:', error);
