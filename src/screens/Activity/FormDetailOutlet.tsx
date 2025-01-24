@@ -19,6 +19,7 @@ import ActivityService from '../../services/activityService';
 import Toast from 'react-native-toast-message';
 import * as Location from 'expo-location';
 import { sendOfflineData } from '../../services/sendOfflineData';
+import {useOffline} from "../../context/OfflineProvider";
 
 type NavigationProp = StackNavigationProp<
 	ActivityStackParamList,
@@ -48,6 +49,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 	const [isDropdownVisible, setIsDropdownVisible] = useState(false);
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const { isOnline, isWifi } = useOffline();
 	const [latitude, setLatitude] = useState('');
 	const [longitude, setLongitude] = useState('');
 
@@ -123,16 +125,23 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 						: ActivityOutletModel.create(db, facility)
 				)
 			);
+			if (!isOnline || !isWifi) {
+				return
+			} else {
+				const submitToServer = await ActivityRepository.findActivityWithDetail(
+					db,
+					activity.call_plan_schedule_id
+				);
 
-			const submitToServer = await ActivityRepository.findActivityWithDetail(
-				db,
-				activity.call_plan_schedule_id
-			);
-
-            if (submitToServer[0]) {
-                await sendOfflineData(submitToServer[0],1, db);
-            }
-
+				if (submitToServer[0]) {
+					await sendOfflineData(submitToServer[0],1, db);
+					const after  = await ActivityRepository.findActivityWithDetail(
+						db,
+						activity.call_plan_schedule_id
+					);
+					console.log(JSON.stringify(after)+'check is sync is 1');
+				}
+			}
 		} catch (error) {
 			console.error('Error saving facilities:', error);
 			Alert.alert('Error', 'Failed to save data. Please try again.');

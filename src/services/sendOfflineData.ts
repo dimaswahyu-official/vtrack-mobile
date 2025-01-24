@@ -102,6 +102,16 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
         const responseActivity = await ActivityService.postActivity(formData);
         if (responseActivity.statusCode !== 200) {
             throw new Error('Failed to submit main activity');
+        } else if (responseActivity.statusCode === 200) {
+            await ActivityRepository.update(db, {
+                call_plan_schedule_id: activity.call_plan_schedule_id,
+                is_sync: 1
+            })
+            // await ActivityOutletModel.update(db, {
+            //     id: ,
+            //     call_plan_schedule_id: activity.call_plan_schedule_id,
+            //     is_sync: 1,
+            // })
         }
 
         // Update sync status for main activity
@@ -140,14 +150,14 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
                     }
                 });
 
-                const responseSio = ActivityService.postSio(activity.call_plan_schedule_id, formDataSio);
-                // if (responseSio.statusCode === 200) {
-                //     await ActivitySioModel.update(db, {
-                //         id: data.id,
-                //         call_plan_schedule_id: activity.call_plan_schedule_id,
-                //         is_sync: 1,
-                //     });
-                // }
+                const responseSio = await ActivityService.postSio(activity.call_plan_schedule_id, formDataSio);
+                if (responseSio.statusCode === 200) {
+                    await ActivitySioModel.update(db, {
+                        id: data.id,
+                        call_plan_schedule_id: activity.call_plan_schedule_id,
+                        is_sync: 1,
+                    });
+                }
             }));
         }
 
@@ -166,14 +176,14 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
                     });
                 }
 
-                const responseProgram = ActivityService.postProgram(activity.call_plan_schedule_id, formDataProgram);
-                // if (responseProgram.statusCode === 200) {
-                //     await ActivityProgramModel.update(db, {
-                //         id: data.id,
-                //         call_plan_schedule_id: activity.call_plan_schedule_id,
-                //         is_sync: 1,
-                //     });
-                // }
+                const responseProgram = await ActivityService.postProgram(activity.call_plan_schedule_id, formDataProgram);
+                if (responseProgram.statusCode === 200) {
+                    await ActivityProgramModel.update(db, {
+                        id: data.id,
+                        call_plan_schedule_id: activity.call_plan_schedule_id,
+                        is_sync: 1,
+                    });
+                }
             }));
         }
 
@@ -187,14 +197,14 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
                     notes: data.notes,
                 };
 
-                const responseBranch = ActivityService.postBranch(activity.call_plan_schedule_id, jsonPayload);
-                // if (responseBranch.statusCode === 200) {
-                //     await ActivityBranchModel.update(db, {
-                //         id: data.id,
-                //         call_plan_schedule_id: activity.call_plan_schedule_id,
-                //         is_sync: 1,
-                //     });
-                // }
+                const responseBranch = await ActivityService.postBranch(activity.call_plan_schedule_id, jsonPayload);
+                if (responseBranch.statusCode === 200) {
+                    await ActivityBranchModel.update(db, {
+                        id: data.id,
+                        call_plan_schedule_id: activity.call_plan_schedule_id,
+                        is_sync: 1,
+                    });
+                }
             }));
         }
 
@@ -208,14 +218,14 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
                     notes: data.notes,
                 };
 
-                const responseSog = ActivityService.postSog(activity.call_plan_schedule_id, sogData);
-                // if (responseSog.statusCode === 200) {
-                //     await ActivitySogModel.update(db, {
-                //         id: data.id,
-                //         call_plan_schedule_id: activity.call_plan_schedule_id,
-                //         is_sync: 1,
-                //     });
-                // }
+                const responseSog = await ActivityService.postSog(activity.call_plan_schedule_id, sogData);
+                if (responseSog.statusCode === 200) {
+                    await ActivitySogModel.update(db, {
+                        id: data.id,
+                        call_plan_schedule_id: activity.call_plan_schedule_id,
+                        is_sync: 1,
+                    });
+                }
             }));
         }
 
