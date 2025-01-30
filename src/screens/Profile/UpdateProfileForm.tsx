@@ -19,6 +19,8 @@ import {useAuthStore} from "../../store/useAuthStore";
 import {useLoadingStore} from "../../store/useLoadingStore";
 import Toast from "react-native-toast-message";
 import {useOffline} from "../../context/OfflineProvider";
+import * as FileSystem from "expo-file-system";
+import * as ImageManipulator from "expo-image-manipulator";
 
 type RootStackParamList = {
     Profile: undefined;
@@ -65,15 +67,16 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
             const formData = new FormData();
             formData.append('name', name);
             formData.append('email', email);
+            console.log(photo)
 
             // If there is a photo, handle the file
             if (photo) {
-                const fetchImage = await fetch(photo.uri);
+                const fetchImage = await fetch(photo);
                 const blob = await fetchImage.blob();
 
                 // @ts-ignore
                 formData.append('file', {
-                    uri: photo.uri,
+                    uri: photo,
                     type: blob.type || 'image/jpeg',
                     name: photo.fileName || 'image.jpg',
                 });
@@ -139,9 +142,57 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
             quality: 1,
         });
 
+        // if (!result.canceled) {
+        //     setPhoto(result.assets[0]);
+        //     setPhotoExist(result.assets[0].uri); // Use the captured image URI
+        // }
         if (!result.canceled) {
-            setPhoto(result.assets[0]);
-            setPhotoExist(result.assets[0].uri); // Use the captured image URI
+            // Get the file size of the original image
+            const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, { size: true });
+            if (!fileInfo.exists) {
+                Alert.alert('Error', 'File does not exist.');
+                return;
+            }
+
+            let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
+
+            // Dynamically adjust compression quality to ensure the file size is below 1 MB
+            let compressQuality = 0.9; // Start with 90% quality
+            let compressedImage = result.assets[0].uri;
+
+            while (fileSizeInMB >= 1 && compressQuality > 0.1) {
+                // Use the correct manipulateAsync method
+                const manipResult = await ImageManipulator.manipulateAsync(
+                    result.assets[0].uri,
+                    [{ resize: { width: 800 } }], // Resize the image to a width of 800px
+                    { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+                );
+
+                // Check the new file size
+                const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+                if (!newFileInfo.exists) {
+                    Alert.alert('Error', 'Compressed file does not exist.');
+                    return;
+                }
+
+                fileSizeInMB = newFileInfo.size / (1024 * 1024);
+
+                // Reduce quality for the next iteration
+                compressQuality -= 0.1;
+
+                // Update the compressed image URI
+                compressedImage = manipResult.uri;
+            }
+
+            console.log(fileSizeInMB, 'size in MB');
+            console.log(compressedImage, 'compressed image');
+
+            if (fileSizeInMB >= 1) {
+                Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
+            } else {
+                setPhoto(compressedImage);
+                setPhotoExist(compressedImage);
+            }
         }
     };
 
@@ -161,8 +212,51 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
         });
 
         if (!result.canceled) {
-            setPhoto(result.assets[0]);
-            setPhotoExist(result.assets[0].uri);
+            // Get the file size of the original image
+            const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, { size: true });
+            if (!fileInfo.exists) {
+                Alert.alert('Error', 'File does not exist.');
+                return;
+            }
+
+            let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
+
+            // Dynamically adjust compression quality to ensure the file size is below 1 MB
+            let compressQuality = 0.9; // Start with 90% quality
+            let compressedImage = result.assets[0].uri;
+
+            while (fileSizeInMB >= 1 && compressQuality > 0.1) {
+                // Use the correct manipulateAsync method
+                const manipResult = await ImageManipulator.manipulateAsync(
+                    result.assets[0].uri,
+                    [{ resize: { width: 800 } }], // Resize the image to a width of 800px
+                    { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+                );
+
+                // Check the new file size
+                const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+                if (!newFileInfo.exists) {
+                    Alert.alert('Error', 'Compressed file does not exist.');
+                    return;
+                }
+
+                fileSizeInMB = newFileInfo.size / (1024 * 1024);
+
+                // Reduce quality for the next iteration
+                compressQuality -= 0.1;
+
+                // Update the compressed image URI
+                compressedImage = manipResult.uri;
+            }
+
+            console.log(fileSizeInMB, 'size in MB');
+
+            if (fileSizeInMB >= 1) {
+                Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
+            } else {
+                setPhoto(compressedImage);
+                setPhotoExist(compressedImage);
+            }
         }
     };
 
