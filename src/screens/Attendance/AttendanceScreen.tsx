@@ -23,6 +23,8 @@ import moment from "moment";
 import * as Location from "expo-location";
 import AbsenService from "../../services/absenService";
 import useAbsenToday from "../../store/useAbsenToday";
+import * as FileSystem from "expo-file-system";
+import * as ImageManipulator from "expo-image-manipulator";
 
 const { width, height } = Dimensions.get("window");
 
@@ -148,18 +150,61 @@ export default function AttendanceScreen({
 
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: false,
-        quality: 0.8,
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
       });
 
-      if (result.canceled) {
-        return;
+      if (!result.canceled) {
+        // Get the file size of the original image
+        const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, { size: true });
+        if (!fileInfo.exists) {
+          Alert.alert('Error', 'File does not exist.');
+          return;
+        }
+
+        let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
+
+        // Dynamically adjust compression quality to ensure the file size is below 1 MB
+        let compressQuality = 0.9; // Start with 90% quality
+        let compressedImage = result.assets[0].uri;
+
+        while (fileSizeInMB >= 1 && compressQuality > 0.1) {
+          // Use the correct manipulateAsync method
+          const manipResult = await ImageManipulator.manipulateAsync(
+              result.assets[0].uri,
+              [{ resize: { width: 800 } }], // Resize the image to a width of 800px
+              { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+          );
+
+          // Check the new file size
+          const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+          if (!newFileInfo.exists) {
+            Alert.alert('Error', 'Compressed file does not exist.');
+            return;
+          }
+
+          fileSizeInMB = newFileInfo.size / (1024 * 1024);
+
+          // Reduce quality for the next iteration
+          compressQuality -= 0.1;
+
+          // Update the compressed image URI
+          compressedImage = manipResult.uri;
+        }
+        console.log(fileSizeInMB,' size in MB');
+
+        if (fileSizeInMB >= 1) {
+          Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
+        } else {
+          setPhoto(compressedImage);
+          setPhotoExist(compressedImage);
+          await handleAttendance(compressedImage, flag);
+        }
       }
 
-      const imageAsset = result.assets[0];
-      setPhoto(imageAsset);
-      setPhotoExist(imageAsset.uri);
-      await handleAttendance(imageAsset, flag);
+      // const imageAsset = result.assets[0];
+      // setPhoto(imageAsset);
+      // setPhotoExist(imageAsset.uri);
+      // await handleAttendance(imageAsset, flag);
     } catch (error) {
       console.error("Error taking photo:", error);
       Alert.alert("Error", "Failed to take photo. Please try again.");
@@ -188,7 +233,7 @@ export default function AttendanceScreen({
       if (photoAsset) {
         // @ts-ignore
         formData.append("file", {
-          uri: photoAsset.uri,
+          uri: photoAsset,
           type: "image/jpeg",
           name: photoAsset.fileName || "image.jpg",
         });
