@@ -44,6 +44,15 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
+    const itemsPerPage = 9;
+    const [currentPage, setCurrentPage] = useState(1);
+    const sortedData = [...bbmList].sort((a, b) => b.id - a.id);
+    // Calculate the current page's data
+    const currentData = sortedData.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     const fetchBbmList = async () => {
         setRefreshing(true);
         try {
@@ -82,9 +91,8 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
                     hasZeroKilometerOut = true;
                     Toast.show({
                         type: 'error',
-                        text1: `Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`,
+                        text1: `Tolong lengkapi draft yang masih belum lengkap`,
                     });
-                    console.log(`Item with date in ${formatDateWithTime(item.date_in)} has kilometer_out as 0.`);
                 }
             });
 
@@ -148,7 +156,7 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
             </View>
             <View style={styles.listContainer}>
                 <FlatList
-                    data={bbmList}
+                    data={currentData}
                     renderItem={renderItem}
                     ListHeaderComponent={
                         <View style={styles.headerRow}>
@@ -158,10 +166,26 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
                         </View>
                     }
                     keyExtractor={(item) => item.id.toString()}
+                    contentContainerStyle={{paddingBottom: 30}}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
                     }
                 />
+                {/* Pagination */}
+                <View style={styles.pagination}>
+                    {Array.from({ length: Math.ceil(sortedData.length / itemsPerPage) }).map((_, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            style={[
+                                styles.pageButton,
+                                currentPage === index + 1 && styles.activePageButton,
+                            ]}
+                            onPress={() => setCurrentPage(index + 1)}
+                        >
+                            <Text style={styles.pageText}>{index + 1}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
             </View>
         </View>
     )
@@ -226,4 +250,13 @@ const styles = StyleSheet.create({
         width: '23%', // Adjust width as necessary
         textAlign: 'center',
     },
+    pagination: { flexDirection: 'row', justifyContent: 'center', marginTop: 4 },
+    pageButton: {
+        padding: 8,
+        margin: 4,
+        borderRadius: 4,
+        backgroundColor: 'gray',
+    },
+    activePageButton: { backgroundColor: Colors.buttonBackground },
+    pageText: { color: '#fff' },
 })

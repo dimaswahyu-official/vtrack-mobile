@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView, FlatList} from 'react-native';
+import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView, FlatList, Alert} from 'react-native';
 import {useThemeStore} from '../store/useThemeStore';
 import {useAuthStore} from '../store/useAuthStore';
 import ButtonComponent from "../components/ButtonComponent";
@@ -48,21 +48,26 @@ export default function ProfileScreen() {
     };
 
     const handleLogout = () => {
-        setLoading(true);
-        Toast.show({
-            type: 'success',
-            text1: 'Success',
-            text2: `Logout Successful`,
-        });
-
-        // Clear auth and show success toast
-        clearAuth();
-        clearConstants();
-
-        // Set a timeout to stop the loading after 2 seconds (2000ms)
-        setTimeout(() => {
-            setLoading(false);
-        }, 2000);
+        Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
+            {
+                text: "Cancel",
+                style: "cancel",
+            },
+            {
+                text: "Logout",
+                onPress: () => {
+                    setLoading(true);
+                    clearAuth();
+                    clearConstants();
+                    Toast.show({
+                        type: "success",
+                        text1: "Success",
+                        text2: "Logout Successful",
+                    });
+                    setTimeout(() => setLoading(false), 1000);
+                },
+            },
+        ]);
     };
 
     const toAttendanceScreen = () => {
@@ -145,6 +150,7 @@ const styles = StyleSheet.create({
     containerCard: {
         position:'relative',
         width: '80%',
+        height: height/2,
         marginTop: 10,
         marginBottom: 10,
         borderRadius: 8,
@@ -152,18 +158,18 @@ const styles = StyleSheet.create({
     },
     coverPhoto: {
         width: '100%',
-        height: 150,
+        height: height/4,
         resizeMode: 'cover',
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
     },
     logo: {
-        marginTop: 5,
+        marginTop: height/18,
         alignSelf: 'center',
         position: 'absolute',
         zIndex: 15,
-        width: 90,
-        height: 80,
+        width: width/4,
+        height: height/9,
         resizeMode: 'contain'
     },
     iconEdit:{

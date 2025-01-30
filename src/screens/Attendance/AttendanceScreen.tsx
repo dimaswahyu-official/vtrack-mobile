@@ -96,7 +96,6 @@ export default function AttendanceScreen({
               photoOut: checkAbsenToday.photoOut,
             });
           } else {
-            console.log('absenToday', absenToday)
             clearAbsenToday();
           }
         }
@@ -203,7 +202,6 @@ export default function AttendanceScreen({
         formData.append("clockOut", dateNow.toISOString());
         response = await AbsenService.AbsenOut(formData);
       }
-
       if (response.statusCode === 200) {
         Toast.show({
           type: "success",
@@ -234,12 +232,11 @@ export default function AttendanceScreen({
             photoOut: absenData.photoOut || "",
           });
         }
-        
       } else {
         throw new Error(response.message || "Failed to record attendance");
       }
     } catch (error: any) {
-      console.error("Attendance Error:", error);
+      console.error("Attendance Error:",error?.message ,error?.response, error.response?.data?.message,);
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
@@ -388,7 +385,7 @@ export default function AttendanceScreen({
                     styles.attendanceButton,
                     absenToday?.clockIn && styles.disabledButton,
                   ]}
-                  disabled={!!absenToday?.clockIn}
+                  disabled={!!absenToday?.clockIn || absenToday?.clockOut != null }
                 >
                   <Text style={styles.attendanceButtonText}>
                     {absenToday?.clockIn ? "Already Checked In" : "Check In"}
