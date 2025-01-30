@@ -16,14 +16,15 @@ import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useRef, useState} from "react";
 import {Picker} from "@react-native-picker/picker";
 import Colors from "../../utils/Colors";
-import * as ImagePicker from "expo-image-picker";
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {EXISTING_SURVEY_STATUS, NEW_SURVEY_STATUS} from "../../constants/status";
 import { ActivityRepository } from "../../model/ActivityRepository";
-import ActivityService from "../../services/activityService";
 import {useLoadingStore} from "../../store/useLoadingStore";
 import {sendOfflineData} from "../../services/sendOfflineData";
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -32,12 +33,12 @@ type FormActivityProps = {
 };
 export default function FormDetailActivity({route}: FormActivityProps) {
     const db = useSQLiteContext();
-    const {item } = route.params || {};
+    const {item} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const [visible, setVisible] = useState(false);
     const activityStyles = ActivityStyles();
     const defaultImage = 'https://via.placeholder.com/100';
-    const { setLoading } = useLoadingStore();
+    const {setLoading} = useLoadingStore();
     const statusOptions = Object.entries(NEW_SURVEY_STATUS);
     const statusOptionExist = Object.entries(EXISTING_SURVEY_STATUS);
     const defaultStatus = item.type === 1
@@ -45,7 +46,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         : Number(statusOptionExist?.[0]?.[0] || 100);
     const [status, setStatus] = useState(defaultStatus);
     const [activityDatas, setActivityDatas] = useState<any>(null);
-
 
 
     useEffect(() => {
@@ -65,7 +65,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         };
 
         fetchActivityData();
-        
+
     }, [item]);
 
 
@@ -136,7 +136,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             }
 
             if (!activity.user_id) {
-                throw new Error('User ID is required'); 
+                throw new Error('User ID is required');
             }
 
             // Check if activity exists
@@ -174,91 +174,15 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         if (status !== 100 && status !== 202) {
             try {
                 setLoading(true);
-                // if (!activity) {
-                //     throw new Error('Activity data is required');
-                // }
-                //
-                // // Prepare the main activity payload
-                // const formData = new FormData();
-                // const requiredFields = ['user_id', 'call_plan_id', 'call_plan_schedule_id', 'area', 'region', 'brand', 'type_sio'];
-                //
-                // // Validate required fields
-                // for (const field of requiredFields) {
-                //     if (!activity[field]) {
-                //         throw new Error(`Missing required field: ${field}`);
-                //     }
-                //     formData.append(field, activity[field].toString());
-                // }
-                // formData.append('status', status.toString());
-                //
-                // // Optional fields
-                // const optionalFields = ['outlet_id', 'survey_outlet_id', 'program_id'];
-                // for (const field of optionalFields) {
-                //     if (activity[field]) {
-                //         formData.append(field, activity[field].toString());
-                //     }
-                // }
-                //
-                // // Handle timestamps
-                // formData.append('start_time', activity.start_time ? new Date(activity.start_time).toISOString() : '');
-                // formData.append('end_time', activity.end_time ? new Date(activity.end_time).toISOString() : '');
-                //
-                // // Location data
-                // if (!activity.latitude || !activity.longitude) {
-                //     throw new Error('Location data is required');
-                // }
-                // formData.append('latitude', activity.latitude);
-                // formData.append('longitude', activity.longitude);
-                // formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '0');
-                //
-                // // Handle range facility data
-                // const facilityTypes = [
-                //     'range_health_facilities',
-                //     'range_work_place',
-                //     'range_public_transportation_facilities',
-                //     'range_worship_facilities',
-                //     'range_playground_facilities',
-                //     'range_educational_facilities'
-                // ];
-                //
-                // const rangeFacility = facilityTypes.reduce((acc, facility) => ({
-                //     ...acc,
-                //     [facility]: activity.activity_outlet?.includes(facility) ? 1 : 0
-                // }), {});
-                //
-                // formData.append('range_facility', JSON.stringify(rangeFacility));
-                //
-                // // Handle photo uploads
-                // const photoFields = [
-                //     {key: 'photo_program', fileName: 'program.jpg'},
-                //     {key: 'photos', fileName: 'photo.jpg', fieldName: 'photo'}
-                // ];
-                //
-                // for (const {key, fileName, fieldName} of photoFields) {
-                //     const photoData = activity[fieldName || key];
-                //     if (photoData) {
-                //         // @ts-ignore
-                //         formData.append(key, {
-                //             uri: photoData,
-                //             type: 'image/jpeg',
-                //             name: photoData.fileName || fileName,
-                //         });
-                //     }
-                // }
-                //
-                // // Submit main activity
-                // const responseActivity = await ActivityService.postActivity(formData);
-                // console.log('response :',responseActivity);
-
-                await sendOfflineData(activity,0,db)
-            }catch (error) {
+                await sendOfflineData(activity, 0, db)
+            } catch (error) {
                 console.error(error);
-            }finally {
+            } finally {
                 setLoading(false);
             }
             navigation.replace('Activity2');
         } else {
-            navigation.navigate('FormDetailSio', { item, activity });
+            navigation.navigate('FormDetailSio', {item, activity});
         }
     }
 
@@ -274,10 +198,56 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             allowsEditing: false,
             quality: 1,
         });
+        // if (!response.canceled) {
+        //     // Pass the photo URI to the next page
+        //     await insertActivityDB(item, response.assets[0].uri)
+        // }
+
         if (!response.canceled) {
-            // Pass the photo URI to the next page
-            await insertActivityDB(item, response.assets[0].uri)
+            // Get the file size of the original image
+            const fileInfo = await FileSystem.getInfoAsync(response.assets[0].uri, { size: true });
+            if (!fileInfo.exists) {
+                Alert.alert('Error', 'File does not exist.');
+                return;
+            }
+
+            let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
+
+            // Dynamically adjust compression quality to ensure the file size is below 2 MB
+            let compressQuality = 0.9; // Start with 90% quality
+            let compressedImage = response.assets[0].uri;
+
+            while (fileSizeInMB >= 2 && compressQuality > 0.1) {
+                // Use the correct manipulateAsync method
+                const manipResult = await ImageManipulator.manipulateAsync(
+                    response.assets[0].uri,
+                    [{ resize: { width: 800 } }], // Resize the image to a width of 800px
+                    { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+                );
+
+                // Check the new file size
+                const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+                if (!newFileInfo.exists) {
+                    Alert.alert('Error', 'Compressed file does not exist.');
+                    return;
+                }
+
+                fileSizeInMB = newFileInfo.size / (1024 * 1024);
+
+                // Reduce quality for the next iteration
+                compressQuality -= 0.1;
+
+                // Update the compressed image URI
+                compressedImage = manipResult.uri;
+            }
+
+            if (fileSizeInMB >= 2) {
+                Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
+            } else {
+                await insertActivityDB(item, compressedImage)
+            }
         }
+
     }
 
     return (
