@@ -32,9 +32,10 @@ import {getStatusLabel} from "../../constants/status";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Colors from "../../utils/Colors";
 import {MaterialIcons} from "@expo/vector-icons";
-const { width, height } = Dimensions.get('window');
 
-export interface Activity2 {
+const {width, height} = Dimensions.get('window');
+
+export interface Activity {
     id: number;
     user_id: number;
     call_plan_id: number;
@@ -100,20 +101,21 @@ export interface CallPlan {
     status: number;
     is_approved: boolean;
 }
+
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'History'>;
 type FormActivityProps = {
     route: FormActivityRouteProp;
 };
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'History'>;
 
-export default function HistoryScreen({ route }: FormActivityProps) {
+export default function HistoryScreen({route}: FormActivityProps) {
     const db = useSQLiteContext();
     const navigation = useNavigation<NavigationProp>();
-    const { isOnline, isWifi } = useOffline();
-    const [activities, setActivities] = useState<Activity2[]>([]);
+    const {isOnline, isWifi} = useOffline();
+    const [activities, setActivities] = useState<Activity[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { user } = useAuthStore();
+    const {user} = useAuthStore();
     const userId = user?.id || '';
 
     const fetchScedule = async () => {
@@ -140,8 +142,8 @@ export default function HistoryScreen({ route }: FormActivityProps) {
                 return;
             }
             // Fetch History data from API
-            const response = await ActivityService.getListingSchedule(userId);
-            const data: Activity2[] = await response.data;
+            const response = await ActivityService.getHistorySchedule(userId);
+            const data: Activity[] = await response.data;
             setActivities(data)
         } catch (e: any) {
             setError(e.message);
@@ -157,11 +159,12 @@ export default function HistoryScreen({ route }: FormActivityProps) {
         const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
         Linking.openURL(url).catch((err) => {
             console.error('Failed to open map', err);
-            Toast.show({ type: 'error', text1: 'Failed to open map' });
+            Toast.show({type: 'error', text1: 'Failed to open map'});
         });
     };
 
-    const renderItem = ({ item }: { item: Activity2 }) => {
+
+    const renderItem = ({item}: { item: Activity }) => {
         const scaleAnim = new Animated.Value(1);
 
         const onPressIn = () => {
@@ -185,7 +188,7 @@ export default function HistoryScreen({ route }: FormActivityProps) {
                 // onPress={() => toggleSelection(item.id)}
             >
                 <Animated.View
-                    style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
+                    style={[styles.card, {transform: [{scale: scaleAnim}]}]}>
                     <View style={styles.row}>
                         {/* Column 1 */}
                         <View style={styles.col1}>
@@ -197,30 +200,30 @@ export default function HistoryScreen({ route }: FormActivityProps) {
                                         marginBottom: 20,
                                     },
                                 ]}>
-                                {item.callPlanOutlet?.name}
+                                {item.callPlanOutlet ? item.callPlanOutlet.name : item.callPlanSurvey?.name}
                             </Text>
 
                             <Text
-                                style={[styles.description, { fontStyle: 'italic' }]}>
+                                style={[styles.description, {fontStyle: 'italic'}]}>
                                 {item.code_call_plan}
                             </Text>
-                            <View style={styles.divider} />
+                            <View style={styles.divider}/>
                             <Text style={styles.description}>
                                 {item.callPlanOutlet
                                     ? item.callPlanOutlet?.brand
                                     : item.callPlanSurvey?.brand}
                             </Text>
-                            <View style={styles.divider} />
+                            <View style={styles.divider}/>
                             <Text style={[styles.description]}>
                                 {item.callPlanOutlet
                                     ? item.callPlanOutlet.sio_type
                                     : item.callPlanSurvey?.sio_type}
                             </Text>
-                            <View style={styles.divider} />
+                            <View style={styles.divider}/>
                             <Text style={styles.description}>
                                 Schedule: {formatDate(item.day_plan)}
                             </Text>
-                            <View style={styles.divider} />
+                            <View style={styles.divider}/>
                             <Text style={styles.description}>
                                 Visit Day:{' '}
                                 {item.callPlanOutlet
@@ -280,6 +283,17 @@ export default function HistoryScreen({ route }: FormActivityProps) {
         );
     }
 
+    if (activities.length === 0) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.header}>History</Text>
+                <View style={styles.center}>
+                    <Text style={styles.header}>No Data History</Text>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <Text style={styles.header}>History</Text>
@@ -289,7 +303,7 @@ export default function HistoryScreen({ route }: FormActivityProps) {
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={styles.list}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
                 }
             />
         </View>
@@ -342,7 +356,7 @@ const styles = StyleSheet.create({
         shadowColor: 'rgba(150,145,145,0.75)',
         shadowOpacity: 0.5,
         shadowRadius: 10,
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         elevation: 3,
         borderWidth: 3,
         borderColor: 'gray',

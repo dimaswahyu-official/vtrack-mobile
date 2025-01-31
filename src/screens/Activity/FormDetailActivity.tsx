@@ -187,66 +187,75 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     }
 
     const handleTakePhoto = async () => {
-        // Request camera permissions
-        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permissionResult.granted) {
-            Alert.alert('Permission required', 'Please grant permission to access the camera.');
-            return;
-        }
-        // Launch the camera
-        const response = await ImagePicker.launchCameraAsync({
-            allowsEditing: false,
-            quality: 1,
-        });
-        // if (!response.canceled) {
-        //     // Pass the photo URI to the next page
-        //     await insertActivityDB(item, response.assets[0].uri)
-        // }
-
-        if (!response.canceled) {
-            // Get the file size of the original image
-            const fileInfo = await FileSystem.getInfoAsync(response.assets[0].uri, { size: true });
-            if (!fileInfo.exists) {
-                Alert.alert('Error', 'File does not exist.');
+        try {
+            setLoading(true);
+            // Request camera permissions
+            const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+            if (!permissionResult.granted) {
+                Alert.alert('Permission required', 'Please grant permission to access the camera.');
                 return;
             }
+            // Launch the camera
+            const response = await ImagePicker.launchCameraAsync({
+                allowsEditing: false,
+                quality: 1,
+            });
+            // if (!response.canceled) {
+            //     // Pass the photo URI to the next page
+            //     await insertActivityDB(item, response.assets[0].uri)
+            // }
 
-            let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
-
-            // Dynamically adjust compression quality to ensure the file size is below 2 MB
-            let compressQuality = 0.9; // Start with 90% quality
-            let compressedImage = response.assets[0].uri;
-
-            while (fileSizeInMB >= 2 && compressQuality > 0.1) {
-                // Use the correct manipulateAsync method
-                const manipResult = await ImageManipulator.manipulateAsync(
-                    response.assets[0].uri,
-                    [{ resize: { width: 800 } }], // Resize the image to a width of 800px
-                    { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
-                );
-
-                // Check the new file size
-                const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
-                if (!newFileInfo.exists) {
-                    Alert.alert('Error', 'Compressed file does not exist.');
+            if (!response.canceled) {
+                // Get the file size of the original image
+                const fileInfo = await FileSystem.getInfoAsync(response.assets[0].uri, { size: true });
+                if (!fileInfo.exists) {
+                    Alert.alert('Error', 'File does not exist.');
                     return;
                 }
 
-                fileSizeInMB = newFileInfo.size / (1024 * 1024);
+                let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
 
-                // Reduce quality for the next iteration
-                compressQuality -= 0.1;
+                // Dynamically adjust compression quality to ensure the file size is below 1 MB
+                let compressQuality = 0.9; // Start with 90% quality
+                let compressedImage = response.assets[0].uri;
 
-                // Update the compressed image URI
-                compressedImage = manipResult.uri;
+                while (fileSizeInMB >= 1 && compressQuality > 0.1) {
+                    // Use the correct manipulateAsync method
+                    const manipResult = await ImageManipulator.manipulateAsync(
+                        response.assets[0].uri,
+                        [{ resize: { width: 800 } }], // Resize the image to a width of 800px
+                        { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+                    );
+
+                    // Check the new file size
+                    const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+                    if (!newFileInfo.exists) {
+                        Alert.alert('Error', 'Compressed file does not exist.');
+                        return;
+                    }
+
+                    fileSizeInMB = newFileInfo.size / (1024 * 1024);
+
+                    // Reduce quality for the next iteration
+                    compressQuality -= 0.1;
+
+                    // Update the compressed image URI
+                    compressedImage = manipResult.uri;
+                }
+
+                if (fileSizeInMB >= 1) {
+                    Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
+                } else {
+                    await insertActivityDB(item, compressedImage)
+                }
             }
-
-            if (fileSizeInMB >= 2) {
-                Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
-            } else {
-                await insertActivityDB(item, compressedImage)
-            }
+        }catch (error) {
+            console.error('Error handling activity:', error);
+            Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
+        }finally {
+            setLoading(false);
         }
+
 
     }
 

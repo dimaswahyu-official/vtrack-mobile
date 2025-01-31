@@ -19,6 +19,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ActivityProgramModel } from '../../model/ActivityProgramRepository';
 import { ActivityRepository } from '../../model/ActivityRepository';
+import * as FileSystem from "expo-file-system";
+import * as ImageManipulator from "expo-image-manipulator";
+import {useLoadingStore} from "../../store/useLoadingStore";
 
 type NavigationProp = StackNavigationProp<
 	ActivityStackParamList,
@@ -39,6 +42,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 	const { item, activity } = route.params || {};
 	const navigation = useNavigation<NavigationProp>();
 	const activityStyles = ActivityStyles();
+	const {setLoading} = useLoadingStore();
 	const defaultImage = 'https://via.placeholder.com/100';
 	type ActivityProgram = {
 		photo_program?: string;
@@ -154,28 +158,85 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 	};
 
 	const handleTakePhoto = async () => {
-		// Request camera permissions
-		const permissionResult =
-			await ImagePicker.requestCameraPermissionsAsync();
-		if (!permissionResult.granted) {
-			Alert.alert(
-				'Permission required',
-				'Please grant permission to access the camera.'
-			);
-			return;
+		try{
+			setLoading(true)
+			// Request camera permissions
+			const permissionResult =
+				await ImagePicker.requestCameraPermissionsAsync();
+			if (!permissionResult.granted) {
+				Alert.alert(
+					'Permission required',
+					'Please grant permission to access the camera.'
+				);
+				return;
+			}
+
+			// Launch the camera
+			const result = await ImagePicker.launchCameraAsync({
+				allowsEditing: false,
+				quality: 1,
+			});
+
+			// if (!result.canceled) {
+			// 	const newActivityProgram = { ...activityProgram };
+			// 	newActivityProgram.photo_program = result.assets[0].uri;
+			// 	updateActivityProgram(newActivityProgram);
+			// }
+
+			if (!result.canceled) {
+				// Get the file size of the original image
+				const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, { size: true });
+				if (!fileInfo.exists) {
+					Alert.alert('Error', 'File does not exist.');
+					return;
+				}
+
+				let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
+
+				// Dynamically adjust compression quality to ensure the file size is below 1 MB
+				let compressQuality = 0.9; // Start with 90% quality
+				let compressedImage = result.assets[0].uri;
+
+				while (fileSizeInMB >= 1 && compressQuality > 0.1) {
+					// Use the correct manipulateAsync method
+					const manipResult = await ImageManipulator.manipulateAsync(
+						result.assets[0].uri,
+						[{ resize: { width: 800 } }], // Resize the image to a width of 800px
+						{ compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+					);
+
+					// Check the new file size
+					const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+					if (!newFileInfo.exists) {
+						Alert.alert('Error', 'Compressed file does not exist.');
+						return;
+					}
+
+					fileSizeInMB = newFileInfo.size / (1024 * 1024);
+
+					// Reduce quality for the next iteration
+					compressQuality -= 0.1;
+
+					// Update the compressed image URI
+					compressedImage = manipResult.uri;
+				}
+
+				if (fileSizeInMB >= 1) {
+					Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
+				} else {
+					const newActivityProgram = { ...activityProgram };
+					newActivityProgram.photo_program = compressedImage;
+					updateActivityProgram(newActivityProgram);
+				}
+			}
+		}catch(error){
+			console.error('Error handling activity:', error);
+			Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
+		}finally {
+			setLoading(false)
 		}
 
-		// Launch the camera
-		const result = await ImagePicker.launchCameraAsync({
-			allowsEditing: false,
-			quality: 1,
-		});
 
-		if (!result.canceled) {
-			const newActivityProgram = { ...activityProgram };
-			newActivityProgram.photo_program = result.assets[0].uri;
-			updateActivityProgram(newActivityProgram);
-		}
 	};
 
 	const handleClearPhoto = () => {
@@ -205,30 +266,88 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 	};
 
 	const handleTakePhotoCompetitor = async (index: number) => {
-		// Request camera permissions
-		const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-		if (!permissionResult.granted) {
-			Alert.alert(
-				'Permission required',
-				'Please grant permission to access the camera.'
-			);
-			return;
+		try{
+			setLoading(true)
+			// Request camera permissions
+			const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+			if (!permissionResult.granted) {
+				Alert.alert(
+					'Permission required',
+					'Please grant permission to access the camera.'
+				);
+				return;
+			}
+
+			// Launch the camera
+			const result = await ImagePicker.launchCameraAsync({
+				allowsEditing: false,
+				quality: 1,
+			});
+
+			// if (!result.canceled) {
+			// 	const photoUri = result.assets[0].uri;
+			// 	setActivityProgramCompetitor((prev) =>
+			// 		prev.map((program, i) =>
+			// 			i === index ? { ...program, photo: photoUri } : program
+			// 		)
+			// 	);
+			// }
+
+			if (!result.canceled) {
+				// Get the file size of the original image
+				const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, { size: true });
+				if (!fileInfo.exists) {
+					Alert.alert('Error', 'File does not exist.');
+					return;
+				}
+
+				let fileSizeInMB = fileInfo.size / (1024 * 1024); // Convert bytes to MB
+
+				// Dynamically adjust compression quality to ensure the file size is below 1 MB
+				let compressQuality = 0.9; // Start with 90% quality
+				let compressedImage = result.assets[0].uri;
+
+				while (fileSizeInMB >= 1 && compressQuality > 0.1) {
+					// Use the correct manipulateAsync method
+					const manipResult = await ImageManipulator.manipulateAsync(
+						result.assets[0].uri,
+						[{ resize: { width: 800 } }], // Resize the image to a width of 800px
+						{ compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+					);
+
+					// Check the new file size
+					const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+					if (!newFileInfo.exists) {
+						Alert.alert('Error', 'Compressed file does not exist.');
+						return;
+					}
+
+					fileSizeInMB = newFileInfo.size / (1024 * 1024);
+
+					// Reduce quality for the next iteration
+					compressQuality -= 0.1;
+
+					// Update the compressed image URI
+					compressedImage = manipResult.uri;
+				}
+
+				if (fileSizeInMB >= 1) {
+					Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
+				} else {
+					setActivityProgramCompetitor((prev) =>
+						prev.map((program, i) =>
+							i === index ? { ...program, photo: compressedImage } : program
+						)
+					);
+				}
+			}
+		}catch(error){
+			console.error('Error handling activity:', error);
+			Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
+		}finally {
+			setLoading(false)
 		}
 
-		// Launch the camera
-		const result = await ImagePicker.launchCameraAsync({
-			allowsEditing: false,
-			quality: 1,
-		});
-
-		if (!result.canceled) {
-			const photoUri = result.assets[0].uri;
-			setActivityProgramCompetitor((prev) =>
-				prev.map((program, i) =>
-					i === index ? { ...program, photo: photoUri } : program
-				)
-			);
-		}
 	};
 
 	const handleClearPhotoCompetitor = (index: number) => {
@@ -301,19 +420,14 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 										activityStyles.label,
 										{ alignItems: 'flex-end' },
 									]}>
-									Judul Program
+									{item.callPlanProgram.name ?? 'JUDUL PROGRAM'}
 								</Text>
 								<Text
 									style={[
 										activityStyles.buttonText,
 										{ alignItems: 'flex-end' },
 									]}>
-									Deskripsi Program, Lorem Ipsum is simply dummy text
-									of the printing and typesetting industry. Lorem Ipsum
-									has been the industry's standard dummy text ever
-									since the 1500s, when an unknown printer took a
-									galley of type and scrambled it to make a type
-									specimen book.
+									{item.callPlanProgram.description ?? 'Deskripsi PROGRAM'}
 								</Text>
 								<Text
 									style={[
@@ -506,7 +620,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 					}}
 					onPress={() => {
 						const missingPhoto = validatePhotos(activityProgram);
-						if (missingPhoto && activity?.program_id) {
+						if (missingPhoto && activity?.program_id.length>0) {
 							Alert.alert(
 								'Missing Photo',
 								`Missing photo for:\nProgram: ${missingPhoto.name}\nDescription: ${missingPhoto.description}`

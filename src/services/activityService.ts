@@ -96,6 +96,15 @@ class ActivityService {
             throw new Error('Error: ' + error);
         }
     }
+
+    static async getHistorySchedule(id: string): Promise<any> {
+        try {
+            const response = await axiosInstance.get(`/schedule-plan/md-history/${id}`);
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
 }
 
 export default ActivityService;

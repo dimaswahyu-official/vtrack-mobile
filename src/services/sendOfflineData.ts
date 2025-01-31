@@ -7,6 +7,8 @@ import {ActivityBranchModel} from "../model/ActivityBranchRepository";
 import {ActivitySogModel} from "../model/ActivitySogRepository";
 import {ActivityOutletModel} from "../model/ActivityOutletRepository";
 import {SQLiteDatabase} from "expo-sqlite";
+import * as Location from "expo-location";
+import {Alert} from "react-native";
 
 export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteDatabase) => {
     try {
@@ -55,12 +57,32 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
         formData.append('start_time', activity.start_time ? new Date(activity.start_time).toISOString() : '');
         formData.append('end_time', activity.end_time ? new Date(activity.end_time).toISOString() : '');
 
-        // Location data
-        if (!activity.latitude || !activity.longitude) {
-            throw new Error('Location data is required');
+        let {status} = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+            Alert.alert(
+                "Permission Denied",
+                "Location permission is required for attendance"
+            );
+            return;
         }
-        formData.append('latitude', activity.latitude);
-        formData.append('longitude', activity.longitude);
+
+        const {coords} = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+        });
+
+        if (coords) {
+            const {latitude, longitude} = coords;
+            formData.append('latitude', latitude.toString());
+            formData.append('longitude', longitude.toString());
+        }
+
+        // Location data
+        // if (!activity.latitude || !activity.longitude) {
+        //     throw new Error('Location data is required');
+        // }
+
+        // formData.append('latitude', activity.latitude);
+        // formData.append('longitude', activity.longitude);
         formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '0');
 
         // Handle range facility data

@@ -232,10 +232,7 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 						<Text style={activityStyles.toggleText}>{sog.name}</Text>
 						<TouchableOpacity
 							onPress={() => toggleCollapse(index)}
-							style={[
-								activityStyles.iconButton,
-								{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-							]}>
+							style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center',position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
 							<MaterialIcons
 								name={collapsedStates[index] ? 'keyboard-arrow-down' : 'keyboard-arrow-up'}
 								size={24}

@@ -2,6 +2,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '@env';
+import {useAuthStore} from "../store/useAuthStore";
 
 
 const axiosInstance = axios.create({
@@ -28,5 +29,20 @@ axiosInstance.interceptors.request.use(
     return Promise.reject(error);
   },
 )
+
+axiosInstance.interceptors.response.use(
+    response => {
+        return response
+    },
+    error => {
+        if (error.response && error.response.status === 401) {
+            // Clear token and redirect to login if unauthorized
+            useAuthStore.getState().clearAuth(); // Access clearAuth from the singleton store
+
+        }
+        return Promise.reject(error)
+    }
+)
+
 
 export default axiosInstance;

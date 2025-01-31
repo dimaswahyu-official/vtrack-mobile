@@ -234,7 +234,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 										marginBottom: 20,
 									},
 								]}>
-								{item.callPlanOutlet?.name}
+								{item.callPlanOutlet ? item.callPlanOutlet.name : item.callPlanSurvey?.name}
 							</Text>
 
 							<Text
@@ -324,7 +324,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 				<TouchableOpacity style={styles.historyContainer} onPress={()=>{
 					navigation.navigate('History')
 				}}>
-					<Ionicons name="time-outline" style={{marginBottom: height * 0.02}} size={20} color="black" />
+					<Ionicons name="time-outline" size={20} color={Colors.buttonBackground} />
 					<Text style={styles.headerHistory}>History</Text>
 				</TouchableOpacity>
 			</View>
@@ -435,11 +435,13 @@ const styles = StyleSheet.create({
 	headerHistory: {
 		fontSize: width > 400 ? 20 : 16,
 		fontWeight: 'bold',
-		color: 'black',
-		marginBottom: height * 0.02,
+		color: Colors.buttonBackground,
 		textAlign: 'right',
 	},
 	historyContainer: {
+		borderRadius:8,
+		marginBottom: height * 0.005,
+		paddingHorizontal:3,
 		flexDirection: 'row',
 		alignItems: 'center',
 	},
