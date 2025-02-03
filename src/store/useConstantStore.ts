@@ -5,10 +5,13 @@ interface ConstantState {
     brands: any[];
     sio: any[];
     sog: any[];
+    dashboard: any;
     setBrands: (brands: any[]) => void;
     setSio: (sio: any[]) => void;
     setSog: (sog: any[]) => void;
+    setDashboard: (dashboard: any) => void;
     getBrands: () => void;
+    getDashboard: () => void;
     getSio: () => void;
     getSog: () => void;
     clearConstants: () => void;
@@ -18,9 +21,14 @@ const useConstantStore = create<ConstantState>((set) => ({
     brands: [],
     sio: [],
     sog:[],
+    dashboard: [],
     setBrands: async (brands: any[]) => {
         await AsyncStorage.setItem('brands', JSON.stringify(brands));
         set({ brands });
+    },
+    setDashboard: async (dashboard: any[]) => {
+        await AsyncStorage.setItem('dashboard', JSON.stringify(dashboard));
+        set({ dashboard });
     },
     setSog: async (sog: any[]) => {
         await AsyncStorage.setItem('sog', JSON.stringify(sog));
@@ -42,11 +50,16 @@ const useConstantStore = create<ConstantState>((set) => ({
         const storedSog = await AsyncStorage.getItem('sog');
         set({ sog: storedSog ? JSON.parse(storedSog) : [] });
     },
+    getDashboard: async () => {
+        const storedDashboard = await AsyncStorage.getItem('dashboard');
+        set({ dashboard: storedDashboard ? JSON.parse(storedDashboard) : [] });
+    },
     clearConstants: async () => {
         await AsyncStorage.removeItem('brands');
         await AsyncStorage.removeItem('sio');
         await AsyncStorage.removeItem('sog');
-        set({ brands: [], sio: [], sog: [] });
+        await AsyncStorage.removeItem('dashboard');
+        set({ brands: [], sio: [], sog: [], dashboard: [] });
     },
 }));
 

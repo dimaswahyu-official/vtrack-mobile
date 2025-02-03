@@ -84,6 +84,9 @@ export default function ReimburseScreen({navigation}: ReimburseScreenProps) {
         let hasZeroKilometerOut = false;
         if (!data || data.length === 0) {
             Toast.show({type: 'info', text1: 'No data to process.'});
+            if (!hasZeroKilometerOut) {
+                navigation.navigate('ReimburseDetails', {bbmItem: {}});
+            }
             return;
         } else {
             data.forEach((item: any) => {

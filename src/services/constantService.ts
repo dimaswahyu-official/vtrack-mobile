@@ -22,6 +22,19 @@ class ConstantService {
             throw new Error('Get SIO failed: ' + error.message);
         }
     }
+
+    static async getDashboard(id: string): Promise<any> {
+        try {
+            const response = await axiosInstance.get(`/dashboard/md-dashboard`, {
+                params: {
+                    user_id: id
+                }
+            });
+            return response.data
+        } catch (error: any) {
+            throw new Error('Error: ' + error);
+        }
+    }
 }
 
 export default ConstantService;

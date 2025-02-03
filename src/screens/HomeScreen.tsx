@@ -24,13 +24,23 @@ import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import {ActivityRepository} from '../model/ActivityRepository';
 import {sendOfflineData} from "../services/sendOfflineData";
+import {useAuthStore} from "../store/useAuthStore";
 
 const {width, height} = Dimensions.get('window');
 
+interface DashboardData {
+    belum_dikunjungi: number;
+    sudah_dikunjungi: number;
+    total_activity_outlet: number;
+    total_activity_survey: number;
+    total_schedule: number;
+}
+
 
 export default function HomeScreen() {
-    const {setBrands, setSio, brands, sio} = useConstantStore();
+    const {setBrands, setSio, setDashboard, dashboard, brands, sio} = useConstantStore();
     const {isOnline, isWifi} = useOffline();
+    const {user} = useAuthStore();
     // State to track sync status and counts
     const [syncStatus, setSyncStatus] = useState<string>('');
     const [syncedCount, setSyncedCount] = useState<number>(0);
@@ -132,45 +142,7 @@ export default function HomeScreen() {
     }, [isOnline, isWifi]);
 
 
-    const data = [
-        {
-            id: 0,
-            title: '10',
-            color: '#FF4500',
-            members: "Outlet Belum Dikunjungi",
-            image: 'https://img.icons8.com/color/70/000000/name.png',
-        },
-        {
-            id: 1,
-            title: '12',
-            color: '#87CEEB',
-            members: "Outlet Sudah Dikunjungi",
-            image: 'https://img.icons8.com/office/70/000000/home-page.png',
-        },
-        {
-            id: 2,
-            title: '12',
-            color: '#4682B4',
-            members: "Outlet Buka",
-            image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
-        },
-        {
-            id: 3,
-            title: '10',
-            color: '#6A5ACD',
-            members: "outlet Tutup",
-            image: 'https://img.icons8.com/color/70/000000/family.png',
-        },
-        {
-            id: 4,
-            title: '22',
-            color: '#FF69B4',
-            members: "Total Outlet dalam schedule",
-            image: 'https://img.icons8.com/color/70/000000/groups.png',
-        },
-    ]
 
-    const [options, setOptions] = useState(data)
 
     const showAlert = () => {
         Alert.alert('Option selected')
@@ -183,6 +155,45 @@ export default function HomeScreen() {
             setBrands(getBrands.data.data);
             const getSio = await ConstantService.getSio();
             setSio(getSio.data.data);
+            const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+            const data = [
+                {
+                    id: 0,
+                    title: getDashboard.data?.belum_dikunjungi,
+                    color: '#f3e7be',
+                    members: "Outlet Belum Dikunjungi",
+                    image: 'https://img.icons8.com/color/70/000000/name.png',
+                },
+                {
+                    id: 1,
+                    title: getDashboard.data?.sudah_dikunjungi,
+                    color: '#9bcfb6',
+                    members: "Outlet Sudah Dikunjungi",
+                    image: 'https://img.icons8.com/office/70/000000/home-page.png',
+                },
+                {
+                    id: 2,
+                    title: getDashboard.data?.belum_dikunjungi,
+                    color: '#d68d96',
+                    members: "Total Activity Outlet",
+                    image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
+                },
+                {
+                    id: 3,
+                    title: getDashboard.data?.total_activity_survey,
+                    color: '#819bf3',
+                    members: "Total Activity Survey",
+                    image: 'https://img.icons8.com/color/70/000000/family.png',
+                },
+                {
+                    id: 4,
+                    title: getDashboard.data?.total_schedule,
+                    color: '#996d99',
+                    members: "Total Outlet dalam schedule",
+                    image: 'https://img.icons8.com/color/70/000000/groups.png',
+                },
+            ]
+            setDashboard(data);
             setSyncStatus('synced');
         } catch (error) {
             console.error('Error fetching constants:', error);
@@ -191,10 +202,10 @@ export default function HomeScreen() {
     }
 
     useEffect(() => {
-        if ((isOnline || isWifi) && !brands.length && !sio.length) {
+        if ((isOnline || isWifi) && !brands.length && !sio.length && !dashboard.length) {
             fetchConstants();
         }
-    }, [isOnline, isWifi, brands, sio]);
+    }, [isOnline, isWifi, brands, sio, dashboard]);
 
 
     return (
@@ -202,21 +213,20 @@ export default function HomeScreen() {
             <FlatList
                 style={styles.list}
                 contentContainerStyle={styles.listContainer}
-                data={options}
+                data={dashboard}
                 horizontal={false}
                 numColumns={2}
                 keyExtractor={(item, index) => {
                     return index.toString()
                 }}
                 renderItem={({item, index}) => {
-                    if (index === data.length - 1) {
+                    if (index === dashboard.length - 1) {
                         return (
                             <>
                                 <TouchableOpacity
-                                    key={item.id}
                                     style={[styles.card, {flexBasis: '98%', backgroundColor: item.color}]}
                                     onPress={() => {
-                                        Alert.alert(item.title)
+                                        Alert.alert(item?.title)
                                     }}>
                                     <Image style={styles.cardImage} source={{uri: item.image}}/>
                                     <View style={styles.cardHeader}>
