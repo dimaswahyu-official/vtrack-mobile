@@ -20,6 +20,7 @@ import Toast from 'react-native-toast-message';
 import * as Location from 'expo-location';
 import { sendOfflineData } from '../../services/sendOfflineData';
 import {useOffline} from "../../context/OfflineProvider";
+import {useLoadingStore} from "../../store/useLoadingStore";
 
 type NavigationProp = StackNavigationProp<
 	ActivityStackParamList,
@@ -44,6 +45,7 @@ const activityStyles = ActivityStyles();
 export default function FormDetailOutlet({ route }: FormActivityProps) {
 	const db = useSQLiteContext();
 	const { item, activity } = route.params || {};
+	const { setLoading } = useLoadingStore();
 	const navigation = useNavigation<NavigationProp>();
 	const [outletFacilities, setOutletFacilities] = useState<Outlet[]>([]);
 	const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -52,6 +54,32 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 	const { isOnline, isWifi } = useOffline();
 	const [latitude, setLatitude] = useState('');
 	const [longitude, setLongitude] = useState('');
+	const outlet = [
+		{
+			title: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
+			label: 'range_health_facilities',
+		},
+		{
+			title: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)',
+			label: 'range_educational_facilities',
+		},
+		{
+			title: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)',
+			label: 'range_playground_facilities',
+		},
+		{
+			title: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
+			label: 'range_worship_facilities',
+		},
+		{
+			title: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
+			label: 'range_public_transportation_facilities',
+		},
+		{
+			title: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)',
+			label: 'range_work_place',
+		},
+	];
 
 	// Initialize outlet facilities from existing data
 	useEffect(() => {
@@ -106,9 +134,21 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 		);
 	}, []);
 
+	const toggleSelectAll = useCallback(() => {
+		setSelectedValues((prev) => {
+			if (prev.length === outlet.length) {
+				// If all items are already selected, clear the selection
+				return [];
+			} else {
+				// Otherwise, select all items
+				return outlet.map((item) => item.label);
+			}
+		});
+	}, [outlet]);
+
 	const submitOutlet = async () => {
 		if (isLoading) return;
-
+		setLoading(true)
 		setIsLoading(true);
 		try {
 			const updatedFacilities = outletFacilities.map((facility) => ({
@@ -147,36 +187,12 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 			Alert.alert('Error', 'Failed to save data. Please try again.');
 		} finally {
 			setIsLoading(false);
+			setLoading(false);
 			navigation.replace('Activity2');
 		}
 	};
 
-	const outlet = [
-		{
-			title: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
-			label: 'range_health_facilities',
-		},
-		{
-			title: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)',
-			label: 'range_educational_facilities',
-		},
-		{
-			title: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)',
-			label: 'range_playground_facilities',
-		},
-		{
-			title: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
-			label: 'range_worship_facilities',
-		},
-		{
-			title: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
-			label: 'range_public_transportation_facilities',
-		},
-		{
-			title: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)',
-			label: 'range_work_place',
-		},
-	];
+
 
 	const CustomCheckbox = ({
 		isChecked,
@@ -276,6 +292,17 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 
 						{isDropdownVisible && (
 							<View style={activityStyles.dropdown}>
+								<TouchableOpacity
+									style={activityStyles.optionContainer}
+									onPress={toggleSelectAll}>
+									<CustomCheckbox
+										isChecked={selectedValues.length === outlet.length}
+										onPress={toggleSelectAll}
+									/>
+									<Text style={[activityStyles.optionLabel, { paddingRight: 6 }]}>
+										PILIH SEMUA AREA
+									</Text>
+								</TouchableOpacity>
 								<FlatList
 									scrollEnabled={false}
 									data={outlet}
