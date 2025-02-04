@@ -183,6 +183,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 		}
 	};
 	useEffect(() => {
+		setRefreshing(true);
 		fetchScedule();
 	}, []);
 

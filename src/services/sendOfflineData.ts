@@ -40,8 +40,6 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
                 throw new Error(`Missing required field: ${field}`);
             }
             formData.append(field, activity[field].toString());
-
-
         }
 
 
@@ -54,7 +52,7 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
         }
 
         // Handle timestamps
-        formData.append('start_time', activity.start_time ? new Date(activity.start_time).toISOString() : '');
+        formData.append('start_time', activity.start_time ?? '');
         formData.append('end_time', activity.end_time ? new Date(activity.end_time).toISOString() : '');
 
         let {status} = await Location.requestForegroundPermissionsAsync();
@@ -82,7 +80,7 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
         // }
 
         // formData.append('latitude', activity.latitude);
-        // formData.append('longitude', activity.longitude);
+        formData.append('notes', activity.notes_survey ?? '');
         formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '0');
 
         // Handle range facility data
@@ -101,24 +99,50 @@ export const sendOfflineData = async (activity: any, isFull: number, db: SQLiteD
         }), {});
 
         formData.append('range_facility', JSON.stringify(rangeFacility));
+        // @ts-ignore
+        formData.append('photos', [
+            {
+                uri: activity.photo_first,
+                type: 'image/jpeg',
+                name: activity.photo_first.fileName || 'photo_first.jpg',
+            },
+            {
+                uri: activity.photo_second,
+                type: 'image/jpeg',
+                name: activity.photo_first.fileName || 'photo_second.jpg',
+            },
+            {
+                uri: activity.photos,
+                type: 'image/jpeg',
+                name: activity.photo_first.fileName || 'photos.jpg',
+            },
+
+        ]);
+        // @ts-ignore
+        formDataSio.append('photo_program', {
+            uri: activity.photo_program,
+            type: 'image/jpeg',
+            name: activity.photo_program.fileName || 'photo_program.jpg',
+        });
+
 
         // Handle photo uploads
-        const photoFields = [
-            {key: 'photo_program', fileName: 'program.jpg'},
-            {key: 'photos', fileName: 'photo.jpg', fieldName: 'photo'}
-        ];
-
-        for (const {key, fileName, fieldName} of photoFields) {
-            const photoData = activity[fieldName || key];
-            if (photoData) {
-                // @ts-ignore
-                formData.append(key, {
-                    uri: photoData,
-                    type: 'image/jpeg',
-                    name: photoData.fileName || fileName,
-                });
-            }
-        }
+        // const photoFields = [
+        //     {key: 'photo_program', fileName: 'program.jpg'},
+        //     {key: 'photos', fileName: 'photo.jpg', fieldName: 'photo'}
+        // ];
+        //
+        // for (const {key, fileName, fieldName} of photoFields) {
+        //     const photoData = activity[fieldName || key];
+        //     if (photoData) {
+        //         // @ts-ignore
+        //         formData.append(key, {
+        //             uri: photoData,
+        //             type: 'image/jpeg',
+        //             name: photoData.fileName || fileName,
+        //         });
+        //     }
+        // }
 
         // Submit main activity
         const responseActivity = await ActivityService.postActivity(formData);

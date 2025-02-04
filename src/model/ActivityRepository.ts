@@ -27,6 +27,9 @@ interface Activity {
 	longitude?: string;
 	survey_outlet_id?: number;
 	program_id?: number;
+	photo_first?: string;
+	photo_second?: string;
+	notes_survey?: string;
 }
 
 interface ActivityWithDetail {
@@ -51,6 +54,9 @@ interface ActivityWithDetail {
 	longitude?: string;
 	survey_outlet_id?: number;
 	program_id?: number;
+	photo_first?: string;
+	photo_second?: string;
+	notes_survey?: string;
 	activity_sio?: ActivitySio[];
 	activity_sog?: ActivitySog[];
 	activity_branch?: ActivityBranch[];
@@ -96,7 +102,10 @@ export const createTableActivity = async (
 			latitude TEXT,
 			longitude TEXT,
 			survey_outlet_id INTEGER,
-			program_id INTEGER
+			program_id INTEGER,
+			photo_first TEXT,
+			photo_second TEXT,
+			notes_survey TEXT
         )
     `);
 };
@@ -126,11 +135,14 @@ export const ActivityRepository = {
 			latitude,
 			longitude,
 			survey_outlet_id,
-			program_id
+			program_id,
+			photo_first,
+			photo_second,
+			notes_survey,
 		} = params;
 		const result = await db.runAsync(
-			`INSERT INTO Activity (user_id, call_plan_id, call_plan_schedule_id, outlet_id, status, area, region, brand, type_sio, start_time, end_time, photo, photo_program, sale_outlet_weekly, is_sync, id_server, latitude, longitude, survey_outlet_id, program_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO Activity (user_id, call_plan_id, call_plan_schedule_id, outlet_id, status, area, region, brand, type_sio, start_time, end_time, photo, photo_program, sale_outlet_weekly, is_sync, id_server, latitude, longitude, survey_outlet_id, program_id, photo_first, photo_second, notes_survey)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				user_id ?? 0,
 				call_plan_id ?? 0,
@@ -152,6 +164,9 @@ export const ActivityRepository = {
 				longitude ?? '',
 				survey_outlet_id ?? 0,
 				program_id ?? 0,
+				photo_first ?? '',
+				photo_second ?? '',
+				notes_survey ?? '',
 			]
 		);
 		return result.lastInsertRowId;
