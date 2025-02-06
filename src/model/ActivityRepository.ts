@@ -30,6 +30,7 @@ interface Activity {
 	photo_first?: string;
 	photo_second?: string;
 	notes_survey?: string;
+	fulfilled?:number
 }
 
 interface ActivityWithDetail {
@@ -62,6 +63,7 @@ interface ActivityWithDetail {
 	activity_branch?: ActivityBranch[];
 	activity_program?: ActivityProgram[];
 	range_facility?: ActivityOutlet[];
+	fulfilled?:number;
 }
 
 export const dropTableExisting = async (db: SQLite.SQLiteDatabase): Promise<void> => {
@@ -105,7 +107,8 @@ export const createTableActivity = async (
 			program_id INTEGER,
 			photo_first TEXT,
 			photo_second TEXT,
-			notes_survey TEXT
+			notes_survey TEXT,
+			fulfilled INTEGER DEFAULT 0
         )
     `);
 };
@@ -139,10 +142,11 @@ export const ActivityRepository = {
 			photo_first,
 			photo_second,
 			notes_survey,
+			fulfilled
 		} = params;
 		const result = await db.runAsync(
-			`INSERT INTO Activity (user_id, call_plan_id, call_plan_schedule_id, outlet_id, status, area, region, brand, type_sio, start_time, end_time, photo, photo_program, sale_outlet_weekly, is_sync, id_server, latitude, longitude, survey_outlet_id, program_id, photo_first, photo_second, notes_survey)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO Activity (user_id, call_plan_id, call_plan_schedule_id, outlet_id, status, area, region, brand, type_sio, start_time, end_time, photo, photo_program, sale_outlet_weekly, is_sync, id_server, latitude, longitude, survey_outlet_id, program_id, photo_first, photo_second, notes_survey, fulfilled)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				user_id ?? 0,
 				call_plan_id ?? 0,
@@ -167,6 +171,7 @@ export const ActivityRepository = {
 				photo_first ?? '',
 				photo_second ?? '',
 				notes_survey ?? '',
+				fulfilled ?? 0,
 			]
 		);
 		return result.lastInsertRowId;

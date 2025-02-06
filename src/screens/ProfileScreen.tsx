@@ -24,6 +24,7 @@ export default function ProfileScreen() {
     const {theme, setTheme} = useThemeStore();
     const {clearAuth, user} = useAuthStore();
     const {clearConstants} = useConstantStore();
+    const defaultImage = 'http://placehold.co/100';
 
 
     useEffect(() => {
@@ -32,13 +33,12 @@ export default function ProfileScreen() {
         } else {
             setLoading(false);
         }
-        console.log(JSON.stringify(user))
     }, [user, setLoading]);
 
     const profile = {
         name: user?.fullName || '',
         email: user?.email || '',
-        photo: user?.photo || "https://via.placeholder.com/150",
+        photo: user?.photo || '',
         roles: user?.roles || '',
         username: user?.username || '',
     };
@@ -100,11 +100,18 @@ export default function ProfileScreen() {
                     <View style={styles.containerCard}>
                         <Image source={require('../../assets/cover-profile.png')} style={styles.coverPhoto}/>
                         <Image source={require('../../assets/logo-nna-white.png')} style={styles.logo}/>
-                        <Ionicons style={styles.iconEdit} name={"pencil"} size={22} color='white'  onPress={() => {
+                        <Ionicons style={styles.iconEdit} name={"pencil"} size={22} color='white' onPress={() => {
                             toUpdateProfileScreen();
                         }}/>
                         <View style={styles.avatarContainer}>
-                            <Image source={{uri: profile.photo}} style={styles.avatar}/>
+                            {profile.photo === '' ? (
+                                <View style={{borderRadius:75, borderColor:'white', backgroundColor:'white',padding:15, margin:10}}>
+                                    <Ionicons name="rocket" size={70} color={colors.buttonBackground} />
+                                </View>
+                            ) : (
+                                <Image source={{uri: profile.photo}} style={styles.avatar}/>
+                            )}
+                            {/*<Image source={{uri: profile.photo}} style={styles.avatar}/>*/}
                             <Text style={styles.name}>{profile.name}</Text>
                             <Text style={styles.roles}>{profile.roles}</Text>
                             <Text style={styles.email}>{profile.email}</Text>
@@ -116,7 +123,7 @@ export default function ProfileScreen() {
                     </View>
 
                     <View style={styles.row}>
-                        <View style={[styles.row,{width:'100%'}]}>
+                        <View style={[styles.row, {width: '100%'}]}>
                             <ButtonComponent
                                 title={'Reimburse'}
                                 onPress={() => {
@@ -133,7 +140,7 @@ export default function ProfileScreen() {
                                 buttonStyle={styles.buttonSync}
                                 textStyle={globalStyles.buttonText}
                             />
-                    </View>
+                        </View>
 
                     </View>
                 </View>
@@ -148,9 +155,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     containerCard: {
-        position:'relative',
+        position: 'relative',
         width: '80%',
-        height: height/2,
+        height: height / 2,
         marginTop: 10,
         marginBottom: 10,
         borderRadius: 8,
@@ -158,21 +165,21 @@ const styles = StyleSheet.create({
     },
     coverPhoto: {
         width: '100%',
-        height: height/4,
+        height: height / 4,
         resizeMode: 'cover',
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
     },
     logo: {
-        marginTop: height/18,
+        marginTop: height / 18,
         alignSelf: 'center',
         position: 'absolute',
         zIndex: 15,
-        width: width/4,
-        height: height/9,
+        width: width / 4,
+        height: height / 9,
         resizeMode: 'contain'
     },
-    iconEdit:{
+    iconEdit: {
         top: 10, // Adjust for vertical positioning
         right: 10,
         position: 'absolute',
@@ -203,11 +210,11 @@ const styles = StyleSheet.create({
     roles: {
         fontSize: 20,
         fontWeight: 'bold',
-        color:colors.secondaryColor
+        color: colors.secondaryColor
     },
     email: {
-        fontWeight:'bold',
-        color:colors.buttonBackground,
+        fontWeight: 'bold',
+        color: colors.buttonBackground,
         fontSize: 20,
         alignItems: 'center',
         justifyContent: 'center',
@@ -260,7 +267,7 @@ const styles = StyleSheet.create({
         width: width * 0.8,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom:10
+        marginBottom: 10
     },
     buttonText: {
         color: 'white',

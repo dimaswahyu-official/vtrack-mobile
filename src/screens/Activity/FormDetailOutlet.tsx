@@ -165,6 +165,13 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 						: ActivityOutletModel.create(db, facility)
 				)
 			);
+
+			// Update Flag Fulfilled
+			await ActivityRepository.update(db, {
+				fulfilled:1,
+				call_plan_schedule_id: activity.call_plan_schedule_id
+			});
+
 			if (!isOnline || !isWifi) {
 				return
 			} else {

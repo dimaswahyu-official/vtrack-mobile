@@ -8,6 +8,12 @@ interface LoginResponse {
     data: any;
 }
 
+interface ForgetPasswordResponse {
+    statusCode: number;
+    message: string;
+    data: any;
+}
+
 
 class AuthServices {
     // Login function: Accepts credentials, performs authentication, and stores the token
@@ -24,7 +30,7 @@ class AuthServices {
         }
     }
 
-    static async forgotPassword(email: string): Promise<void> {
+    static async forgotPassword(email: string): Promise<ForgetPasswordResponse> {
         try {
             const response = await axiosInstance.post('/auth/forgot-password', {
                 email

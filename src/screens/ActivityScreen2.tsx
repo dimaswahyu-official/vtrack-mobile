@@ -11,12 +11,12 @@ import {
 	TouchableWithoutFeedback,
 	View,
 } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { StackNavigationProp  } from '@react-navigation/stack';
 import { ActivityStackParamList } from '../navigation/ActivityNavigator';
 import { useSQLiteContext } from 'expo-sqlite';
-import { RouteProp, useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useOffline } from '../context/OfflineProvider';
-import React, { useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import ActivityService from '../services/activityService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -182,10 +182,21 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			setRefreshing(false);
 		}
 	};
+
+
+	useFocusEffect(
+		useCallback(() => {
+			setRefreshing(true);
+			setActivities([]);
+			fetchScedule();
+		}, [])
+	);
+
 	useEffect(() => {
 		setRefreshing(true);
+		setActivities([]);
 		fetchScedule();
-	}, []);
+	}, [navigation]);
 
 	const openMaps = (latitude: string, longitude: string) => {
 		const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;

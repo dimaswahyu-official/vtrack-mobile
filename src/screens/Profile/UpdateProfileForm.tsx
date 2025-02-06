@@ -278,6 +278,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
             <TextInput
                 style={globalStyles.input}
                 value={name}
+                editable={false}
                 onChangeText={setName}
                 placeholder="Name"
             />
@@ -285,6 +286,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
                 style={globalStyles.input}
                 value={email}
                 onChangeText={setEmail}
+                editable={false}
                 placeholder="Email"
                 keyboardType="email-address"
             />

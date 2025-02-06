@@ -42,14 +42,14 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const statusOptions = Object.entries(NEW_SURVEY_STATUS);
     const statusOptionExist = Object.entries(EXISTING_SURVEY_STATUS);
     const defaultStatus = item.type === 1
-        ? Number(statusOptions?.[0]?.[0] || 100)
-        : Number(statusOptionExist?.[0]?.[0] || 100);
-    const [status, setStatus] = useState(defaultStatus);
+        ? Number(statusOptions?.[0]?.[0])
+        : Number(statusOptionExist?.[0]?.[0]);
+    const [status, setStatus] = useState<number>(() => defaultStatus)
     const [activityDatas, setActivityDatas] = useState<any>(null);
 
 
     useEffect(() => {
-
+        console.log(status);
         const fetchActivityData = async () => {
             try {
                 const response = await ActivityRepository.findByCallPlanScheduleId(db, item.id);
@@ -174,6 +174,11 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         if (status !== 100 && status !== 202) {
             try {
                 setLoading(true);
+                // Update Flag Fulfilled
+                await ActivityRepository.update(db, {
+                    fulfilled:1,
+                    call_plan_schedule_id: activity.call_plan_schedule_id
+                });
                 await sendOfflineData(activity, 0, db)
             } catch (error) {
                 console.error(error);
@@ -336,11 +341,11 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     </View>
                 </View>
             </View>
-            {(!(status === activityDatas?.status) || activityDatas?.status === 100) && (
-                <TouchableOpacity style={activityStyles.button} onPress={() => {
-                    status === 100 && activityDatas ? navigation.navigate('FormDetailSio', { item, activity: activityDatas }) : setVisible(true);
+            {(!(status === activityDatas?.status) || activityDatas?.status === 100 || activityDatas?.status === 202) && (
+                <TouchableOpacity disabled={status==0} style={activityStyles.button} onPress={() => {
+                    (status === 100 || status === 202) && activityDatas ? navigation.navigate('FormDetailSio', { item, activity: activityDatas }) : setVisible(true);
                 }}>
-                    <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>{status === activityDatas?.status && status === 100 ? 'NEXT' : 'CHECKIN'}</Text>
+                    <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>{status === activityDatas?.status && (status === 100 || status === 202) ? 'NEXT' : 'CHECKIN'}</Text>
                 </TouchableOpacity>
             )}
             {PopupCard()}

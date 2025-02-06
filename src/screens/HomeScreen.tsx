@@ -226,7 +226,7 @@ export default function HomeScreen() {
                                 <TouchableOpacity
                                     style={[styles.card, {flexBasis: '98%', backgroundColor: item.color}]}
                                     onPress={() => {
-                                        Alert.alert(item?.title)
+                                        {}
                                     }}>
                                     <Image style={styles.cardImage} source={{uri: item.image}}/>
                                     <View style={styles.cardHeader}>
@@ -245,7 +245,7 @@ export default function HomeScreen() {
                             key={item.id}
                             style={[styles.card, {backgroundColor: item.color}]}
                             onPress={() => {
-                                Alert.alert(item.title)
+                                {}
                             }}>
                             <Image style={styles.cardImage} source={{uri: item.image}}/>
 

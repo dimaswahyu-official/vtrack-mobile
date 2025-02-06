@@ -4,7 +4,9 @@ import Toast from 'react-native-toast-message';
 import { useForm, Controller } from 'react-hook-form';
 import GlobalStyles from "../utils/GlobalStyles";
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from "@react-navigation/stack"; // Import navigation
+import { StackNavigationProp } from "@react-navigation/stack";
+import authService from "../services/authService";
+import {useLoadingStore} from "../store/useLoadingStore"; // Import navigation
 
 type FormData = {
     email: string;
@@ -22,6 +24,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
+    const { setLoading } = useLoadingStore();
     const { control, handleSubmit, formState: { errors } } = useForm<FormData>();
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const navigation = useNavigation<NavigationProp>();  // Add the type here
@@ -61,23 +64,29 @@ export default function ForgotPassword() {
         return emailRegex.test(email);
     };
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (data:any) => {
         try {
+            setLoading(true);
             // Simulate API call to send reset link
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            Toast.show({
-                type: 'success',
-                text1: 'Email Sent',
-                text2: 'A password reset link has been sent to your email.',
-            });
-
+            // await new Promise(resolve => setTimeout(resolve, 2000));
+           await authService.forgotPassword(data.email).then(response => {
+               if (response.statusCode === 200) {
+                   Toast.show({
+                       type: 'success',
+                       text1: 'Email Sent',
+                       text2: 'A password reset link has been sent to your email.',
+                   });
+               }
+           })
         } catch (error) {
             Toast.show({
                 type: 'error',
                 text1: 'Error',
                 text2: 'Failed to send email. Please try again later.',
             });
+        } finally {
+            setLoading(false);
+            navigation.replace('Login')
         }
     };
 

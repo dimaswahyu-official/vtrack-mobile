@@ -979,7 +979,12 @@ export default function FormDetailSio({route}: FormActivityProps) {
                     }}
                     onPress={() => {
                         if(item.type===1) {
-                            goToFormDetailProgram();
+                            if (activitySurvey?.photo_first == '' || activitySurvey?.photo_second == '') {
+                                alert('Tolong Lengkapi Seluruh data photo survey');
+                            } else {
+                                goToFormDetailProgram();
+                            }
+
                         }else {
                             if (areAllPhotosTaken(activitySio)) {
                                 goToFormDetailProgram();

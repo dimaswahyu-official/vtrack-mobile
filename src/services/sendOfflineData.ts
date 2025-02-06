@@ -63,10 +63,7 @@ export const sendOfflineData = async (
 
 		// Handle timestamps
 		formData.append('start_time', activity.start_time ?? '');
-		formData.append(
-			'end_time',
-			activity.end_time ? new Date(activity.end_time).toISOString() : ''
-		);
+		formData.append('end_time', new Date().toISOString());
 
 		let { status } = await Location.requestForegroundPermissionsAsync();
 		if (status !== 'granted') {
