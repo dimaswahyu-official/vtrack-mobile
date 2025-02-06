@@ -169,6 +169,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 			// Update Flag Fulfilled
 			await ActivityRepository.update(db, {
 				fulfilled:1,
+				end_time: new Date().toISOString(),
 				call_plan_schedule_id: activity.call_plan_schedule_id
 			});
 
