@@ -168,53 +168,77 @@ export default function HomeScreen() {
     const fetchConstants = async () => {
         setSyncStatus('syncing');
         try {
-            const getBrands = await ConstantService.getBrands();
-            setBrands(getBrands.data.data);
-            const getSio = await ConstantService.getSio();
-            setSio(getSio.data.data);
-            const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
-            const data = [
-                {
-                    id: 0,
-                    title: getDashboard.data?.belum_dikunjungi,
-                    color: '#f3e7be',
-                    members: "Outlet Belum Dikunjungi",
-                    image: 'https://img.icons8.com/color/70/000000/name.png',
-                },
-                {
-                    id: 1,
-                    title: getDashboard.data?.sudah_dikunjungi,
-                    color: '#9bcfb6',
-                    members: "Outlet Sudah Dikunjungi",
-                    image: 'https://img.icons8.com/office/70/000000/home-page.png',
-                },
-                {
-                    id: 2,
-                    title: getDashboard.data?.belum_dikunjungi,
-                    color: '#d68d96',
-                    members: "Total Activity Outlet",
-                    image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
-                },
-                {
-                    id: 3,
-                    title: getDashboard.data?.total_activity_survey,
-                    color: '#819bf3',
-                    members: "Total Activity Survey",
-                    image: 'https://img.icons8.com/color/70/000000/family.png',
-                },
-                {
-                    id: 4,
-                    title: getDashboard.data?.total_schedule,
-                    color: '#996d99',
-                    members: "Total Outlet dalam schedule",
-                    image: 'https://img.icons8.com/color/70/000000/groups.png',
-                },
-            ]
-            setDashboard(data);
+            // Add error handling for each API call
+            try {
+                const getBrands = await ConstantService.getBrands();
+                setBrands(getBrands.data.data);
+            } catch (err) {
+                console.error('Error fetching brands:', err);
+                throw new Error('Failed to fetch brands data');
+            }
+
+            try {
+                const getSio = await ConstantService.getSio(); 
+                setSio(getSio.data.data);
+            } catch (err) {
+                console.error('Error fetching SIO:', err);
+                throw new Error('Failed to fetch SIO data');
+            }
+
+            try {
+                const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+                const data = [
+                    {
+                        id: 0,
+                        title: getDashboard.data?.belum_dikunjungi ?? 0,
+                        color: '#f3e7be',
+                        members: "Outlet Belum Dikunjungi",
+                        image: 'https://img.icons8.com/color/70/000000/name.png',
+                    },
+                    {
+                        id: 1,
+                        title: getDashboard.data?.sudah_dikunjungi ?? 0,
+                        color: '#9bcfb6',
+                        members: "Outlet Sudah Dikunjungi", 
+                        image: 'https://img.icons8.com/office/70/000000/home-page.png',
+                    },
+                    {
+                        id: 2,
+                        title: getDashboard.data?.belum_dikunjungi ?? 0,
+                        color: '#d68d96',
+                        members: "Total Activity Outlet",
+                        image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
+                    },
+                    {
+                        id: 3,
+                        title: getDashboard.data?.total_activity_survey ?? 0,
+                        color: '#819bf3',
+                        members: "Total Activity Survey",
+                        image: 'https://img.icons8.com/color/70/000000/family.png',
+                    },
+                    {
+                        id: 4,
+                        title: getDashboard.data?.total_schedule ?? 0,
+                        color: '#996d99',
+                        members: "Total Outlet dalam schedule",
+                        image: 'https://img.icons8.com/color/70/000000/groups.png',
+                    },
+                ]
+                setDashboard(data);
+            } catch (err) {
+                console.error('Error fetching dashboard:', err);
+                throw new Error('Failed to fetch dashboard data');
+            }
+
             setSyncStatus('synced');
         } catch (error) {
             console.error('Error fetching constants:', error);
             setSyncStatus('not synced');
+            Alert.alert(
+                'Error',
+                'Failed to fetch data. Please check your connection and try again.',
+                [{text: 'OK'}]
+            );
         }
     }
 

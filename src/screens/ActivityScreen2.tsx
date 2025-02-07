@@ -147,7 +147,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 				setRefreshing(false);
 				return;
 			}
-			// await dropTableExisting(db);`
+			// await dropTableExisting(db);
 			await createTableActivity(db);
 			await createTableActivitySio(db);
 			await createTableActivitySog(db);

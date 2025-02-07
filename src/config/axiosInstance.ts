@@ -7,7 +7,7 @@ import useConstantStore from "../store/useConstantStore";
 
 
 const axiosInstance = axios.create({
-  baseURL: BASE_URL + '/api/v1',
+  baseURL: 'https://api.koneksi.co.id/api/v1',
   timeout: 10000,
 });
 
