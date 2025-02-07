@@ -8,7 +8,6 @@ import {
     Alert,
     FlatList,
     Image,
-    ScrollView,
     Dimensions
 } from 'react-native';
 import ConstantService from '../services/constantService';
@@ -50,6 +49,7 @@ export default function HomeScreen() {
 
 
     const db = useSQLiteContext();
+    
     const BACKGROUND_FETCH_TASK = 'SYNC_ACTIVITIES_TASK';
 
     TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
@@ -64,6 +64,7 @@ export default function HomeScreen() {
 
             console.log('[Background Fetch] Fetching unsynced activities...');
             const activities = await ActivityRepository.findUnsyncedActivities(db);
+            console.log('activities', JSON.stringify(activities));
             console.log(`[Background Fetch] Found ${activities.length} unsynced activities`);
 
             if (activities.length === 0) {
@@ -71,20 +72,36 @@ export default function HomeScreen() {
                 return BackgroundFetch.BackgroundFetchResult.NoData;
             }
 
+            let hasErrors = false;
             for (const activity of activities) {
                 try {
                     console.log(`[Background Fetch] Processing activity ID: ${activity.id}`);
                     //Sync Data On Background
                     const dataSend = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id);
-                    // await sendOfflineData(dataSend);
+                    if (!dataSend) {
+                        console.error(`[Background Fetch] No data found for activity ID: ${activity.id}`);
+                        hasErrors = true;
+                        continue;
+                    }
+                    
+                    try {
+                        const dataToSend = JSON.stringify(dataSend);
+                        console.log('dataToSend', dataToSend);
+                        await sendOfflineData(dataSend[0], db);
+                    } catch (parseError) {
+                        console.error('[Background Fetch] Failed to process activity data:', parseError);
+                        hasErrors = true;
+                        continue;
+                    }
                 } catch (error) {
                     console.error('[Background Fetch] Failed to sync activity:', error);
+                    hasErrors = true;
                     continue;
                 }
             }
 
             console.log('[Background Fetch] Completed successfully');
-            return BackgroundFetch.BackgroundFetchResult.NewData;
+            return hasErrors ? BackgroundFetch.BackgroundFetchResult.Failed : BackgroundFetch.BackgroundFetchResult.NewData;
         } catch (error: any) {
             console.error('[Background Fetch] Fatal error:', error);
             return BackgroundFetch.BackgroundFetchResult.Failed;
@@ -116,7 +133,7 @@ export default function HomeScreen() {
             if (!isRegistered) {
                 console.log('[Background Fetch] Registering task...');
                 await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-                    minimumInterval: 3 * 60,
+                    minimumInterval: 1 * 60,
                     stopOnTerminate: false,
                     startOnBoot: true,
                 });
@@ -137,7 +154,7 @@ export default function HomeScreen() {
 
     useEffect(() => {
         if (isOnline || isWifi) {
-            // registerBackgroundFetch();
+            registerBackgroundFetch();
         }
     }, [isOnline, isWifi]);
 

@@ -221,7 +221,7 @@ export const ActivityRepository = {
 	findUnsyncedActivities: async (
 		db: SQLite.SQLiteDatabase
 	): Promise<Activity[]> => {
-		const result = await db.getAllAsync<Activity>(`SELECT * FROM Activity WHERE is_sync = 0`);
+		const result = await db.getAllAsync<Activity>(`SELECT * FROM Activity WHERE is_sync = 0 AND fulfilled = 1`);
 		return result;
 	},
 
@@ -231,7 +231,7 @@ export const ActivityRepository = {
 	): Promise<ActivityWithDetail[]> => {
 		const activity = await db.getAllAsync<Activity>(
 			`SELECT * FROM Activity WHERE call_plan_schedule_id = ?`,
-			[call_plan_schedule_id]
+			[call_plan_schedule_id],
 		);
 
 		if (!activity.length) {

@@ -176,10 +176,10 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 setLoading(true);
                 // Update Flag Fulfilled
                 await ActivityRepository.update(db, {
-                    fulfilled:1,
+                    fulfilled: 1,
                     call_plan_schedule_id: activity.call_plan_schedule_id
                 });
-                await sendOfflineData(activity, 0, db)
+                await sendOfflineData(activity, db)
             } catch (error) {
                 console.error(error);
             } finally {

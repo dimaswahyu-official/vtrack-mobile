@@ -166,11 +166,20 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 				)
 			);
 
+			const { coords } = await Location.getCurrentPositionAsync({
+				accuracy: Location.Accuracy.High,
+			});
+
+			const { latitude, longitude } = coords;
+
 			// Update Flag Fulfilled
 			await ActivityRepository.update(db, {
 				fulfilled:1,
+				status: 200,
 				end_time: new Date().toISOString(),
-				call_plan_schedule_id: activity.call_plan_schedule_id
+				call_plan_schedule_id: activity.call_plan_schedule_id,
+				latitude: latitude.toString(),
+				longitude: longitude.toString(),
 			});
 
 			if (!isOnline || !isWifi) {
@@ -180,15 +189,14 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 					db,
 					activity.call_plan_schedule_id
 				);
-
-				if (submitToServer[0]) {
-					await sendOfflineData(submitToServer[0],1, db);
-					const after  = await ActivityRepository.findActivityWithDetail(
-						db,
-						activity.call_plan_schedule_id
-					);
-					console.log(JSON.stringify(after)+'check is sync is 1');
-				}
+				// if (submitToServer[0]) {
+				// 	await sendOfflineData(submitToServer[0],1, db);
+				// 	const after  = await ActivityRepository.findActivityWithDetail(
+				// 		db,
+				// 		activity.call_plan_schedule_id
+				// 	);
+				// 	console.log(JSON.stringify(after)+'check is sync is 1');
+				// }
 			}
 		} catch (error) {
 			console.error('Error saving facilities:', error);

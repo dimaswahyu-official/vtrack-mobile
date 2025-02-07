@@ -7,24 +7,14 @@ import { ActivityBranchModel } from '../model/ActivityBranchRepository';
 import { ActivitySogModel } from '../model/ActivitySogRepository';
 import { ActivityOutletModel } from '../model/ActivityOutletRepository';
 import { SQLiteDatabase } from 'expo-sqlite';
-import * as Location from 'expo-location';
-import { Alert } from 'react-native';
 
 export const sendOfflineData = async (
 	activity: any,
-	isFull: number,
 	db: SQLiteDatabase
 ) => {
 	try {
 		if (!activity) {
 			throw new Error('Activity data is required');
-		}
-
-		if (isFull === 1) {
-			const updateActivity = await ActivityRepository.update(db, {
-				call_plan_schedule_id: activity.call_plan_schedule_id,
-				status: 200,
-			});
 		}
 
 		// Prepare the main activity payload
@@ -39,7 +29,7 @@ export const sendOfflineData = async (
 			'type_sio',
 		];
 
-		if (isFull === 1) {
+		if (activity.status === 200) {
 			formData.append('status', '200');
 		} else {
 			formData.append('status', activity.status.toString());
@@ -64,37 +54,12 @@ export const sendOfflineData = async (
 		// Handle timestamps
 		formData.append('start_time', activity.start_time ?? '');
 		formData.append('end_time', activity.end_time ?? '');
-
-		let { status } = await Location.requestForegroundPermissionsAsync();
-		if (status !== 'granted') {
-			Alert.alert(
-				'Permission Denied',
-				'Location permission is required for attendance'
-			);
-			return;
-		}
-
-		const { coords } = await Location.getCurrentPositionAsync({
-			accuracy: Location.Accuracy.High,
-		});
-
-		if (coords) {
-			const { latitude, longitude } = coords;
-			formData.append('latitude', latitude.toString());
-			formData.append('longitude', longitude.toString());
-		}
-
 		// Location data
-		// if (!activity.latitude || !activity.longitude) {
-		//     throw new Error('Location data is required');
-		// }
-
-		// formData.append('latitude', activity.latitude);
+		formData.append('latitude', activity.latitude ?? '');
+		formData.append('longitude', activity.longitude ?? '');
+		
 		formData.append('notes', activity.notes_survey ?? '');
-		formData.append(
-			'sale_outlet_weekly',
-			activity.sale_outlet_weekly?.toString() || '0'
-		);
+		formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '0');
 
 		// Handle range facility data
 		const facilityTypes = [
@@ -159,31 +124,15 @@ export const sendOfflineData = async (
 				call_plan_schedule_id: activity.call_plan_schedule_id,
 				is_sync: 1,
 			});
-			// await ActivityOutletModel.update(db, {
-			//     id: ,
-			//     call_plan_schedule_id: activity.call_plan_schedule_id,
-			//     is_sync: 1,
-			// })
+			await ActivityOutletModel.update(db, {
+				id: activity.activity_outlet?.id,
+				call_plan_schedule_id: activity.call_plan_schedule_id,
+				is_sync: 1,
+			})
 		}
-
-		// Update sync status for main activity
-		// await Promise.all([
-		//     ActivityRepository.update(db, {
-		//         id: activity.id,
-		//         call_plan_schedule_id: activity.call_plan_schedule_id,
-		//         is_sync: 1
-		//     }),
-		//     ActivityOutletModel.update(db, {
-		//         id: activity.activity_outlet?.id,
-		//         call_plan_schedule_id: activity.call_plan_schedule_id,
-		//         is_sync: 1,
-		//     })
-		// ]);
-
-		console.log('activityService', JSON.stringify(activity));
+		
 
 		// Handle SIO data submission
-
 		if (activity.activity_sio) {
 			await Promise.all(
 				activity.activity_sio.map(async (data: any) => {
@@ -307,6 +256,7 @@ export const sendOfflineData = async (
 			text1: 'Success',
 			text2: 'Data successfully synchronized',
 		});
+
 	} catch (error: any) {
 		console.error('Error submitting activity:', error);
 		Toast.show({
