@@ -158,15 +158,40 @@ export default function HomeScreen() {
         }
     }, [isOnline, isWifi]);
 
-    useEffect(() => {
-        const fetchDashboard = async () => {
+
+
+
+    const showAlert = () => {
+        Alert.alert('Option selected')
+    }
+
+    const fetchConstants = async () => {
+        setSyncStatus('syncing');
+        try {
+            // Add error handling for each API call
+            try {
+                const getBrands = await ConstantService.getBrands();
+                setBrands(getBrands.data.data);
+            } catch (err) {
+                console.error('Error fetching brands:', err);
+                throw new Error('Failed to fetch brands data');
+            }
+
+            try {
+                const getSio = await ConstantService.getSio();
+                setSio(getSio.data.data);
+            } catch (err) {
+                console.error('Error fetching SIO:', err);
+                throw new Error('Failed to fetch SIO data');
+            }
+
             try {
                 const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
                 const data = [
                     {
                         id: 0,
                         title: getDashboard.data?.belum_dikunjungi ?? 0,
-                        color: '#dac680',
+                        color: '#f3e7be',
                         members: "Outlet Belum Dikunjungi",
                         image: 'https://img.icons8.com/color/70/000000/name.png',
                     },
@@ -198,33 +223,22 @@ export default function HomeScreen() {
                         members: "Total Outlet dalam schedule",
                         image: 'https://img.icons8.com/color/70/000000/groups.png',
                     },
-                ];
+                ]
                 setDashboard(data);
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
+            } catch (err) {
+                console.error('Error fetching dashboard:', err);
+                throw new Error('Failed to fetch dashboard data');
             }
-        };
-        fetchDashboard();
-    }, [user]);
 
-
-
-
-    const showAlert = () => {
-        Alert.alert('Option selected')
-    }
-
-    const fetchConstants = async () => {
-        setSyncStatus('syncing');
-        try {
-            const getBrands = await ConstantService.getBrands();
-            setBrands(getBrands.data.data);
-            const getSio = await ConstantService.getSio();
-            setSio(getSio.data.data);
             setSyncStatus('synced');
         } catch (error) {
             console.error('Error fetching constants:', error);
             setSyncStatus('not synced');
+            Alert.alert(
+                'Error',
+                'Failed to fetch data. Please check your connection and try again.',
+                [{text: 'OK'}]
+            );
         }
     }
 
@@ -232,7 +246,7 @@ export default function HomeScreen() {
         if ((isOnline || isWifi) && !brands.length && !sio.length && !dashboard.length) {
             fetchConstants();
         }
-    }, [isOnline, isWifi, brands, sio, dashboard, user]);
+    }, [isOnline, isWifi, brands, sio, dashboard]);
 
 
     return (

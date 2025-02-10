@@ -155,49 +155,86 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 				is_sync: 0,
 			}));
 
-			await Promise.all(
-				updatedFacilities.map((facility) =>
-					facility.id
-						? ActivityOutletModel.update(db, facility)
-						: ActivityOutletModel.create(db, facility)
-				)
-			);
+			// Add error handling for facility updates
+			try {
+				await Promise.all(
+					updatedFacilities.map(async (facility) => {
+						try {
+							if (facility.id) {
+								await ActivityOutletModel.update(db, facility);
+							} else {
+								await ActivityOutletModel.create(db, facility);
+							}
+						} catch (err) {
+							console.error('Error updating/creating facility:', err);
+							throw new Error(`Failed to save facility: ${err}`);
+						}
+					})
+				);
+			} catch (err) {
+				throw new Error(`Database operation failed: ${err}`);
+			}
 
-			const { coords } = await Location.getCurrentPositionAsync({
-				accuracy: Location.Accuracy.High,
-			});
+			// Add error handling for location
+			let coords;
+			try {
+				const location = await Location.getCurrentPositionAsync({
+					accuracy: Location.Accuracy.High,
+				});
+				coords = location.coords;
+			} catch (err) {
+				console.error('Location error:', err);
+				throw new Error('Failed to get current location. Please check location permissions.');
+			}
 
 			const { latitude, longitude } = coords;
 
-			// Update Flag Fulfilled
-			await ActivityRepository.update(db, {
-				fulfilled:1,
-				status: 200,
-				end_time: new Date().toISOString(),
-				call_plan_schedule_id: activity.call_plan_schedule_id,
-				latitude: latitude.toString(),
-				longitude: longitude.toString(),
-			});
+			// Add error handling for activity update
+			try {
+				await ActivityRepository.update(db, {
+					fulfilled: 1,
+					status: 200,
+					end_time: new Date().toISOString(),
+					call_plan_schedule_id: activity.call_plan_schedule_id,
+					latitude: latitude.toString(),
+					longitude: longitude.toString(),
+				});
+			} catch (err) {
+				console.error('Activity update error:', err);
+				throw new Error('Failed to update activity status');
+			}
 
 			if (!isOnline || !isWifi) {
-				return
+				return;
 			} else {
-				const submitToServer = await ActivityRepository.findActivityWithDetail(
-					db,
-					activity.call_plan_schedule_id
-				);
-				// if (submitToServer[0]) {
-				// 	await sendOfflineData(submitToServer[0],1, db);
-				// 	const after  = await ActivityRepository.findActivityWithDetail(
-				// 		db,
-				// 		activity.call_plan_schedule_id
-				// 	);
-				// 	console.log(JSON.stringify(after)+'check is sync is 1');
-				// }
+				try {
+					const submitToServer = await ActivityRepository.findActivityWithDetail(
+						db,
+						activity.call_plan_schedule_id
+					);
+
+					// if (submitToServer[0]) {
+					// 	await sendOfflineData(submitToServer[0],1, db);
+					// 	const after  = await ActivityRepository.findActivityWithDetail(
+					// 		db,
+					// 		activity.call_plan_schedule_id
+					// 	);
+					// 	console.log(JSON.stringify(after)+'check is sync is 1');
+					// }
+				} catch (err) {
+					console.error('Server sync error:', err);
+					throw new Error('Failed to sync with server');
+				}
 			}
 		} catch (error) {
-			console.error('Error saving facilities:', error);
-			Alert.alert('Error', 'Failed to save data. Please try again.');
+			// Provide more detailed error messages
+			console.error('Detailed error:', error);
+			const errorMessage = (error as Error).message || 'An unexpected error occurred';
+			Alert.alert(
+				'Error Saving Data',
+				`${errorMessage}\nPlease try again or contact support if the problem persists.`,
+				[{ text: 'OK' }]
+			);
 		} finally {
 			setIsLoading(false);
 			setLoading(false);
