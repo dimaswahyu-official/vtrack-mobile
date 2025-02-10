@@ -72,7 +72,7 @@ const ActivityStyles = () => {
             color: '#555',
         },
         input: {
-            height: height * 0.05,
+            height: 40,
             borderWidth: 1,
             borderColor: '#ccc',
             borderRadius: 5,

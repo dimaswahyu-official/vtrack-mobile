@@ -158,6 +158,55 @@ export default function HomeScreen() {
         }
     }, [isOnline, isWifi]);
 
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            try {
+                const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+                const data = [
+                    {
+                        id: 0,
+                        title: getDashboard.data?.belum_dikunjungi ?? 0,
+                        color: '#dac680',
+                        members: "Outlet Belum Dikunjungi",
+                        image: 'https://img.icons8.com/color/70/000000/name.png',
+                    },
+                    {
+                        id: 1,
+                        title: getDashboard.data?.sudah_dikunjungi ?? 0,
+                        color: '#9bcfb6',
+                        members: "Outlet Sudah Dikunjungi",
+                        image: 'https://img.icons8.com/office/70/000000/home-page.png',
+                    },
+                    {
+                        id: 2,
+                        title: getDashboard.data?.belum_dikunjungi ?? 0,
+                        color: '#d68d96',
+                        members: "Total Activity Outlet",
+                        image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
+                    },
+                    {
+                        id: 3,
+                        title: getDashboard.data?.total_activity_survey ?? 0,
+                        color: '#819bf3',
+                        members: "Total Activity Survey",
+                        image: 'https://img.icons8.com/color/70/000000/family.png',
+                    },
+                    {
+                        id: 4,
+                        title: getDashboard.data?.total_schedule ?? 0,
+                        color: '#996d99',
+                        members: "Total Outlet dalam schedule",
+                        image: 'https://img.icons8.com/color/70/000000/groups.png',
+                    },
+                ];
+                setDashboard(data);
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+            }
+        };
+        fetchDashboard();
+    }, [user]);
+
 
 
 
@@ -172,45 +221,6 @@ export default function HomeScreen() {
             setBrands(getBrands.data.data);
             const getSio = await ConstantService.getSio();
             setSio(getSio.data.data);
-            const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
-            const data = [
-                {
-                    id: 0,
-                    title: getDashboard.data?.belum_dikunjungi,
-                    color: '#f3e7be',
-                    members: "Outlet Belum Dikunjungi",
-                    image: 'https://img.icons8.com/color/70/000000/name.png',
-                },
-                {
-                    id: 1,
-                    title: getDashboard.data?.sudah_dikunjungi,
-                    color: '#9bcfb6',
-                    members: "Outlet Sudah Dikunjungi",
-                    image: 'https://img.icons8.com/office/70/000000/home-page.png',
-                },
-                {
-                    id: 2,
-                    title: getDashboard.data?.belum_dikunjungi,
-                    color: '#d68d96',
-                    members: "Total Activity Outlet",
-                    image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
-                },
-                {
-                    id: 3,
-                    title: getDashboard.data?.total_activity_survey,
-                    color: '#819bf3',
-                    members: "Total Activity Survey",
-                    image: 'https://img.icons8.com/color/70/000000/family.png',
-                },
-                {
-                    id: 4,
-                    title: getDashboard.data?.total_schedule,
-                    color: '#996d99',
-                    members: "Total Outlet dalam schedule",
-                    image: 'https://img.icons8.com/color/70/000000/groups.png',
-                },
-            ]
-            setDashboard(data);
             setSyncStatus('synced');
         } catch (error) {
             console.error('Error fetching constants:', error);
@@ -222,7 +232,7 @@ export default function HomeScreen() {
         if ((isOnline || isWifi) && !brands.length && !sio.length && !dashboard.length) {
             fetchConstants();
         }
-    }, [isOnline, isWifi, brands, sio, dashboard]);
+    }, [isOnline, isWifi, brands, sio, dashboard, user]);
 
 
     return (
@@ -245,7 +255,7 @@ export default function HomeScreen() {
                                     onPress={() => {
                                         {}
                                     }}>
-                                    <Image style={styles.cardImage} source={{uri: item.image}}/>
+                                    {/*<Image style={styles.cardImage} source={{uri: item.image}}/>*/}
                                     <View style={styles.cardHeader}>
                                         <Text style={styles.title}>{item.title}</Text>
                                     </View>
@@ -264,7 +274,7 @@ export default function HomeScreen() {
                             onPress={() => {
                                 {}
                             }}>
-                            <Image style={styles.cardImage} source={{uri: item.image}}/>
+                            {/*<Image style={styles.cardImage} source={{uri: item.image}}/>*/}
 
                             <View style={styles.cardHeader}>
                                 <Text style={styles.title}>{item.title}</Text>

@@ -1,5 +1,6 @@
 // Get screen dimensions
 import {
+	Alert,
 	Animated,
 	Dimensions,
 	FlatList,
@@ -37,6 +38,8 @@ import {
 	createTableActivityOutlet,
 } from '../model';
 import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
 
 const { width, height } = Dimensions.get('window');
 
@@ -154,7 +157,20 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			await createTableActivityBranch(db);
 			await createTableActivityProgram(db);
 			await createTableActivityOutlet(db);
-			
+
+			let { status } = await Location.requestForegroundPermissionsAsync();
+			if (status !== "granted") {
+				Alert.alert(
+					"Permission Denied",
+					"Location permission is required for attendance"
+				);
+				return;
+			}
+			const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+			if (!permissionResult.granted) {
+				Alert.alert('Permission required', 'Please grant permission to access the camera.');
+				return;
+			}
 
 			// Fetch latest schedule data from API
 			const response = await ActivityService.getListingSchedule(userId);

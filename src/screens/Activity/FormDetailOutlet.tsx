@@ -52,31 +52,29 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const { isOnline, isWifi } = useOffline();
-	const [latitude, setLatitude] = useState('');
-	const [longitude, setLongitude] = useState('');
 	const outlet = [
 		{
-			title: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
+			title: 'JARAK LEBIH DARI FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
 			label: 'range_health_facilities',
 		},
 		{
-			title: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)',
+			title: 'JARAK LEBIH DARI 200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)',
 			label: 'range_educational_facilities',
 		},
 		{
-			title: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)',
+			title: 'JARAK LEBIH DARI 200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)',
 			label: 'range_playground_facilities',
 		},
 		{
-			title: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
+			title: 'JARAK LEBIH DARI 500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
 			label: 'range_worship_facilities',
 		},
 		{
-			title: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
+			title: 'JARAK LEBIH DARI 500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
 			label: 'range_public_transportation_facilities',
 		},
 		{
-			title: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)',
+			title: 'JARAK LEBIH DARI 500m TEMPAT KERJA (KANTOR PEMERINTAHAN)',
 			label: 'range_work_place',
 		},
 	];
@@ -92,7 +90,6 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 					);
 
 				if (existingFacilities.length > 0) {
-					console.log('existingFacilities', existingFacilities);
 					setOutletFacilities(existingFacilities);
 					setSelectedValues(
 						existingFacilities

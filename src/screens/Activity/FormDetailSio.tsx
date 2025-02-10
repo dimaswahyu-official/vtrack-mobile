@@ -666,7 +666,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                         {activitySurvey?.photo_first === '' ? (
                             <>
                                 <Text style={styles.text}>
-                                    Foto Survey Pertama
+                                    Foto 1
                                 </Text>
                                 <TouchableOpacity
                                     style={[activityStyles.photoButton]}
@@ -690,7 +690,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                         ) : (
                             <>
                                 <Text style={styles.text}>
-                                    Foto Survey Pertama
+                                    Foto 1
                                 </Text>
                                 <TouchableOpacity
                                     style={activityStyles.clearButton}
@@ -718,7 +718,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                         {activitySurvey?.photo_second === '' ? (
                             <>
                                 <Text style={styles.text}>
-                                    Foto Survey Kedua
+                                    Foto 2
                                 </Text>
                                 <TouchableOpacity
                                     style={[activityStyles.photoButton]}
@@ -742,7 +742,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                         ) : (
                             <>
                                 <Text style={styles.text}>
-                                    Foto Survey Kedua
+                                    Foto 2
                                 </Text>
                                 <TouchableOpacity
                                     style={activityStyles.clearButton}
@@ -770,7 +770,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                     </Text>
                     <TextInput
                         style={[activityStyles.input, {flex: 1}]}
-                        placeholder="SIO Notes"
+                        placeholder="Notes"
                         value={activitySurvey?.notes_survey}
                         onChangeText={(text) => {
                             const newActivitySurvey = {...activitySurvey};
@@ -979,7 +979,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                     }}
                     onPress={() => {
                         if(item.type===1) {
-                            if (activitySurvey?.photo_first == '' || activitySurvey?.photo_second == '') {
+                            if (activitySurvey?.photo_first == '') {
                                 alert('Tolong Lengkapi Seluruh data photo survey');
                             } else {
                                 goToFormDetailProgram();
