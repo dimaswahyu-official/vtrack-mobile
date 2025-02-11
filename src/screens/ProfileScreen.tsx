@@ -7,6 +7,8 @@ import GlobalStyles from "../utils/GlobalStyles";
 import {useNavigation} from '@react-navigation/native';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {StackNavigationProp} from "@react-navigation/stack";
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
 import {ProfileStackParamList} from "../navigation/ProfileNavigator";
 import {useLoadingStore} from "../store/useLoadingStore";
 import Toast from "react-native-toast-message";
@@ -25,6 +27,7 @@ export default function ProfileScreen() {
     const {clearAuth, user} = useAuthStore();
     const {clearConstants} = useConstantStore();
     const defaultImage = 'http://placehold.co/100';
+    const BACKGROUND_FETCH_TASK = 'SYNC_ACTIVITIES_TASK';
 
 
     useEffect(() => {
@@ -69,6 +72,18 @@ export default function ProfileScreen() {
             },
         ]);
     };
+    const triggerBackgroundFetch = async () => {
+        try {
+            await BackgroundFetch.registerTaskAsync('SYNC_ACTIVITIES_TASK', {
+                minimumInterval: 30, // Runs after 30 second (for testing)
+                startOnBoot: true,
+                stopOnTerminate: false,
+            });
+            console.log('[Background Fetch] Task scheduled manually!');
+        } catch (error) {
+            console.error('[Background Fetch] Task scheduling failed:', error);
+        }
+    };
 
     const toAttendanceScreen = () => {
         navigation.navigate('Attendance', {profile});
@@ -105,8 +120,14 @@ export default function ProfileScreen() {
                         }}/>
                         <View style={styles.avatarContainer}>
                             {profile.photo === '' ? (
-                                <View style={{borderRadius:75, borderColor:'white', backgroundColor:'white',padding:15, margin:10}}>
-                                    <Ionicons name="rocket" size={70} color={colors.buttonBackground} />
+                                <View style={{
+                                    borderRadius: 75,
+                                    borderColor: 'white',
+                                    backgroundColor: 'white',
+                                    padding: 15,
+                                    margin: 10
+                                }}>
+                                    <Ionicons name="rocket" size={70} color={colors.buttonBackground}/>
                                 </View>
                             ) : (
                                 <Image source={{uri: profile.photo}} style={styles.avatar}/>
@@ -121,7 +142,6 @@ export default function ProfileScreen() {
                             <Text style={styles.verticalText}>{profile.roles}</Text>
                         </View>
                     </View>
-
                     <View style={styles.row}>
                         <View style={[styles.row, {width: '100%'}]}>
                             <ButtonComponent
@@ -141,7 +161,16 @@ export default function ProfileScreen() {
                                 textStyle={globalStyles.buttonText}
                             />
                         </View>
-
+                    </View>
+                    <View style={styles.row}>
+                        <ButtonComponent
+                            title={'Synchronize'}
+                            onPress={() => {
+                                triggerBackgroundFetch();
+                            }}
+                            buttonStyle={styles.buttonSync}
+                            textStyle={globalStyles.buttonText}
+                        />
                     </View>
                 </View>
             </View>

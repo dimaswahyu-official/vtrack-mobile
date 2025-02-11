@@ -24,6 +24,7 @@ import * as TaskManager from 'expo-task-manager';
 import {ActivityRepository} from '../model/ActivityRepository';
 import {sendOfflineData} from "../services/sendOfflineData";
 import {useAuthStore} from "../store/useAuthStore";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const {width, height} = Dimensions.get('window');
 
@@ -49,7 +50,7 @@ export default function HomeScreen() {
 
 
     const db = useSQLiteContext();
-    
+
     const BACKGROUND_FETCH_TASK = 'SYNC_ACTIVITIES_TASK';
 
     TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
@@ -126,14 +127,14 @@ export default function HomeScreen() {
         }
     };
 
+
     const registerBackgroundFetch = async () => {
         try {
             const {status, isRegistered} = await checkStatusAsync() || {};
-
             if (!isRegistered) {
                 console.log('[Background Fetch] Registering task...');
                 await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-                    minimumInterval: 1 * 60,
+                    minimumInterval: 60, // 1 minutes
                     stopOnTerminate: false,
                     startOnBoot: true,
                 });
@@ -158,12 +159,56 @@ export default function HomeScreen() {
         }
     }, [isOnline, isWifi]);
 
+    const fetchDashboard = async () => {
+        setSyncStatus('syncing');
+        try {
+            const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+            const data = [
+                {
+                    id: 0,
+                    title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
+                    color: '#dac680',
+                    members: "Outlet Belum Dikunjungi",
+                },
+                {
+                    id: 1,
+                    title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
+                    color: '#9bcfb6',
+                    members: "Outlet Sudah Dikunjungi",
+                },
+                {
+                    id: 2,
+                    title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
+                    color: '#d68d96',
+                    members: "Total Activity Outlet yang Telah Dikunjungi",
+                },
+                {
+                    id: 3,
+                    title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
+                    color: '#819bf3',
+                    members: "Total Activity Survey yang Telah Dikunjungi",
+                },
+                {
+                    id: 4,
+                    title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
+                    color: '#996d99',
+                    members: "Total Outlet dalam schedule",
+                },
+            ];
+            setDashboard(data);
+            setSyncStatus('synced');
+        } catch (error) {
+            setSyncStatus('not synced');
+            console.error('Error fetching dashboard data:', error);
+        }
+    };
 
+    useEffect(() => {
+        if (user) {
+            fetchDashboard();
+        }
+    }, [user]);
 
-
-    const showAlert = () => {
-        Alert.alert('Option selected')
-    }
 
     const fetchConstants = async () => {
         setSyncStatus('syncing');
@@ -184,52 +229,6 @@ export default function HomeScreen() {
                 console.error('Error fetching SIO:', err);
                 throw new Error('Failed to fetch SIO data');
             }
-
-            try {
-                const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
-                const data = [
-                    {
-                        id: 0,
-                        title: getDashboard.data?.belum_dikunjungi ?? 0,
-                        color: '#f3e7be',
-                        members: "Outlet Belum Dikunjungi",
-                        image: 'https://img.icons8.com/color/70/000000/name.png',
-                    },
-                    {
-                        id: 1,
-                        title: getDashboard.data?.sudah_dikunjungi ?? 0,
-                        color: '#9bcfb6',
-                        members: "Outlet Sudah Dikunjungi",
-                        image: 'https://img.icons8.com/office/70/000000/home-page.png',
-                    },
-                    {
-                        id: 2,
-                        title: getDashboard.data?.belum_dikunjungi ?? 0,
-                        color: '#d68d96',
-                        members: "Total Activity Outlet",
-                        image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
-                    },
-                    {
-                        id: 3,
-                        title: getDashboard.data?.total_activity_survey ?? 0,
-                        color: '#819bf3',
-                        members: "Total Activity Survey",
-                        image: 'https://img.icons8.com/color/70/000000/family.png',
-                    },
-                    {
-                        id: 4,
-                        title: getDashboard.data?.total_schedule ?? 0,
-                        color: '#996d99',
-                        members: "Total Outlet dalam schedule",
-                        image: 'https://img.icons8.com/color/70/000000/groups.png',
-                    },
-                ]
-                setDashboard(data);
-            } catch (err) {
-                console.error('Error fetching dashboard:', err);
-                throw new Error('Failed to fetch dashboard data');
-            }
-
             setSyncStatus('synced');
         } catch (error) {
             console.error('Error fetching constants:', error);
@@ -243,70 +242,77 @@ export default function HomeScreen() {
     }
 
     useEffect(() => {
-        if ((isOnline || isWifi) && !brands.length && !sio.length && !dashboard.length) {
+        if ((isOnline || isWifi) && !brands.length && !sio.length) {
             fetchConstants();
         }
-    }, [isOnline, isWifi, brands, sio, dashboard]);
+    }, [isOnline, isWifi, brands, sio]);
 
 
     return (
-        <View style={styles.container}>
-            <FlatList
-                style={styles.list}
-                contentContainerStyle={styles.listContainer}
-                data={dashboard}
-                horizontal={false}
-                numColumns={2}
-                keyExtractor={(item, index) => {
-                    return index.toString()
-                }}
-                renderItem={({item, index}) => {
-                    if (index === dashboard.length - 1) {
+        <>
+            <View style={styles.row}>
+                <Text style={styles.name}>
+                    Hi {user?.fullName} {'  '}
+                    <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor}/>
+                </Text>
+            </View>
+            <View style={styles.container}>
+                <FlatList
+                    style={styles.list}
+                    contentContainerStyle={styles.listContainer}
+                    data={dashboard}
+                    horizontal={false}
+                    numColumns={2}
+                    keyExtractor={(item, index) => {
+                        return index.toString()
+                    }}
+                    renderItem={({item, index}) => {
+                        if (index === dashboard.length - 1) {
+                            return (
+                                <>
+                                    <TouchableOpacity
+                                        style={[styles.card, {flexBasis: '98%', backgroundColor: item.color}]}
+                                        onPress={() => {
+                                            {
+                                            }
+                                        }}>
+                                        {/*<Image style={styles.cardImage} source={{uri: item.image}}/>*/}
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.title}>{item.title}</Text>
+                                        </View>
+
+                                        <View style={styles.cardFooter}>
+                                            <Text style={styles.subTitle}>{item.members}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </>
+                            );
+                        }
                         return (
-                            <>
-                                <TouchableOpacity
-                                    style={[styles.card, {flexBasis: '98%', backgroundColor: item.color}]}
-                                    onPress={() => {
-                                        {}
-                                    }}>
-                                    {/*<Image style={styles.cardImage} source={{uri: item.image}}/>*/}
-                                    <View style={styles.cardHeader}>
-                                        <Text style={styles.title}>{item.title}</Text>
-                                    </View>
+                            <TouchableOpacity
+                                key={item.id}
+                                style={[styles.card, {backgroundColor: item.color}]}
+                                onPress={() => {
+                                    {}
+                                }}>
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.title}>{item.title}</Text>
+                                </View>
+                                <View style={styles.cardFooter}>
+                                    <Text style={styles.subTitle}>{item.members}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )
+                    }}
 
-                                    <View style={styles.cardFooter}>
-                                        <Text style={styles.subTitle}>{item.members}</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </>
-                        );
-                    }
-                    return (
-                        <TouchableOpacity
-                            key={item.id}
-                            style={[styles.card, {backgroundColor: item.color}]}
-                            onPress={() => {
-                                {}
-                            }}>
-                            {/*<Image style={styles.cardImage} source={{uri: item.image}}/>*/}
-
-                            <View style={styles.cardHeader}>
-                                <Text style={styles.title}>{item.title}</Text>
-                            </View>
-                            <View style={styles.cardFooter}>
-                                <Text style={styles.subTitle}>{item.members}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    )
-                }}
-
-            />
-            <TouchableOpacity style={styles.button} onPress={() => {
-                navigation.navigate('ActivityStack');
-            }}>
-                <Text style={styles.buttonText}>RUTE</Text>
-            </TouchableOpacity>
-        </View>
+                />
+                <TouchableOpacity style={styles.button} onPress={() => {
+                    navigation.navigate('ActivityStack');
+                }}>
+                    <Text style={styles.buttonText}>RUTE</Text>
+                </TouchableOpacity>
+            </View>
+        </>
     );
 }
 
@@ -426,10 +432,22 @@ const styles = StyleSheet.create({
     },
     subTitle: {
         fontSize: 12,
+        fontWeight: 'bold',
         color: '#FFFFFF',
     },
     icon: {
         height: 5,
         width: 5,
+    },
+    name: {
+        marginTop: 2,
+        fontSize: 22,
+        fontWeight: 'bold',
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginVertical: 8,
+        paddingHorizontal: width * 0.08,
     },
 });
