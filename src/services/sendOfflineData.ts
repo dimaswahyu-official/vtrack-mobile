@@ -124,11 +124,6 @@ export const sendOfflineData = async (
 				call_plan_schedule_id: activity.call_plan_schedule_id,
 				is_sync: 1,
 			});
-			await ActivityOutletModel.update(db, {
-				id: activity.activity_outlet?.id,
-				call_plan_schedule_id: activity.call_plan_schedule_id,
-				is_sync: 1,
-			})
 		}
 		
 
@@ -136,7 +131,6 @@ export const sendOfflineData = async (
 		if (activity.activity_sio) {
 			await Promise.all(
 				activity.activity_sio.map(async (data: any) => {
-					console.log(data);
 					const formDataSio = new FormData();
 					['name', 'description', 'notes'].forEach((field) =>
 						formDataSio.append(field, data[field])

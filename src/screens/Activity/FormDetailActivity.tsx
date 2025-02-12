@@ -205,10 +205,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 allowsEditing: false,
                 quality: 1,
             });
-            // if (!response.canceled) {
-            //     // Pass the photo URI to the next page
-            //     await insertActivityDB(item, response.assets[0].uri)
-            // }
 
             if (!response.canceled) {
                 // Get the file size of the original image

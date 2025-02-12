@@ -72,18 +72,6 @@ export default function ProfileScreen() {
             },
         ]);
     };
-    const triggerBackgroundFetch = async () => {
-        try {
-            await BackgroundFetch.registerTaskAsync('SYNC_ACTIVITIES_TASK', {
-                minimumInterval: 30, // Runs after 30 second (for testing)
-                startOnBoot: true,
-                stopOnTerminate: false,
-            });
-            console.log('[Background Fetch] Task scheduled manually!');
-        } catch (error) {
-            console.error('[Background Fetch] Task scheduling failed:', error);
-        }
-    };
 
     const toAttendanceScreen = () => {
         navigation.navigate('Attendance', {profile});
@@ -162,16 +150,16 @@ export default function ProfileScreen() {
                             />
                         </View>
                     </View>
-                    <View style={styles.row}>
-                        <ButtonComponent
-                            title={'Synchronize'}
-                            onPress={() => {
-                                triggerBackgroundFetch();
-                            }}
-                            buttonStyle={styles.buttonSync}
-                            textStyle={globalStyles.buttonText}
-                        />
-                    </View>
+                    {/*<View style={styles.row}>*/}
+                    {/*    <ButtonComponent*/}
+                    {/*        title={'Synchronize'}*/}
+                    {/*        onPress={() => {*/}
+                    {/*            triggerBackgroundFetch();*/}
+                    {/*        }}*/}
+                    {/*        buttonStyle={styles.buttonSync}*/}
+                    {/*        textStyle={globalStyles.buttonText}*/}
+                    {/*    />*/}
+                    {/*</View>*/}
                 </View>
             </View>
         </ScrollView>

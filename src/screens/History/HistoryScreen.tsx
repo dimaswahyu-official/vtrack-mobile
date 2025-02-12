@@ -185,7 +185,6 @@ export default function HistoryScreen({route}: FormActivityProps) {
             <TouchableWithoutFeedback
                 onPressIn={onPressIn}
                 onPressOut={onPressOut}
-                // onPress={() => toggleSelection(item.id)}
             >
                 <Animated.View
                     style={[styles.card, {transform: [{scale: scaleAnim}]}]}>
@@ -254,15 +253,6 @@ export default function HistoryScreen({route}: FormActivityProps) {
                                     color={Colors.buttonBackground}
                                 />
                             </TouchableOpacity>
-                            {/*<TouchableOpacity*/}
-                            {/*	style={styles.buttonWork}*/}
-                            {/*	onPress={() => handlePressWork(item)}>*/}
-                            {/*	<MaterialIcons*/}
-                            {/*		name="input"*/}
-                            {/*		size={22}*/}
-                            {/*		color={Colors.buttonBackground}*/}
-                            {/*	/>*/}
-                            {/*</TouchableOpacity>*/}
                         </View>
                     </View>
                 </Animated.View>

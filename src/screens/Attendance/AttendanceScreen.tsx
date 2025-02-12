@@ -132,11 +132,6 @@ export default function AttendanceScreen({
       return;
     }
 
-    // if (absenToday?.clockIn) {
-    //   Alert.alert("Notice", "You have already checked in today");
-    //   return;
-    // }
-
     try {
       const permissionResult =
         await ImagePicker.requestCameraPermissionsAsync();
@@ -200,11 +195,6 @@ export default function AttendanceScreen({
           await handleAttendance(compressedImage, flag);
         }
       }
-
-      // const imageAsset = result.assets[0];
-      // setPhoto(imageAsset);
-      // setPhotoExist(imageAsset.uri);
-      // await handleAttendance(imageAsset, flag);
     } catch (error) {
       console.error("Error taking photo:", error);
       Alert.alert("Error", "Failed to take photo. Please try again.");

@@ -15,8 +15,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Colors from '../../utils/Colors';
 import { ActivityOutletModel } from '../../model/ActivityOutletRepository';
 import { ActivityRepository } from '../../model/ActivityRepository';
-import ActivityService from '../../services/activityService';
-import Toast from 'react-native-toast-message';
 import * as Location from 'expo-location';
 import { sendOfflineData } from '../../services/sendOfflineData';
 import {useOffline} from "../../context/OfflineProvider";
@@ -212,15 +210,9 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 						db,
 						activity.call_plan_schedule_id
 					);
-
-					// if (submitToServer[0]) {
-					// 	await sendOfflineData(submitToServer[0],1, db);
-					// 	const after  = await ActivityRepository.findActivityWithDetail(
-					// 		db,
-					// 		activity.call_plan_schedule_id
-					// 	);
-					// 	console.log(JSON.stringify(after)+'check is sync is 1');
-					// }
+					if (submitToServer[0]) {
+						await sendOfflineData(submitToServer[0], db);
+					}
 				} catch (err) {
 					console.error('Server sync error:', err);
 					throw new Error('Failed to sync with server');

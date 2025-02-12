@@ -162,35 +162,40 @@ export default function HomeScreen() {
     const fetchDashboard = async () => {
         setSyncStatus('syncing');
         try {
-            const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+            // const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
             const data = [
                 {
                     id: 0,
-                    title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
+                    // title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
+                    title: 'NotSynced',
                     color: '#dac680',
                     members: "Outlet Belum Dikunjungi",
                 },
                 {
                     id: 1,
-                    title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
+                    // title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
+                    title: 'NotSynced',
                     color: '#9bcfb6',
                     members: "Outlet Sudah Dikunjungi",
                 },
                 {
                     id: 2,
-                    title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
+                    // title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
+                    title: 'NotSynced',
                     color: '#d68d96',
                     members: "Total Activity Outlet yang Telah Dikunjungi",
                 },
                 {
                     id: 3,
-                    title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
+                    // title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
+                    title: 'NotSynced',
                     color: '#819bf3',
                     members: "Total Activity Survey yang Telah Dikunjungi",
                 },
                 {
                     id: 4,
-                    title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
+                    // title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
+                    title: 'NotSynced',
                     color: '#996d99',
                     members: "Total Outlet dalam schedule",
                 },

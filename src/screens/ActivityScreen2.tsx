@@ -223,7 +223,6 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 	};
 	const handlePressWork = (item: any) => {
 		navigation.navigate('FormDetailActivity', { item });
-		// navigation.navigate('FormActivityNormal', {item});
 	};
 
 	const renderItem = ({ item }: { item: Activity2 }) => {
@@ -247,7 +246,6 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			<TouchableWithoutFeedback
 				onPressIn={onPressIn}
 				onPressOut={onPressOut}
-				// onPress={() => toggleSelection(item.id)}
 			>
 				<Animated.View
 					style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>

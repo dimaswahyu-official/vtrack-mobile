@@ -32,8 +32,6 @@ export const ActivityOutletModel = {
 		params: ActivityOutletCreateParams
 	): Promise<number> => {
 		const { call_plan_schedule_id, label, value, is_sync } = params;
-
-		console.log('Inserting Outlet with parameters:', params);
 		try {
 			const result = await db.runAsync(
 				`INSERT INTO ActivityOutlet (call_plan_schedule_id, label, value, is_sync)
@@ -41,8 +39,6 @@ export const ActivityOutletModel = {
 				[call_plan_schedule_id, label, value, is_sync ?? 0]
 			);
 			const insertId = result.lastInsertRowId as number;
-
-			console.log('Activity Outlet inserted with ID:', insertId);
 			return insertId;
 		} catch (error) {
 			console.error('Error inserting Activity Outlet : ', error);
