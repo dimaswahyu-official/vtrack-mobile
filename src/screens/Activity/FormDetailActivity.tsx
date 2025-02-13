@@ -49,7 +49,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
 
 
     useEffect(() => {
-        console.log(status);
         const fetchActivityData = async () => {
             try {
                 const response = await ActivityRepository.findByCallPlanScheduleId(db, item.id);

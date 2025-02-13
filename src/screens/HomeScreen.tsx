@@ -4,7 +4,6 @@ import {
     TouchableOpacity,
     View,
     Text,
-    Clipboard,
     Alert,
     FlatList,
     Image,
@@ -157,6 +156,7 @@ export default function HomeScreen() {
         if (isOnline || isWifi) {
             registerBackgroundFetch();
         }
+        checkStatusAsync();
     }, [isOnline, isWifi]);
 
     const fetchDashboard = async () => {

@@ -14,13 +14,17 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "This app requires access to the camera.",
-        "NSMicrophoneUsageDescription": "This app requires access to the microphone.",
-        "NSPhotoLibraryUsageDescription": "This app requires access to the photo library.",
+        "NSCameraUsageDescription": "This app requires access to the camera to take photos.",
+        "NSMicrophoneUsageDescription": "This app requires access to the microphone for recording audio.",
+        "NSPhotoLibraryUsageDescription": "This app requires access to the photo library to save and access photos.",
+        "NSLocationWhenInUseUsageDescription": "This app requires access to location when open.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app requires access to location in the background.",
         "UIBackgroundModes": [
-          "fetch"
+          "fetch",
+          "location"
         ]
-      }
+      },
+      "bundleIdentifier": "com.nna.vtrack.mobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -31,12 +35,16 @@
         "CAMERA",
         "RECORD_AUDIO",
         "WRITE_EXTERNAL_STORAGE",
-        "READ_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE", 
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
         "BACKGROUND_FETCH",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED"
       ],
-      "package": "com.nna.vtrack.mobile"
+      "package": "com.nna.vtrack.mobile",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/nna-icon.png"
@@ -46,16 +54,7 @@
         "expo-sqlite",
         {
           "enableFTS": true,
-          "useSQLCipher": true,
-          "android": {
-            "enableFTS": false,
-            "useSQLCipher": false
-          },
-          "ios": {
-            "customBuildFlags": [
-              "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"
-            ]
-          }
+          "useSQLCipher": true
         }
       ],
       [
@@ -64,6 +63,14 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location.",
+          "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to use your location in the background.",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location when the app is open."
         }
       ]
     ],
