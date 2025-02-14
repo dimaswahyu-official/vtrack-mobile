@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vtrack",
     "slug": "vtrackMobile",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
@@ -35,19 +35,19 @@
         "CAMERA",
         "RECORD_AUDIO",
         "WRITE_EXTERNAL_STORAGE",
-        "READ_EXTERNAL_STORAGE", 
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
         "ACCESS_BACKGROUND_LOCATION",
         "BACKGROUND_FETCH",
         "WAKE_LOCK",
-        "RECEIVE_BOOT_COMPLETED"
+        "RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.BACKGROUND_FETCH",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_PERMISSION_GRANTED"
       ],
       "package": "com.nna.vtrack.mobile",
-      "versionCode": 1
-    },
-    "web": {
-      "favicon": "./assets/nna-icon.png"
+      "versionCode": 2
     },
     "plugins": [
       [
@@ -72,12 +72,24 @@
           "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to use your location in the background.",
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location when the app is open."
         }
+      ],
+      [
+        "expo-background-fetch",
+        {
+          "minimumInterval": 5
+        }
+      ],
+      [
+        "expo-task-manager",
+        {
+          "isAndroidForegroundServiceEnabled": true
+        }
       ]
     ],
-    "owner": "dewedev",
+    "owner": "bagasmmra",
     "extra": {
       "eas": {
-        "projectId": "3636e3f0-915e-4798-ae34-291cbf59b90c"
+        "projectId": "92388322-b51e-42c5-b27b-ea68763cb50d"
       }
     }
   }

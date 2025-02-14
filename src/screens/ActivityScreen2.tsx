@@ -221,6 +221,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			Toast.show({ type: 'error', text1: 'Failed to open map' });
 		});
 	};
+	
 	const handlePressWork = (item: any) => {
 		navigation.navigate('FormDetailActivity', { item });
 	};
