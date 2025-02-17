@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ActivityStackParamList } from '../../navigation/ActivityNavigator';
-import { RouteProp, useNavigation } from '@react-navigation/native';
+import {RouteProp, StackActions, useNavigation} from '@react-navigation/native';
 import ActivityStyles from '../../utils/ActivityStyles';
 import { useSQLiteContext } from 'expo-sqlite';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -230,7 +230,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 		} finally {
 			setIsLoading(false);
 			setLoading(false);
-			navigation.replace('Activity2');
+			navigation.dispatch(StackActions.replace('Activity2'));
 		}
 	};
 

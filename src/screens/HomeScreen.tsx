@@ -6,7 +6,7 @@ import {
     Text,
     Alert,
     FlatList,
-    Dimensions
+    Dimensions, RefreshControl
 } from 'react-native';
 import ConstantService from '../services/constantService';
 import useConstantStore from '../store/useConstantStore';
@@ -41,6 +41,7 @@ export default function HomeScreen() {
     const {user} = useAuthStore();
     // State to track sync status and counts
     const [syncStatus, setSyncStatus] = useState<string>('');
+    const [refreshing, setRefreshing] = useState(false);
     const [syncedCount, setSyncedCount] = useState<number>(0);
     const [notSyncedCount, setNotSyncedCount] = useState<number>(0);
     const [checkStatus, setCheckStatus] = useState<string>('');
@@ -84,7 +85,7 @@ export default function HomeScreen() {
                 try {
                     console.log(`[Background Fetch] Processing activity ID: ${activity.id}`);
                     const dataSend = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id);
-                    
+
                     if (!dataSend || dataSend.length === 0) {
                         console.error(`[Background Fetch] No data found for activity ID: ${activity.id}`);
                         failedCount++;
@@ -94,7 +95,7 @@ export default function HomeScreen() {
                     await sendOfflineData(dataSend[0], db);
                     syncedCount++;
                     console.log(`[Background Fetch] Successfully synced activity ID: ${activity.id}`);
-                    
+
                 } catch (error) {
                     console.error(`[Background Fetch] Failed to sync activity ${activity.id}:`, error);
                     failedCount++;
@@ -102,8 +103,8 @@ export default function HomeScreen() {
             }
 
             console.log(`[Background Fetch] Sync complete. Synced: ${syncedCount}, Failed: ${failedCount}`);
-            return syncedCount > 0 
-                ? BackgroundFetch.BackgroundFetchResult.NewData 
+            return syncedCount > 0
+                ? BackgroundFetch.BackgroundFetchResult.NewData
                 : BackgroundFetch.BackgroundFetchResult.Failed;
 
         } catch (error) {
@@ -137,7 +138,7 @@ export default function HomeScreen() {
     const registerBackgroundFetch = async () => {
         try {
             console.log('[Background Fetch] Starting registration...');
-            
+
             // Check if already registered
             const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
             if (isRegistered) {
@@ -171,9 +172,13 @@ export default function HomeScreen() {
                 await registerBackgroundFetch();
                 await checkStatusAsync();
             }
+
+            const Sync =  await ActivityRepository.findSyncedActivities(db);
+            console.log('Sync activity', JSON.stringify(Sync));
         };
 
         initializeBackgroundFetch();
+
 
         // Cleanup on unmount
         // return () => {
@@ -184,41 +189,42 @@ export default function HomeScreen() {
 
     const fetchDashboard = async () => {
         setSyncStatus('syncing');
+        setRefreshing(true);
         try {
-            // const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+            const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
             const data = [
                 {
                     id: 0,
-                    // title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
-                    title: 'NotSynced',
+                    title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
+                    // title: 'NotSynced',
                     color: '#dac680',
                     members: "Outlet Belum Dikunjungi",
                 },
                 {
                     id: 1,
-                    // title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
-                    title: 'NotSynced',
+                    title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
+                    // title: 'NotSynced',
                     color: '#9bcfb6',
                     members: "Outlet Sudah Dikunjungi",
                 },
                 {
                     id: 2,
-                    // title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
-                    title: 'NotSynced',
+                    title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
+                    // title: 'NotSynced',
                     color: '#d68d96',
                     members: "Total Activity Outlet yang Telah Dikunjungi",
                 },
                 {
                     id: 3,
-                    // title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
-                    title: 'NotSynced',
+                    title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
+                    // title: 'NotSynced',
                     color: '#819bf3',
                     members: "Total Activity Survey yang Telah Dikunjungi",
                 },
                 {
                     id: 4,
-                    // title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
-                    title: 'NotSynced',
+                    title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
+                    // title: 'NotSynced',
                     color: '#996d99',
                     members: "Total Outlet dalam schedule",
                 },
@@ -228,14 +234,18 @@ export default function HomeScreen() {
         } catch (error) {
             setSyncStatus('not synced');
             console.error('Error fetching dashboard data:', error);
+        }finally {
+            setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        if (user) {
-            fetchDashboard();
+        if ((isOnline || isWifi)) {
+            if (user) {
+                fetchDashboard();
+            }
         }
-    }, [user]);
+    }, [user,navigation]);
 
 
     const fetchConstants = async () => {
@@ -269,6 +279,11 @@ export default function HomeScreen() {
         }
     }
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchDashboard();
+    };
+
     useEffect(() => {
         if ((isOnline || isWifi) && !brands.length && !sio.length) {
             fetchConstants();
@@ -291,6 +306,9 @@ export default function HomeScreen() {
                     data={dashboard}
                     horizontal={false}
                     numColumns={2}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
                     keyExtractor={(item, index) => {
                         return index.toString()
                     }}

@@ -40,6 +40,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
+import {useLoadingStore} from "../store/useLoadingStore";
 
 const { width, height } = Dimensions.get('window');
 
@@ -124,13 +125,15 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 	const [refreshing, setRefreshing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const { user } = useAuthStore();
+	const {setLoading} = useLoadingStore();
 	const userId = user?.id || '';
 	const [dataOffline, setDataOffline] = useState<any>({});
 
 	const fetchScedule = async () => {
 		setRefreshing(true);
+		setLoading(true);
 		try {
-			if (!isOnline) {
+			if (!isOnline || !isWifi) {
 				const getDataOffline = await ActivityRepository.getAll(db);
 				const storedActivities = await AsyncStorage.getItem('activities');
 				if (storedActivities) {
@@ -158,20 +161,6 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			await createTableActivityProgram(db);
 			await createTableActivityOutlet(db);
 
-			let { status } = await Location.requestForegroundPermissionsAsync();
-			if (status !== "granted") {
-				Alert.alert(
-					"Permission Denied",
-					"Location permission is required for attendance"
-				);
-				return;
-			}
-			const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-			if (!permissionResult.granted) {
-				Alert.alert('Permission required', 'Please grant permission to access the camera.');
-				return;
-			}
-
 			// Fetch latest schedule data from API
 			const response = await ActivityService.getListingSchedule(userId);
 			const data: Activity2[] = await response.data;
@@ -193,8 +182,10 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			// Save to local storage for offline access
 			await AsyncStorage.setItem('activities', JSON.stringify(data));
 		} catch (e: any) {
+			setLoading(false);
 			setError(e.message);
 		} finally {
+			setLoading(false);
 			setRefreshing(false);
 		}
 	};
@@ -205,7 +196,7 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			setRefreshing(true);
 			setActivities([]);
 			fetchScedule();
-		}, [])
+		}, [navigation])
 	);
 
 	useEffect(() => {
@@ -340,6 +331,25 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 		return (
 			<View style={styles.center}>
 				<Text style={styles.errorText}>Error: {error}</Text>
+			</View>
+		);
+	}
+
+	if (activities.length === 0) {
+		return (
+			<View style={styles.container}>
+				<View style={styles.rowHeader}>
+					<Text style={styles.header}>Route's Schedule Plan</Text>
+					<TouchableOpacity style={styles.historyContainer} onPress={()=>{
+						navigation.navigate('History')
+					}}>
+						<Ionicons name="time-outline" size={20} color={Colors.buttonBackground} />
+						<Text style={styles.headerHistory}>History</Text>
+					</TouchableOpacity>
+				</View>
+				<View style={styles.center}>
+					<Text style={styles.header}>No Data Schedule Today</Text>
+				</View>
 			</View>
 		);
 	}

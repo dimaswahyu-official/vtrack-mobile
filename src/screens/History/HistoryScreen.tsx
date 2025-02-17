@@ -32,6 +32,7 @@ import {getStatusLabel} from "../../constants/status";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Colors from "../../utils/Colors";
 import {MaterialIcons} from "@expo/vector-icons";
+import {useLoadingStore} from "../../store/useLoadingStore";
 
 const {width, height} = Dimensions.get('window');
 
@@ -117,8 +118,10 @@ export default function HistoryScreen({route}: FormActivityProps) {
     const [error, setError] = useState<string | null>(null);
     const {user} = useAuthStore();
     const userId = user?.id || '';
+    const {setLoading} = useLoadingStore();
 
     const fetchScedule = async () => {
+        setLoading(true);
         setRefreshing(true);
         try {
             if (!isOnline) {
@@ -146,8 +149,10 @@ export default function HistoryScreen({route}: FormActivityProps) {
             const data: Activity[] = await response.data;
             setActivities(data)
         } catch (e: any) {
+            setLoading(false);
             setError(e.message);
         } finally {
+            setLoading(false);
             setRefreshing(false);
         }
     };

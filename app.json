@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vtrack",
     "slug": "vtrackMobile",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
@@ -86,10 +86,10 @@
         }
       ]
     ],
-    "owner": "bagasmmra",
+    "owner": "dewedev",
     "extra": {
       "eas": {
-        "projectId": "92388322-b51e-42c5-b27b-ea68763cb50d"
+        "projectId": "3636e3f0-915e-4798-ae34-291cbf59b90c"
       }
     }
   }

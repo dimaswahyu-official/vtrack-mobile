@@ -225,6 +225,13 @@ export const ActivityRepository = {
 		return result;
 	},
 
+	findSyncedActivities: async (
+		db: SQLite.SQLiteDatabase
+	): Promise<Activity[]> => {
+		const result = await db.getAllAsync<Activity>(`SELECT * FROM Activity WHERE is_sync = 1 AND fulfilled = 1`);
+		return result;
+	},
+
 	findActivityWithDetail: async (
 		db: SQLite.SQLiteDatabase,
 		call_plan_schedule_id: number
@@ -273,34 +280,30 @@ export const ActivityRepository = {
 		}));
 	},
 
+
+
 	deletActivityWithDetail: async (
-		db: SQLite.SQLiteDatabase,
-		call_plan_schedule_id: number
+		db: SQLite.SQLiteDatabase
 	): Promise<void> => {
-		console.log('call_plan_schedule_id', call_plan_schedule_id);
 		await db.runAsync(
-			`DELETE FROM Activity WHERE call_plan_schedule_id = ?`,
-			[call_plan_schedule_id]
+			`DELETE FROM Activity WHERE is_sync = 1 AND fulfilled = 1`
 		);
 		await db.runAsync(
-			`DELETE FROM ActivityOutlet WHERE call_plan_schedule_id = ?`,
-			[call_plan_schedule_id]
+			`DELETE FROM ActivityOutlet WHERE is_sync = 1 AND fulfilled = 1`
 		);
 		await db.runAsync(
-			`DELETE FROM ActivitySio WHERE call_plan_schedule_id = ?`,
-			[call_plan_schedule_id]
+			`DELETE FROM ActivitySio WHERE is_sync = 1 AND fulfilled = 1`,
 		);
 		await db.runAsync(
-			`DELETE FROM ActivitySog WHERE call_plan_schedule_id = ?`,
-			[call_plan_schedule_id]
+			`DELETE FROM ActivitySog WHERE is_sync = 1 AND fulfilled = 1`,
 		);
 		await db.runAsync(
-			`DELETE FROM ActivityBranch WHERE call_plan_schedule_id = ?`,
-			[call_plan_schedule_id]
+			`DELETE FROM ActivityBranch WHERE is_sync = 1 AND fulfilled = 1`,
 		);
 		await db.runAsync(
-			`DELETE FROM ActivityProgram WHERE call_plan_schedule_id = ?`,
-			[call_plan_schedule_id]
+			`DELETE FROM ActivityProgram WHERE is_sync = 1 AND fulfilled = 1`,
 		);
+
+		console.log("all data is_sync = 1 and fulfilled = 1 is DELETE from table")
 	},
 };

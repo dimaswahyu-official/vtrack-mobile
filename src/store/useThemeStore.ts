@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { Appearance } from 'react-native';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light';
 
 interface ThemeState {
     theme: Theme;
@@ -15,6 +15,6 @@ export const useThemeStore = create<ThemeState>((set) => ({
     setTheme: (theme) => set({ theme }),
     initializeTheme: () => {
         const currentColorScheme = Appearance.getColorScheme();
-        set({ theme: currentColorScheme === 'light' || currentColorScheme === 'dark' ? currentColorScheme : 'light' });
+        set({ theme: currentColorScheme === 'light'  ? currentColorScheme : 'light' });
     },
 }));

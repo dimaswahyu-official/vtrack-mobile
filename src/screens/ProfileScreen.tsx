@@ -7,8 +7,6 @@ import GlobalStyles from "../utils/GlobalStyles";
 import {useNavigation} from '@react-navigation/native';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {StackNavigationProp} from "@react-navigation/stack";
-import * as BackgroundFetch from 'expo-background-fetch';
-import * as TaskManager from 'expo-task-manager';
 import {ProfileStackParamList} from "../navigation/ProfileNavigator";
 import {useLoadingStore} from "../store/useLoadingStore";
 import Toast from "react-native-toast-message";
@@ -46,9 +44,6 @@ export default function ProfileScreen() {
         username: user?.username || '',
     };
 
-    const handleThemeToggle = () => {
-        setTheme(theme === 'light' ? 'dark' : 'light');
-    };
 
     const handleLogout = () => {
         Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
@@ -121,6 +116,7 @@ export default function ProfileScreen() {
                                 <Image source={{uri: profile.photo}} style={styles.avatar}/>
                             )}
                             {/*<Image source={{uri: profile.photo}} style={styles.avatar}/>*/}
+                            <View style={{margin:height*0.02}}></View>
                             <Text style={styles.name}>{profile.name}</Text>
                             <Text style={styles.roles}>{profile.roles}</Text>
                             <Text style={styles.email}>{profile.email}</Text>
@@ -174,7 +170,7 @@ const styles = StyleSheet.create({
     containerCard: {
         position: 'relative',
         width: '80%',
-        height: height / 2,
+        height: height / 1.85,
         marginTop: 10,
         marginBottom: 10,
         borderRadius: 8,
@@ -188,7 +184,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 8,
     },
     logo: {
-        marginTop: height / 18,
+        marginTop: height / 25,
         alignSelf: 'center',
         position: 'absolute',
         zIndex: 15,
@@ -293,7 +289,7 @@ const styles = StyleSheet.create({
     verticalView: {
         justifyContent: 'flex-end',
         alignItems: 'flex-end',
-        paddingVertical: 2
+        marginVertical: height* -0.02
     },
     verticalText: {
         transform: [{rotate: '-90deg'}], // Rotates the text
