@@ -230,7 +230,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 		} finally {
 			setIsLoading(false);
 			setLoading(false);
-			navigation.dispatch(StackActions.replace('Activity2'));
+			navigation.replace('Activity2')
 		}
 	};
 

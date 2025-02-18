@@ -199,11 +199,6 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 		}, [navigation])
 	);
 
-	useEffect(() => {
-		setRefreshing(true);
-		setActivities([]);
-		fetchScedule();
-	}, [navigation]);
 
 	const openMaps = (latitude: string, longitude: string) => {
 		const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
@@ -334,6 +329,8 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 			</View>
 		);
 	}
+
+
 
 	if (activities.length === 0) {
 		return (
