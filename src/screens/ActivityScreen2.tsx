@@ -193,9 +193,34 @@ export default function ActivityScreen({ route }: FormActivityProps) {
 
 	useFocusEffect(
 		useCallback(() => {
-			setRefreshing(true);
-			setActivities([]);
-			fetchScedule();
+			let isActive = true;
+
+			const fetchData = async () => {
+				try {
+					setRefreshing(true);
+					setActivities([]);
+					
+					if (isActive) {
+						await fetchScedule();
+					}
+				} catch (error) {
+					console.error('Error fetching schedule:', error);
+					if (isActive) {
+						setError('Failed to fetch schedule');
+					}
+				} finally {
+					if (isActive) {
+						setRefreshing(false); 
+					}
+				}
+			};
+
+			fetchData();
+
+			// Cleanup function
+			return () => {
+				isActive = false;
+			};
 		}, [navigation])
 	);
 
