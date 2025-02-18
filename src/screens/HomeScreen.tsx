@@ -172,9 +172,6 @@ export default function HomeScreen() {
                 await registerBackgroundFetch();
                 await checkStatusAsync();
             }
-
-            const Sync =  await ActivityRepository.findSyncedActivities(db);
-            console.log('Sync activity', JSON.stringify(Sync));
         };
 
         initializeBackgroundFetch();
