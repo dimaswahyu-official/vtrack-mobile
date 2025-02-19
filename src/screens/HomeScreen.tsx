@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     StyleSheet,
     TouchableOpacity,
@@ -13,7 +13,7 @@ import useConstantStore from '../store/useConstantStore';
 import {useOffline} from '../context/OfflineProvider';
 import {useSQLiteContext} from 'expo-sqlite';
 import Colors from "../utils/Colors";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {BottomTabNavigationProp} from "@react-navigation/bottom-tabs";
 import {MainTabParamList} from "../navigation/MainNavigator";
 import {BackgroundFetchStatus} from 'expo-background-fetch';
@@ -23,6 +23,11 @@ import {ActivityRepository} from '../model/ActivityRepository';
 import {sendOfflineData} from "../services/sendOfflineData";
 import {useAuthStore} from "../store/useAuthStore";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import moment from "moment/moment";
+import Toast from "react-native-toast-message";
+import ActivityService from "../services/activityService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {Activity} from "./History/HistoryScreen";
 
 const {width, height} = Dimensions.get('window');
 
@@ -36,15 +41,17 @@ interface DashboardData {
 
 
 export default function HomeScreen() {
-    const {setBrands, setSio, setDashboard, dashboard, brands, sio} = useConstantStore();
+    const {setBrands, setSio, brands, sio} = useConstantStore();
     const {isOnline, isWifi} = useOffline();
     const {user} = useAuthStore();
     // State to track sync status and counts
     const [syncStatus, setSyncStatus] = useState<string>('');
+
+    const [dashboard, setDashboard] = useState<any>([]);
     const [refreshing, setRefreshing] = useState(false);
-    const [syncedCount, setSyncedCount] = useState<number>(0);
-    const [notSyncedCount, setNotSyncedCount] = useState<number>(0);
+    const [error, setError] = useState<string | null>(null);
     const [checkStatus, setCheckStatus] = useState<string>('');
+    const date = moment().format("l");
     const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
 
 
@@ -185,68 +192,133 @@ export default function HomeScreen() {
     }, []);
 
     const fetchDashboard = async () => {
-        setSyncStatus('syncing');
         setRefreshing(true);
         try {
-            const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
-            const data = [
-                {
-                    id: 0,
-                    title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
-                    // title: 'NotSynced',
-                    color: '#dac680',
-                    members: "Outlet Belum Dikunjungi",
-                },
-                {
-                    id: 1,
-                    title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
-                    // title: 'NotSynced',
-                    color: '#9bcfb6',
-                    members: "Outlet Sudah Dikunjungi",
-                },
-                {
-                    id: 2,
-                    title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
-                    // title: 'NotSynced',
-                    color: '#d68d96',
-                    members: "Total Activity Outlet yang Telah Dikunjungi",
-                },
-                {
-                    id: 3,
-                    title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
-                    // title: 'NotSynced',
-                    color: '#819bf3',
-                    members: "Total Activity Survey yang Telah Dikunjungi",
-                },
-                {
-                    id: 4,
-                    title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
-                    // title: 'NotSynced',
-                    color: '#996d99',
-                    members: "Total Outlet dalam schedule",
-                },
-            ];
-            setDashboard(data);
-            setSyncStatus('synced');
+            const cachedActivities = await AsyncStorage.getItem('dashboard');
+            const parsedCachedActivities = cachedActivities ? JSON.parse(cachedActivities) : [];
+
+
+            if(!isOnline && !isWifi){
+                //offline
+                let finalActivities = [];
+                if(parsedCachedActivities.length > 0){
+                    finalActivities = parsedCachedActivities;
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Offline Mode',
+                        text2: 'Using cached data',
+                    });
+                }else{
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Offline Mode',
+                        text2: 'No local data available',
+                    });
+                }
+                setDashboard(finalActivities)
+            }else{
+                //online
+                // Fetch History data from API
+                const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+                const data = [
+                    {
+                        id: 0,
+                        title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
+                        // title: 'NotSynced',
+                        color: '#dac680',
+                        members: "Outlet Belum Dikunjungi",
+                    },
+                    {
+                        id: 1,
+                        title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
+                        // title: 'NotSynced',
+                        color: '#9bcfb6',
+                        members: "Outlet Sudah Dikunjungi",
+                    },
+                    {
+                        id: 2,
+                        title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
+                        // title: 'NotSynced',
+                        color: '#d68d96',
+                        members: "Total Activity Outlet yang Telah Dikunjungi",
+                    },
+                    {
+                        id: 3,
+                        title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
+                        // title: 'NotSynced',
+                        color: '#819bf3',
+                        members: "Total Activity Survey yang Telah Dikunjungi",
+                    },
+                    {
+                        id: 4,
+                        title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
+                        // title: 'NotSynced',
+                        color: '#996d99',
+                        members: "Total Outlet dalam schedule",
+                    },
+                ];
+                setDashboard(data);
+
+                // Update local caches
+                await AsyncStorage.setItem('dashboard', JSON.stringify(data));
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'Online Mode',
+                    text2: 'Dashboard synchronized successfully',
+                });
+
+            }
         } catch (error) {
-            setSyncStatus('not synced');
             console.error('Error fetching dashboard data:', error);
         }finally {
             setRefreshing(false);
         }
     };
 
-    useEffect(() => {
-        if ((isOnline || isWifi)) {
-            if (user) {
-                fetchDashboard();
-            }
-        }
-    }, [user,navigation]);
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            const fetchData = async () => {
+                if (!isActive) return;
+
+                try {
+                    setRefreshing(true);
+                    setDashboard([]);
+                    if ((isOnline || isWifi) && !brands.length && !sio.length) {
+                        await fetchConstants();
+                    }
+                    if(user){
+                        await fetchDashboard();
+                    }
+                } catch (error) {
+                    console.error('Error fetching history:', error);
+                    if (isActive) {
+                        setError('Failed to fetch history');
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Error',
+                            text2: 'Failed to fetch history',
+                        });
+                    }
+                } finally {
+                    if (isActive) {
+                        setRefreshing(false);
+                    }
+                }
+            };
+
+            fetchData();
+
+            return () => {
+                isActive = false;
+            };
+        }, [user, navigation, isOnline, isWifi])
+    );
 
 
     const fetchConstants = async () => {
-        setSyncStatus('syncing');
         try {
             // Add error handling for each API call
             try {
@@ -264,10 +336,8 @@ export default function HomeScreen() {
                 console.error('Error fetching SIO:', err);
                 throw new Error('Failed to fetch SIO data');
             }
-            setSyncStatus('synced');
         } catch (error) {
             console.error('Error fetching constants:', error);
-            setSyncStatus('not synced');
             Alert.alert(
                 'Error',
                 'Failed to fetch data. Please check your connection and try again.',
@@ -281,12 +351,6 @@ export default function HomeScreen() {
         await fetchDashboard();
     };
 
-    useEffect(() => {
-        if ((isOnline || isWifi) && !brands.length && !sio.length) {
-            fetchConstants();
-        }
-    }, [isOnline, isWifi, brands, sio]);
-
 
     return (
         <>
@@ -294,6 +358,12 @@ export default function HomeScreen() {
                 <Text style={styles.name}>
                     Hi {user?.fullName} {'  '}
                     <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor}/>
+                </Text>
+            </View>
+            <View style={styles.date}>
+                <Text style={styles.dateText}>
+                    Jadwal hari ini {date}
+
                 </Text>
             </View>
             <View style={styles.container}>
@@ -487,10 +557,20 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: 'bold',
     },
+    dateText: {
+        fontSize: 15,
+        fontWeight: 'medium',
+        fontStyle: 'italic'
+    },
     row: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         marginVertical: 8,
+        paddingHorizontal: width * 0.08,
+    },
+    date: {
+        alignItems: 'flex-start',
+        marginVertical: 2,
         paddingHorizontal: width * 0.08,
     },
 });
