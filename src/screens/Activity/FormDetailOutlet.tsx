@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ActivityStackParamList } from '../../navigation/ActivityNavigator';
-import {RouteProp, StackActions, useNavigation} from '@react-navigation/native';
+import {CommonActions, RouteProp, StackActions, useNavigation} from '@react-navigation/native';
 import ActivityStyles from '../../utils/ActivityStyles';
 import { useSQLiteContext } from 'expo-sqlite';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -230,7 +230,15 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 		} finally {
 			setIsLoading(false);
 			setLoading(false);
-			navigation.replace('Activity2')
+			// navigation.replace('Activity2')
+			navigation.dispatch(
+				CommonActions.reset({
+					index: 0,
+					routes: [
+						{ name: 'Activity2' }, // Replace 'Dashboard' with the name of your dashboard screen
+					],
+				})
+			);
 		}
 	};
 
