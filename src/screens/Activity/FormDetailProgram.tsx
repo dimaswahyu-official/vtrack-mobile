@@ -403,6 +403,18 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 				setActivityProgramCompetitor(response);
 			}
 		});
+
+		ActivityRepository.findByCallPlanScheduleId(
+			db,
+			activity.call_plan_schedule_id
+		).then((response) => {
+			if (!response || response.length === 0) {
+				console.log('No data found for the given schedule ID.');
+			} else {
+				setActivityProgram(response[0]);
+
+			}
+		});
 	}, [activity.call_plan_schedule_id]);
 
 	return (

@@ -225,12 +225,6 @@ export const ActivityRepository = {
 		return result;
 	},
 
-	findSyncedActivities: async (
-		db: SQLite.SQLiteDatabase
-	): Promise<Activity[]> => {
-		const result = await db.getAllAsync<Activity>(`SELECT * FROM Activity WHERE is_sync = 1 AND fulfilled = 1`);
-		return result;
-	},
 
 	findActivityWithDetail: async (
 		db: SQLite.SQLiteDatabase,

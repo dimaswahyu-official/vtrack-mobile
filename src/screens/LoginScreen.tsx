@@ -17,6 +17,7 @@ import ConstantService from '../services/constantService';
 import useConstantStore from '../store/useConstantStore';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import colors from "../utils/Colors";
+import Colors from "../utils/Colors";
 
 type FormData = {
     email: string;
@@ -130,7 +131,7 @@ export default function LoginScreen() {
             marginBottom: 10,
         },
         forgotPassword: {
-            color: theme === 'dark' ? '#1e90ff' : '#007aff',
+            color: Colors.buttonBackground,
             marginTop: height * 0.02, // Use percentage of device height
             textAlign: 'center',
             fontSize: width * 0.04, // Use percentage of device width
@@ -202,7 +203,7 @@ export default function LoginScreen() {
                     )}
                 />
                 <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={signInStyles.eyeIcon}>
-                    <Icon name={passwordVisible ? 'eye-off' : 'eye'} size={24} color={theme === 'dark' ? '#fff' : '#333'} />
+                    <Icon name={passwordVisible ? 'eye-off' : 'eye'} size={24} />
                 </TouchableOpacity>
             </View>
 
