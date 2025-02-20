@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vtrack",
     "slug": "vtrackMobile",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
@@ -47,7 +47,7 @@
         "android.permission.FOREGROUND_SERVICE_PERMISSION_GRANTED"
       ],
       "package": "com.nna.vtrack.mobile",
-      "versionCode": 4
+      "versionCode": 5
     },
     "plugins": [
       [

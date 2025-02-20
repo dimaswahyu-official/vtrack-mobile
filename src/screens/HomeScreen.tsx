@@ -25,19 +25,9 @@ import {useAuthStore} from "../store/useAuthStore";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import moment from "moment/moment";
 import Toast from "react-native-toast-message";
-import ActivityService from "../services/activityService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {Activity} from "./History/HistoryScreen";
-
 const {width, height} = Dimensions.get('window');
-
-interface DashboardData {
-    belum_dikunjungi: number;
-    sudah_dikunjungi: number;
-    total_activity_outlet: number;
-    total_activity_survey: number;
-    total_schedule: number;
-}
+import DropDownPicker from "react-native-dropdown-picker";
 
 
 export default function HomeScreen() {
@@ -45,15 +35,19 @@ export default function HomeScreen() {
     const {isOnline, isWifi} = useOffline();
     const {user} = useAuthStore();
     // State to track sync status and counts
-    const [syncStatus, setSyncStatus] = useState<string>('');
-
     const [dashboard, setDashboard] = useState<any>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [checkStatus, setCheckStatus] = useState<string>('');
     const date = moment().format("l");
     const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
-
+    const [selectedFilter, setSelectedFilter] = useState("all");
+    const [open, setOpen] = useState(false);
+    const [items, setItems] = useState([
+        {label: "All", value: "all"},
+        {label: "Today", value: "today"},
+        {label: "Weekly", value: "weekly"},
+    ]);
 
     const db = useSQLiteContext();
 
@@ -123,6 +117,23 @@ export default function HomeScreen() {
     const [isRegistered, setIsRegistered] = useState(false);
     const [status, setStatus] = useState<BackgroundFetchStatus | null>(null);
 
+    useEffect(() => {
+        filterData();
+    }, [selectedFilter]);
+
+    const filterData = () => {
+        if (selectedFilter === "all") {
+            //all
+            fetchDashboard(selectedFilter)
+        } else if (selectedFilter === "today") {
+            //send today
+            fetchDashboard(selectedFilter)
+        } else if (selectedFilter === "weekly") {
+            //send weekly
+            fetchDashboard(selectedFilter)
+        }
+    };
+
     const checkStatusAsync = async () => {
         try {
             const status = await BackgroundFetch.getStatusAsync();
@@ -182,33 +193,24 @@ export default function HomeScreen() {
         };
 
         initializeBackgroundFetch();
-
-
-        // Cleanup on unmount
-        // return () => {
-        //     BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK)
-        //         .catch(error => console.error('[Background Fetch] Cleanup error:', error));
-        // };
     }, []);
 
-    const fetchDashboard = async () => {
+    const fetchDashboard = async (filter: string) => {
         setRefreshing(true);
         try {
             const cachedActivities = await AsyncStorage.getItem('dashboard');
             const parsedCachedActivities = cachedActivities ? JSON.parse(cachedActivities) : [];
-
-
-            if(!isOnline && !isWifi){
+            if (!isOnline && !isWifi) {
                 //offline
                 let finalActivities = [];
-                if(parsedCachedActivities.length > 0){
+                if (parsedCachedActivities.length > 0) {
                     finalActivities = parsedCachedActivities;
                     Toast.show({
                         type: 'info',
                         text1: 'Offline Mode',
                         text2: 'Using cached data',
                     });
-                }else{
+                } else {
                     Toast.show({
                         type: 'error',
                         text1: 'Offline Mode',
@@ -216,10 +218,10 @@ export default function HomeScreen() {
                     });
                 }
                 setDashboard(finalActivities)
-            }else{
+            } else {
                 //online
                 // Fetch History data from API
-                const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
+                const getDashboard = await ConstantService.getDashboard(user?.id ?? '', selectedFilter);
                 const data = [
                     {
                         id: 0,
@@ -271,7 +273,7 @@ export default function HomeScreen() {
             }
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
-        }finally {
+        } finally {
             setRefreshing(false);
         }
     };
@@ -289,8 +291,8 @@ export default function HomeScreen() {
                     if ((isOnline || isWifi) && !brands.length && !sio.length) {
                         await fetchConstants();
                     }
-                    if(user){
-                        await fetchDashboard();
+                    if (user) {
+                        await fetchDashboard(selectedFilter);
                     }
                 } catch (error) {
                     console.error('Error fetching history:', error);
@@ -348,24 +350,37 @@ export default function HomeScreen() {
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await fetchDashboard();
+        await fetchDashboard(selectedFilter);
     };
 
 
     return (
         <>
             <View style={styles.row}>
-                <Text style={styles.name}>
-                    Hi {user?.fullName} {'  '}
-                    <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor}/>
-                </Text>
-            </View>
-            <View style={styles.date}>
-                <Text style={styles.dateText}>
-                    Jadwal hari ini {date}
+                <View style={styles.textContainer}>
+                    <Text style={styles.name}>
+                        Hi {user?.fullName} {'  '}
+                        <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor}/>
+                    </Text>
+                </View>
 
-                </Text>
+                <View style={styles.pickerContainer}>
+                    <DropDownPicker
+                        open={open}
+                        value={selectedFilter}
+                        items={items}
+                        setOpen={setOpen}
+                        setValue={setSelectedFilter}
+                        setItems={setItems}
+                        placeholder="Select Filter"
+                        style={styles.dropdown}
+                        dropDownContainerStyle={styles.dropdownList}
+                        textStyle={styles.textStyle}
+                    />
+                </View>
             </View>
+
+
             <View style={styles.container}>
                 <FlatList
                     style={styles.list}
@@ -374,7 +389,7 @@ export default function HomeScreen() {
                     horizontal={false}
                     numColumns={2}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
                     }
                     keyExtractor={(item, index) => {
                         return index.toString()
@@ -406,7 +421,8 @@ export default function HomeScreen() {
                                 key={item.id}
                                 style={[styles.card, {backgroundColor: item.color}]}
                                 onPress={() => {
-                                    {}
+                                    {
+                                    }
                                 }}>
                                 <View style={styles.cardHeader}>
                                     <Text style={styles.title}>{item.title}</Text>
@@ -553,24 +569,39 @@ const styles = StyleSheet.create({
         width: 5,
     },
     name: {
-        marginTop: 2,
         fontSize: 22,
         fontWeight: 'bold',
     },
-    dateText: {
-        fontSize: 15,
-        fontWeight: 'medium',
-        fontStyle: 'italic'
-    },
     row: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginVertical: 8,
-        paddingHorizontal: width * 0.08,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginVertical: 10,
+        paddingHorizontal: width * 0.06,
     },
-    date: {
-        alignItems: 'flex-start',
-        marginVertical: 2,
-        paddingHorizontal: width * 0.08,
+    pickerContainer: {
+        width: 120,
+        justifyContent: 'center',
+    },
+    dropdown: {
+        backgroundColor: "#fff",
+        borderColor: "#ccc",
+        borderWidth: 1,
+        borderRadius: 8,
+        height: 40,
+        minHeight: 40,
+    },
+    dropdownList: {
+        color: "#fff",
+        backgroundColor: "#fff",
+        borderColor: "#ccc",
+    },
+    textStyle: {
+        fontSize: 15,
+        paddingVertical: 2,
+    },
+    textContainer: {
+        flexDirection: "row",
+        alignItems: "center",
     },
 });
