@@ -277,27 +277,34 @@ export const ActivityRepository = {
 
 
 	deletActivityWithDetail: async (
-		db: SQLite.SQLiteDatabase
+		db: SQLite.SQLiteDatabase,
+		call_plan_schedule_id: number
 	): Promise<void> => {
 		await db.runAsync(
-			`DELETE FROM Activity WHERE is_sync = 1 AND fulfilled = 1`
+			`DELETE FROM Activity WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
 		);
 		await db.runAsync(
-			`DELETE FROM ActivityOutlet WHERE is_sync = 1 AND fulfilled = 1`
+			`DELETE FROM ActivityOutlet WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
 		);
 		await db.runAsync(
-			`DELETE FROM ActivitySio WHERE is_sync = 1 AND fulfilled = 1`,
+			`DELETE FROM ActivitySio WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
 		);
 		await db.runAsync(
-			`DELETE FROM ActivitySog WHERE is_sync = 1 AND fulfilled = 1`,
+			`DELETE FROM ActivitySog WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
 		);
 		await db.runAsync(
-			`DELETE FROM ActivityBranch WHERE is_sync = 1 AND fulfilled = 1`,
+			`DELETE FROM ActivityBranch WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
 		);
 		await db.runAsync(
-			`DELETE FROM ActivityProgram WHERE is_sync = 1 AND fulfilled = 1`,
+			`DELETE FROM ActivityProgram WHERE call_plan_schedule_id = ?`,
+			[call_plan_schedule_id]
 		);
 
-		console.log("all data is_sync = 1 and fulfilled = 1 is DELETE from table")
+		console.log(`delete data is_sync = 1 and fulfilled = 1 is DELETE by call_plan_schedule_id ${call_plan_schedule_id}`)
 	},
 };

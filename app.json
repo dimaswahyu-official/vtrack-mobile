@@ -76,7 +76,7 @@
       [
         "expo-background-fetch",
         {
-          "minimumInterval": 3
+          "minimumInterval": 10
         }
       ],
       [

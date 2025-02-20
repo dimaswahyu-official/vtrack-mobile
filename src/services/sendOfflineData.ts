@@ -8,10 +8,7 @@ import { ActivitySogModel } from '../model/ActivitySogRepository';
 import { ActivityOutletModel } from '../model/ActivityOutletRepository';
 import { SQLiteDatabase } from 'expo-sqlite';
 
-export const sendOfflineData = async (
-	activity: any,
-	db: SQLiteDatabase
-) => {
+export const sendOfflineData = async (activity: any, db: SQLiteDatabase) => {
 	try {
 		if (!activity) {
 			throw new Error('Activity data is required');
@@ -57,9 +54,12 @@ export const sendOfflineData = async (
 		// Location data
 		formData.append('latitude', activity.latitude ?? '');
 		formData.append('longitude', activity.longitude ?? '');
-		
+
 		formData.append('notes', activity.notes_survey ?? '');
-		formData.append('sale_outlet_weekly', activity.sale_outlet_weekly?.toString() || '0');
+		formData.append(
+			'sale_outlet_weekly',
+			activity.sale_outlet_weekly?.toString() || '0'
+		);
 
 		// Handle range facility data
 		const facilityTypes = [
@@ -115,142 +115,158 @@ export const sendOfflineData = async (
 			});
 		}
 
-		// Submit main activity
-		const responseActivity = await ActivityService.postActivity(formData);
-		if (responseActivity.statusCode !== 200) {
-			throw new Error('Failed to submit main activity');
-		} else if (responseActivity.statusCode === 200) {
-			await ActivityRepository.update(db, {
-				call_plan_schedule_id: activity.call_plan_schedule_id,
-				is_sync: 1,
-			});
-		}
-		
+		if (activity.status === 200 || activity.status === 202) {
+			// Submit main activity
+			const responseActivity = await ActivityService.postActivity(formData);
+			if (responseActivity.statusCode !== 200) {
+				throw new Error('Failed to submit main activity');
+			} else if (responseActivity.statusCode === 200) {
+				await ActivityRepository.update(db, {
+					call_plan_schedule_id: activity.call_plan_schedule_id,
+					is_sync: 1,
+				});
+			}
 
-		// Handle SIO data submission
-		if (activity.activity_sio) {
-			await Promise.all(
-				activity.activity_sio.map(async (data: any) => {
-					const formDataSio = new FormData();
-					['name', 'description', 'notes'].forEach((field) =>
-						formDataSio.append(field, data[field])
-					);
+			// Handle SIO data submission
+			if (activity.activity_sio) {
+				await Promise.all(
+					activity.activity_sio.map(async (data: any) => {
+						const formDataSio = new FormData();
+						['name', 'description', 'notes'].forEach((field) =>
+							formDataSio.append(field, data[field])
+						);
 
-					['photo_before', 'photo_after'].forEach((photo) => {
-						if (data[photo]) {
-							// @ts-ignore
-							formDataSio.append(photo, {
-								uri: data[photo],
-								type: 'image/jpeg',
-								name: data[photo].fileName || 'photo.jpg',
+						['photo_before', 'photo_after'].forEach((photo) => {
+							if (data[photo]) {
+								// @ts-ignore
+								formDataSio.append(photo, {
+									uri: data[photo],
+									type: 'image/jpeg',
+									name: data[photo].fileName || 'photo.jpg',
+								});
+							}
+						});
+
+						const responseSio = await ActivityService.postSio(
+							activity.call_plan_schedule_id,
+							formDataSio
+						);
+						if (responseSio.statusCode === 200) {
+							await ActivitySioModel.update(db, {
+								id: data.id,
+								call_plan_schedule_id: activity.call_plan_schedule_id,
+								is_sync: 1,
 							});
 						}
-					});
+					})
+				);
+			}
 
-					const responseSio = await ActivityService.postSio(
-						activity.call_plan_schedule_id,
-						formDataSio
-					);
-					if (responseSio.statusCode === 200) {
-						await ActivitySioModel.update(db, {
-							id: data.id,
-							call_plan_schedule_id: activity.call_plan_schedule_id,
-							is_sync: 1,
-						});
-					}
-				})
-			);
+			// Handle program data submission
+			if (activity.activity_program) {
+				await Promise.all(
+					activity.activity_program.map(async (data: any) => {
+						const formDataProgram = new FormData();
+						formDataProgram.append('name', data.name);
+						formDataProgram.append('description', data.description);
+						if (data.photo) {
+							// @ts-ignore
+							formDataProgram.append('file', {
+								uri: data.photo,
+								type: 'image/jpeg',
+								name: data.photo.fileName || 'image.jpg',
+							});
+						}
+
+						const responseProgram = await ActivityService.postProgram(
+							activity.call_plan_schedule_id,
+							formDataProgram
+						);
+						if (responseProgram.statusCode === 200) {
+							await ActivityProgramModel.update(db, {
+								id: data.id,
+								call_plan_schedule_id: activity.call_plan_schedule_id,
+								is_sync: 1,
+							});
+						}
+					})
+				);
+			}
+
+			// Handle branch data submission
+			if (activity.activity_branch) {
+				await Promise.all(
+					activity.activity_branch.map(async (data: any) => {
+						const jsonPayload = {
+							name: data.name,
+							description: data.description,
+							value: data.value,
+							notes: data.notes,
+						};
+
+						const responseBranch = await ActivityService.postBranch(
+							activity.call_plan_schedule_id,
+							jsonPayload
+						);
+						if (responseBranch.statusCode === 200) {
+							await ActivityBranchModel.update(db, {
+								id: data.id,
+								call_plan_schedule_id: activity.call_plan_schedule_id,
+								is_sync: 1,
+							});
+						}
+					})
+				);
+			}
+
+			// Handle SOG data submission
+			if (activity.activity_sog) {
+				await Promise.all(
+					activity.activity_sog.map(async (data: any) => {
+						const sogData = {
+							name: data.name,
+							description: data.description,
+							value: data.value,
+							notes: data.notes,
+						};
+
+						const responseSog = await ActivityService.postSog(
+							activity.call_plan_schedule_id,
+							sogData
+						);
+						if (responseSog.statusCode === 200) {
+							await ActivitySogModel.update(db, {
+								id: data.id,
+								call_plan_schedule_id: activity.call_plan_schedule_id,
+								is_sync: 1,
+							});
+						}
+					})
+				);
+			}
+		} else {
+			const responseActivity = await ActivityService.postActivity(formData);
+			if (responseActivity.statusCode !== 200) {
+				throw new Error('Failed to submit main activity');
+			} else if (responseActivity.statusCode === 200) {
+				await ActivityRepository.update(db, {
+					call_plan_schedule_id: activity.call_plan_schedule_id,
+					is_sync: 1,
+				});
+			}
 		}
 
-		// Handle program data submission
-		if (activity.activity_program) {
-			await Promise.all(
-				activity.activity_program.map(async (data: any) => {
-					const formDataProgram = new FormData();
-					formDataProgram.append('name', data.name);
-					formDataProgram.append('description', data.description);
-					if (data.photo) {
-						// @ts-ignore
-						formDataProgram.append('file', {
-							uri: data.photo,
-							type: 'image/jpeg',
-							name: data.photo.fileName || 'image.jpg',
-						});
-					}
-
-					const responseProgram = await ActivityService.postProgram(
-						activity.call_plan_schedule_id,
-						formDataProgram
-					);
-					if (responseProgram.statusCode === 200) {
-						await ActivityProgramModel.update(db, {
-							id: data.id,
-							call_plan_schedule_id: activity.call_plan_schedule_id,
-							is_sync: 1,
-						});
-					}
-				})
-			);
-		}
-
-		// Handle branch data submission
-		if (activity.activity_branch) {
-			await Promise.all(
-				activity.activity_branch.map(async (data: any) => {
-					const jsonPayload = {
-						name: data.name,
-						description: data.description,
-						value: data.value,
-						notes: data.notes,
-					};
-
-					const responseBranch = await ActivityService.postBranch(
-						activity.call_plan_schedule_id,
-						jsonPayload
-					);
-					if (responseBranch.statusCode === 200) {
-						await ActivityBranchModel.update(db, {
-							id: data.id,
-							call_plan_schedule_id: activity.call_plan_schedule_id,
-							is_sync: 1,
-						});
-					}
-				})
-			);
-		}
-
-		// Handle SOG data submission
-		if (activity.activity_sog) {
-			await Promise.all(
-				activity.activity_sog.map(async (data: any) => {
-					const sogData = {
-						name: data.name,
-						description: data.description,
-						value: data.value,
-						notes: data.notes,
-					};
-
-					const responseSog = await ActivityService.postSog(
-						activity.call_plan_schedule_id,
-						sogData
-					);
-					if (responseSog.statusCode === 200) {
-						await ActivitySogModel.update(db, {
-							id: data.id,
-							call_plan_schedule_id: activity.call_plan_schedule_id,
-							is_sync: 1,
-						});
-					}
-				})
-			);
-		}
+		ActivityRepository.deletActivityWithDetail(
+			db,
+			activity.call_plan_schedule_id
+		);
 
 		Toast.show({
 			type: 'success',
 			text1: 'Success',
 			text2: 'Data successfully synchronized',
 		});
-
+		
 	} catch (error: any) {
 		console.error('Error submitting activity:', error);
 		Toast.show({
