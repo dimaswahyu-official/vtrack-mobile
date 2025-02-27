@@ -669,7 +669,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                                     Foto 1
                                 </Text>
                                 <TouchableOpacity
-                                    style={[activityStyles.photoButton]}
+                                    style={[activityStyles.photoButton, {width: '80%'}]}
                                     onPress={() =>
                                         photoSurveyFirst()
                                     }>
@@ -721,7 +721,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                                     Foto 2
                                 </Text>
                                 <TouchableOpacity
-                                    style={[activityStyles.photoButton]}
+                                    style={[activityStyles.photoButton, {width: '80%'}]}
                                     onPress={() =>
                                         photoSurveySecond()
                                     }>

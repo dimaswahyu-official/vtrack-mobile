@@ -25,8 +25,8 @@ const AppNavigator = () => {
     return (
         <ThemeProvider>
             <StatusBar
-                barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-                backgroundColor={theme === 'dark' ? '#121212' : '#fff'}
+                barStyle={ 'light-content'}
+                backgroundColor={'#fff'}
             />
             {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
         </ThemeProvider>
