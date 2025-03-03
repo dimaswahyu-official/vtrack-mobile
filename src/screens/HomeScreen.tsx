@@ -219,60 +219,63 @@ export default function HomeScreen() {
                 }
                 setDashboard(finalActivities)
             } else {
-                //online
-                // Fetch History data from API
-                const getDashboard = await ConstantService.getDashboard(user?.id ?? '', selectedFilter);
-                const data = [
-                    {
-                        id: 0,
-                        title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
-                        // title: 'NotSynced',
-                        color: '#dac680',
-                        members: "Outlet Belum Dikunjungi",
-                    },
-                    {
-                        id: 1,
-                        title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
-                        // title: 'NotSynced',
-                        color: '#9bcfb6',
-                        members: "Outlet Sudah Dikunjungi",
-                    },
-                    {
-                        id: 2,
-                        title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
-                        // title: 'NotSynced',
-                        color: '#d68d96',
-                        members: "Total Activity Outlet yang Telah Dikunjungi",
-                    },
-                    {
-                        id: 3,
-                        title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
-                        // title: 'NotSynced',
-                        color: '#819bf3',
-                        members: "Total Activity Survey yang Telah Dikunjungi",
-                    },
-                    {
-                        id: 4,
-                        title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
-                        // title: 'NotSynced',
-                        color: '#996d99',
-                        members: "Total Outlet dalam schedule",
-                    },
-                ];
-                setDashboard(data);
+                if (user?.id) {
+                    const getDashboard = await ConstantService.getDashboard(user?.id ?? '', selectedFilter);
+                    const data = [
+                        {
+                            id: 0,
+                            title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#dac680',
+                            members: "Outlet Belum Dikunjungi",
+                        },
+                        {
+                            id: 1,
+                            title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#9bcfb6',
+                            members: "Outlet Sudah Dikunjungi",
+                        },
+                        {
+                            id: 2,
+                            title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#d68d96',
+                            members: "Total Activity Outlet yang Telah Dikunjungi",
+                        },
+                        {
+                            id: 3,
+                            title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#819bf3',
+                            members: "Total Activity Survey yang Telah Dikunjungi",
+                        },
+                        {
+                            id: 4,
+                            title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#996d99',
+                            members: "Total Outlet dalam schedule",
+                        },
+                    ];
+                    setDashboard(data);
 
-                // Update local caches
-                await AsyncStorage.setItem('dashboard', JSON.stringify(data));
+                    // Update local caches
+                    await AsyncStorage.setItem('dashboard', JSON.stringify(data));
 
-                Toast.show({
-                    type: 'success',
-                    text1: 'Online Mode',
-                    text2: 'Dashboard synchronized successfully',
-                });
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Online Mode',
+                        text2: 'Dashboard synchronized successfully',
+                    });
+
+                } else {
+                    console.warn('User ID is not available. Skipping dashboard fetch.');
+                }
 
             }
         } catch (error) {
-            console.error('Error fetching dashboard data:', error);
+            console.log('Error fetching dashboard data:', error);
         } finally {
             setRefreshing(false);
         }

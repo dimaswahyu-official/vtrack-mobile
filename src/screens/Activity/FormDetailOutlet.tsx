@@ -202,21 +202,28 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 				throw new Error('Failed to update activity status');
 			}
 
-			if (!isOnline || !isWifi) {
+			if (!isOnline) {
+				// Exit if the device is completely offline
+				console.log('Device is offline. Skipping sync.');
 				return;
-			} else {
-				try {
-					const submitToServer = await ActivityRepository.findActivityWithDetail(
-						db,
-						activity.call_plan_schedule_id
-					);
-					if (submitToServer[0]) {
-						await sendOfflineData(submitToServer[0], db);
-					}
-				} catch (err) {
-					console.error('Server sync error:', err);
-					throw new Error('Failed to sync with server');
+			}
+			if (!isWifi) {
+				// Warn if the device is using mobile data
+				console.warn('Device is using mobile data. Proceeding with sync.');
+			}
+			try {
+				// Proceed if the device is online (Wi-Fi or mobile data)
+				const submitToServer = await ActivityRepository.findActivityWithDetail(
+					db,
+					activity.call_plan_schedule_id
+				);
+
+				if (submitToServer[0]) {
+					await sendOfflineData(submitToServer[0], db);
 				}
+			} catch (err) {
+				console.error('Server sync error:', err);
+				throw new Error('Failed to sync with server');
 			}
 		} catch (error) {
 			// Provide more detailed error messages

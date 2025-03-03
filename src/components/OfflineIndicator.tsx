@@ -19,7 +19,7 @@ const OfflineIndicator = () => {
     } else if (isOnline && !isWifi) {
         // <View style={{borderWidth:1,borderColor:'green',width:'100%'}}></View>
 
-        statusColor = 'orange';
+        statusColor = 'green';
     } else {
         // <View style={{borderWidth:1,borderColor:'green',width:'100%'}}></View>
         statusColor = 'green';
