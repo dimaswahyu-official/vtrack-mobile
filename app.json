@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vimeps",
     "slug": "vtrackMobile",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
