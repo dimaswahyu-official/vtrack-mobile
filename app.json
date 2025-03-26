@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vimeps",
     "slug": "vtrackMobile",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
@@ -47,7 +47,7 @@
         "android.permission.FOREGROUND_SERVICE_PERMISSION_GRANTED"
       ],
       "package": "com.nna.vtrack.mobile",
-      "versionCode": 11
+      "versionCode": 12
     },
     "plugins": [
       [
