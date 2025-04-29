@@ -394,7 +394,7 @@ export default function AttendanceScreen({
                 <View style={styles.cardContainer}>
                     <View style={styles.card}>
                         <Image
-                            source={{uri: absenToday?.photoIn}}
+                            source={{uri: absenToday?.photoOut ? absenToday?.photoOut : absenToday?.photoIn}}
                             style={styles.coverPhoto}
                         />
                         <Text style={styles.dateTime}>
@@ -408,7 +408,7 @@ export default function AttendanceScreen({
                             <Text style={styles.locationText}>{absenToday?.remarks}</Text>
                             <Text style={styles.locationText}>{absenToday?.status}</Text>
                         </View>
-                        {(absenToday?.clockIn || absenToday == null) && time < "17" ? (
+                        {(absenToday?.clockIn || absenToday == null) && time < "16" ? (
                             <View style={styles.buttonContainer}>
                                 <TouchableOpacity
                                     onPress={() => {

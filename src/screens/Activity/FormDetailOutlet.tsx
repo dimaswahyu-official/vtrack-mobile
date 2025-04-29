@@ -20,6 +20,7 @@ import { sendOfflineData } from '../../services/sendOfflineData';
 import {useOffline} from "../../context/OfflineProvider";
 import {useLoadingStore} from "../../store/useLoadingStore";
 
+
 type NavigationProp = StackNavigationProp<
 	ActivityStackParamList,
 	'FormDetailOutlet'
@@ -52,7 +53,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 	const { isOnline, isWifi } = useOffline();
 	const outlet = [
 		{
-			title: 'JARAK LEBIH DARI FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
+			title: 'JARAK LEBIH DARI 200m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
 			label: 'range_health_facilities',
 		},
 		{
@@ -175,14 +176,21 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 
 			// Add error handling for location
 			let coords;
-			try {
-				const location = await Location.getCurrentPositionAsync({
-					accuracy: Location.Accuracy.High,
-				});
-				coords = location.coords;
-			} catch (err) {
-				console.error('Location error:', err);
-				throw new Error('Failed to get current location. Please check location permissions.');
+			if(isOnline || isWifi) {
+				try {
+					const location = await Location.getCurrentPositionAsync({
+						accuracy: Location.Accuracy.High,
+					});
+					coords = location.coords;
+				} catch (err) {
+					console.error('Location error:', err);
+					throw new Error('Failed to get current location. Please check location permissions.');
+				}
+			}else{
+				coords = {
+					"longitude": item?.callPlanOutlet?.longitude ?? item?.callPlanSurvey?.longitude ?? '',
+					"latitude": item?.callPlanOutlet?.latitude ?? item?.callPlanSurvey?.latitude ?? '',
+				}
 			}
 
 			const { latitude, longitude } = coords;
@@ -400,14 +408,16 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 						borderRadius: 8,
 						alignItems: 'center',
 						marginHorizontal: 8,
-						backgroundColor: isLoading
+						backgroundColor: isLoading || selectedValues.length === 0
 							? Colors.light.background
 							: Colors.buttonBackground,
 					}}
 					onPress={submitOutlet}
-					disabled={isLoading}>
+					disabled={isLoading || selectedValues.length === 0}>
 					<Text
-						style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+						style={{ color: isLoading || selectedValues.length === 0
+								? 'gray'
+								: Colors.light.background, fontWeight: 'bold', fontSize: 16 }}>
 						{isLoading ? 'Submitting...' : 'Submit'}
 					</Text>
 				</TouchableOpacity>

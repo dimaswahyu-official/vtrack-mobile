@@ -46,10 +46,11 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const sortedStatusOptions = (statusOptions).sort(([keyA], [keyB]) => {
         return keyA === "202" ? -1 : keyA.localeCompare(keyB);
     });
-    const defaultStatus = item.type === 1
-        ? Number(sortedStatusOptions?.[0]?.[0])
-        : Number(statusOptionExist?.[0]?.[0]);
-    const [status, setStatus] = useState<number>(() => defaultStatus)
+    const filteredStatusOptions = (item.type === 1 ? statusOptions : statusOptionExist).filter(
+        ([key]) => Number(key) !== 200
+    );
+    const defaultStatus = Number(filteredStatusOptions?.[0]?.[0] ?? 0);
+    const [status, setStatus] = useState<number>(() => defaultStatus);
     const [activityDatas, setActivityDatas] = useState<any>(null);
     const {isOnline, isWifi} = useOffline();
 
@@ -363,7 +364,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                         setStatus(Number(itemValue));
                                     }}
                                 >
-                                    {(item.type === 1 ? statusOptions : statusOptionExist).map(([key, value]) => (
+                                    {filteredStatusOptions.map(([key, value]) => (
                                         <Picker.Item key={key} label={value} value={String(key)} />
                                     ))}
                                 </Picker>

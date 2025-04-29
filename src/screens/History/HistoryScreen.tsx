@@ -202,7 +202,7 @@ export default function HistoryScreen({route}: FormActivityProps) {
     );
 
     const openMaps = (latitude: string, longitude: string) => {
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${longitude},${latitude}`;
         Linking.openURL(url).catch((err) => {
             console.error('Failed to open map', err);
             Toast.show({type: 'error', text1: 'Failed to open map'});
