@@ -5,6 +5,7 @@ interface User {
     id: string;
     fullName: string;
     email: string;
+    region:string;
     photo: string;
     roles: string;
     username: string;

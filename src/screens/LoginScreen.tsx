@@ -104,6 +104,7 @@ export default function LoginScreen() {
                     setToken(response.data.accessToken);
                     setUser({
                         id: response.data.user.id,
+                        region : response.data.user.region,
                         email: response.data.user.email,
                         fullName: response.data.user.fullname,
                         photo: response.data.user.photo,
