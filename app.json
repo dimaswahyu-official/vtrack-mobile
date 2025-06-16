@@ -17,11 +17,8 @@
         "NSMicrophoneUsageDescription": "This app requires access to the microphone for recording audio.",
         "NSPhotoLibraryUsageDescription": "This app requires access to the photo library to save and access photos.",
         "NSLocationWhenInUseUsageDescription": "This app requires access to location when open.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app requires access to location in the background.",
-        "UIBackgroundModes": [
-          "fetch",
-          "location"
-        ]
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app requires access to location in the background for tracking user activity and providing location-based services.",
+        "UIBackgroundModes": ["location"]
       },
       "bundleIdentifier": "com.nna.vtrack.mobile"
     },
@@ -35,12 +32,10 @@
         "RECORD_AUDIO",
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE",
-        "ACCESS_BACKGROUND_LOCATION",
         "BACKGROUND_FETCH",
         "WAKE_LOCK",
         "RECEIVE_BOOT_COMPLETED",
         "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.BACKGROUND_FETCH",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_PERMISSION_GRANTED"

@@ -64,6 +64,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
             const id = user?.id || '';
             const roles = user?.roles || '';
             const username = user?.username || '';
+            const region = user?.region || '';
             const formData = new FormData();
             formData.append('name', name);
             formData.append('email', email);
@@ -98,7 +99,8 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
                     email: response.data.email,
                     photo: response.data.photo,
                     username,
-                    roles
+                    roles,
+                    region,
 
                 });
                 // Optionally navigate back or refresh the profile
