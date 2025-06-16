@@ -11,27 +11,20 @@ import {
     View,
 } from 'react-native';
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
-import {RouteProp, useNavigation} from "@react-navigation/native";
+import {RouteProp, useFocusEffect, useNavigation} from "@react-navigation/native";
 import {StackNavigationProp} from "@react-navigation/stack";
 import {useSQLiteContext} from "expo-sqlite";
 import {useOffline} from "../../context/OfflineProvider";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {useAuthStore} from "../../store/useAuthStore";
-import {ActivityRepository, createTableActivity} from "../../model/ActivityRepository";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
-import {
-    createTableActivityBranch, createTableActivityOutlet,
-    createTableActivityProgram,
-    createTableActivitySio,
-    createTableActivitySog
-} from "../../model";
 import ActivityService from "../../services/activityService";
 import {formatDate} from "../../utils/DateHelper";
 import {getStatusLabel} from "../../constants/status";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Colors from "../../utils/Colors";
-import {MaterialIcons} from "@expo/vector-icons";
+import {useLoadingStore} from "../../store/useLoadingStore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const {width, height} = Dimensions.get('window');
 
@@ -117,43 +110,96 @@ export default function HistoryScreen({route}: FormActivityProps) {
     const [error, setError] = useState<string | null>(null);
     const {user} = useAuthStore();
     const userId = user?.id || '';
+    const {setLoading} = useLoadingStore();
 
-    const fetchScedule = async () => {
+    const fetchHistory = async () => {
+        setLoading(true);
         setRefreshing(true);
         try {
-            if (!isOnline) {
-                const getDataOffline = await ActivityRepository.getAll(db);
-                const storedActivities = await AsyncStorage.getItem('activities');
-                if (storedActivities) {
-                    setActivities(JSON.parse(storedActivities));
+
+            // Get local data
+            const cachedActivities = await AsyncStorage.getItem('history');
+            const parsedCachedActivities = cachedActivities ? JSON.parse(cachedActivities) : [];
+
+            if(!isOnline && !isWifi){
+                //offline
+                let finalActivities = [];
+                if(parsedCachedActivities.length > 0){
+                    finalActivities = parsedCachedActivities;
                     Toast.show({
                         type: 'info',
                         text1: 'Offline Mode',
-                        text2: 'Showing cached data.',
+                        text2: 'Using cached data',
                     });
-                } else {
+                }else{
                     Toast.show({
                         type: 'error',
-                        text1: 'No Internet Connection',
-                        text2: 'No cached data available.',
+                        text1: 'Offline Mode',
+                        text2: 'No local data available',
                     });
                 }
-                setRefreshing(false);
-                return;
+                setActivities(finalActivities)
+            }else{
+                //online
+                // Fetch History data from API
+                const response = await ActivityService.getHistorySchedule(userId);
+                const data: Activity[] = await response.data;
+                setActivities(data)
+
+                // Update local caches
+                await AsyncStorage.setItem('history', JSON.stringify(data));
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'Online Mode',
+                    text2: 'Data synchronized successfully',
+                });
+
             }
-            // Fetch History data from API
-            const response = await ActivityService.getHistorySchedule(userId);
-            const data: Activity[] = await response.data;
-            setActivities(data)
         } catch (e: any) {
+            setLoading(false);
             setError(e.message);
         } finally {
+            setLoading(false);
             setRefreshing(false);
         }
     };
-    useEffect(() => {
-        fetchScedule();
-    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            const fetchData = async () => {
+                if (!isActive) return;
+
+                try {
+                    setRefreshing(true);
+                    setActivities([]);
+                    await fetchHistory();
+                } catch (error) {
+                    console.error('Error fetching history:', error);
+                    if (isActive) {
+                        setError('Failed to fetch history');
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Error',
+                            text2: 'Failed to fetch history',
+                        });
+                    }
+                } finally {
+                    if (isActive) {
+                        setRefreshing(false);
+                    }
+                }
+            };
+
+            fetchData();
+
+            return () => {
+                isActive = false;
+            };
+        }, [navigation, isOnline, isWifi])
+    );
 
     const openMaps = (latitude: string, longitude: string) => {
         const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
@@ -185,7 +231,6 @@ export default function HistoryScreen({route}: FormActivityProps) {
             <TouchableWithoutFeedback
                 onPressIn={onPressIn}
                 onPressOut={onPressOut}
-                // onPress={() => toggleSelection(item.id)}
             >
                 <Animated.View
                     style={[styles.card, {transform: [{scale: scaleAnim}]}]}>
@@ -254,15 +299,6 @@ export default function HistoryScreen({route}: FormActivityProps) {
                                     color={Colors.buttonBackground}
                                 />
                             </TouchableOpacity>
-                            {/*<TouchableOpacity*/}
-                            {/*	style={styles.buttonWork}*/}
-                            {/*	onPress={() => handlePressWork(item)}>*/}
-                            {/*	<MaterialIcons*/}
-                            {/*		name="input"*/}
-                            {/*		size={22}*/}
-                            {/*		color={Colors.buttonBackground}*/}
-                            {/*	/>*/}
-                            {/*</TouchableOpacity>*/}
                         </View>
                     </View>
                 </Animated.View>
@@ -272,7 +308,7 @@ export default function HistoryScreen({route}: FormActivityProps) {
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await fetchScedule();
+        await fetchHistory();
     };
 
     if (error) {

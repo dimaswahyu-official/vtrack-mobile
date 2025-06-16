@@ -1,21 +1,19 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     StyleSheet,
     TouchableOpacity,
     View,
     Text,
-    Clipboard,
     Alert,
     FlatList,
-    Image,
-    Dimensions
+    Dimensions, RefreshControl
 } from 'react-native';
 import ConstantService from '../services/constantService';
 import useConstantStore from '../store/useConstantStore';
 import {useOffline} from '../context/OfflineProvider';
 import {useSQLiteContext} from 'expo-sqlite';
 import Colors from "../utils/Colors";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {BottomTabNavigationProp} from "@react-navigation/bottom-tabs";
 import {MainTabParamList} from "../navigation/MainNavigator";
 import {BackgroundFetchStatus} from 'expo-background-fetch';
@@ -24,38 +22,48 @@ import * as TaskManager from 'expo-task-manager';
 import {ActivityRepository} from '../model/ActivityRepository';
 import {sendOfflineData} from "../services/sendOfflineData";
 import {useAuthStore} from "../store/useAuthStore";
-
+import Ionicons from "@expo/vector-icons/Ionicons";
+import moment from "moment/moment";
+import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const {width, height} = Dimensions.get('window');
-
-interface DashboardData {
-    belum_dikunjungi: number;
-    sudah_dikunjungi: number;
-    total_activity_outlet: number;
-    total_activity_survey: number;
-    total_schedule: number;
-}
+import DropDownPicker from "react-native-dropdown-picker";
 
 
 export default function HomeScreen() {
-    const {setBrands, setSio, setDashboard, dashboard, brands, sio} = useConstantStore();
+    const {setBrands, setSio, brands, sio} = useConstantStore();
     const {isOnline, isWifi} = useOffline();
     const {user} = useAuthStore();
     // State to track sync status and counts
-    const [syncStatus, setSyncStatus] = useState<string>('');
-    const [syncedCount, setSyncedCount] = useState<number>(0);
-    const [notSyncedCount, setNotSyncedCount] = useState<number>(0);
+    const [dashboard, setDashboard] = useState<any>([]);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [checkStatus, setCheckStatus] = useState<string>('');
+    const date = moment().format("l");
     const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
-
+    const [selectedFilter, setSelectedFilter] = useState("all");
+    const [open, setOpen] = useState(false);
+    const [items, setItems] = useState([
+        {label: "All", value: "all"},
+        {label: "Today", value: "today"},
+        {label: "Weekly", value: "weekly"},
+    ]);
 
     const db = useSQLiteContext();
-    
+
     const BACKGROUND_FETCH_TASK = 'SYNC_ACTIVITIES_TASK';
 
+    // Define task outside component and before any usage
     TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
         try {
             const now = Date.now();
             console.log(`[Background Fetch] Started at ${new Date(now).toISOString()}`);
+
+            // Check network connectivity first
+            if (!isOnline && !isWifi) {
+                console.log('[Background Fetch] No network connection available');
+                return BackgroundFetch.BackgroundFetchResult.NoData;
+            }
 
             if (!db) {
                 console.error('[Background Fetch] Database instance is null');
@@ -64,7 +72,6 @@ export default function HomeScreen() {
 
             console.log('[Background Fetch] Fetching unsynced activities...');
             const activities = await ActivityRepository.findUnsyncedActivities(db);
-            console.log('activities', JSON.stringify(activities));
             console.log(`[Background Fetch] Found ${activities.length} unsynced activities`);
 
             if (activities.length === 0) {
@@ -72,37 +79,36 @@ export default function HomeScreen() {
                 return BackgroundFetch.BackgroundFetchResult.NoData;
             }
 
-            let hasErrors = false;
+            let syncedCount = 0;
+            let failedCount = 0;
+
             for (const activity of activities) {
                 try {
                     console.log(`[Background Fetch] Processing activity ID: ${activity.id}`);
-                    //Sync Data On Background
                     const dataSend = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id);
-                    if (!dataSend) {
+
+                    if (!dataSend || dataSend.length === 0) {
                         console.error(`[Background Fetch] No data found for activity ID: ${activity.id}`);
-                        hasErrors = true;
+                        failedCount++;
                         continue;
                     }
-                    
-                    try {
-                        const dataToSend = JSON.stringify(dataSend);
-                        console.log('dataToSend', dataToSend);
-                        await sendOfflineData(dataSend[0], db);
-                    } catch (parseError) {
-                        console.error('[Background Fetch] Failed to process activity data:', parseError);
-                        hasErrors = true;
-                        continue;
-                    }
+
+                    await sendOfflineData(dataSend[0], db);
+                    syncedCount++;
+                    console.log(`[Background Fetch] Successfully synced activity ID: ${activity.id}`);
+
                 } catch (error) {
-                    console.error('[Background Fetch] Failed to sync activity:', error);
-                    hasErrors = true;
-                    continue;
+                    console.error(`[Background Fetch] Failed to sync activity ${activity.id}:`, error);
+                    failedCount++;
                 }
             }
 
-            console.log('[Background Fetch] Completed successfully');
-            return hasErrors ? BackgroundFetch.BackgroundFetchResult.Failed : BackgroundFetch.BackgroundFetchResult.NewData;
-        } catch (error: any) {
+            console.log(`[Background Fetch] Sync complete. Synced: ${syncedCount}, Failed: ${failedCount}`);
+            return syncedCount > 0
+                ? BackgroundFetch.BackgroundFetchResult.NewData
+                : BackgroundFetch.BackgroundFetchResult.Failed;
+
+        } catch (error) {
             console.error('[Background Fetch] Fatal error:', error);
             return BackgroundFetch.BackgroundFetchResult.Failed;
         }
@@ -111,62 +117,213 @@ export default function HomeScreen() {
     const [isRegistered, setIsRegistered] = useState(false);
     const [status, setStatus] = useState<BackgroundFetchStatus | null>(null);
 
+    useEffect(() => {
+        filterData();
+    }, [selectedFilter]);
+
+    const filterData = () => {
+        if (selectedFilter === "all") {
+            //all
+            fetchDashboard(selectedFilter)
+        } else if (selectedFilter === "today") {
+            //send today
+            fetchDashboard(selectedFilter)
+        } else if (selectedFilter === "weekly") {
+            //send weekly
+            fetchDashboard(selectedFilter)
+        }
+    };
+
     const checkStatusAsync = async () => {
         try {
             const status = await BackgroundFetch.getStatusAsync();
             const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
-            console.log('[Background Fetch] Current status:', BackgroundFetch.BackgroundFetchStatus[status as any]);
-            console.log('[Background Fetch] Is registered:', isRegistered);
+            setCheckStatus(`Status: ${BackgroundFetch.BackgroundFetchStatus[status as any]}, Registered: ${isRegistered}`);
+            console.log('[Background Fetch] Status check:', {
+                status: BackgroundFetch.BackgroundFetchStatus[status as any],
+                isRegistered
+            });
             setStatus(status);
             setIsRegistered(isRegistered);
             return {status, isRegistered};
         } catch (error) {
             console.error('[Background Fetch] Error checking status:', error);
+            setCheckStatus('Error checking status');
             return null;
         }
     };
 
     const registerBackgroundFetch = async () => {
         try {
-            const {status, isRegistered} = await checkStatusAsync() || {};
+            console.log('[Background Fetch] Starting registration...');
 
-            if (!isRegistered) {
-                console.log('[Background Fetch] Registering task...');
-                await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-                    minimumInterval: 1 * 60,
-                    stopOnTerminate: false,
-                    startOnBoot: true,
-                });
-
-                const newStatus = await checkStatusAsync();
-                if (newStatus?.isRegistered) {
-                    console.log('[Background Fetch] Task registered successfully');
-                } else {
-                    console.error('[Background Fetch] Task registration failed');
-                }
-            } else {
-                console.log('[Background Fetch] Task already registered');
+            // Check if already registered
+            const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+            if (isRegistered) {
+                console.log('[Background Fetch] Task already registered, unregistering first...');
+                await BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
             }
-        } catch (error: any) {
+
+            console.log('[Background Fetch] Registering new task...');
+            await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+                minimumInterval: 2 * 60, // 2 minutes
+                stopOnTerminate: false,
+                startOnBoot: true,
+            });
+
+            // Verify registration
+            const newStatus = await checkStatusAsync();
+            if (newStatus?.isRegistered) {
+                console.log('[Background Fetch] Task registered successfully');
+            } else {
+                console.error('[Background Fetch] Task registration verification failed');
+            }
+        } catch (error) {
             console.error('[Background Fetch] Registration error:', error);
         }
     };
 
+    // Register background fetch only once when component mounts
     useEffect(() => {
-        if (isOnline || isWifi) {
-            registerBackgroundFetch();
+        const initializeBackgroundFetch = async () => {
+            if (isOnline || isWifi) {
+                await registerBackgroundFetch();
+                await checkStatusAsync();
+            }
+        };
+
+        initializeBackgroundFetch();
+    }, []);
+
+    const fetchDashboard = async (filter: string) => {
+        setRefreshing(true);
+        try {
+            const cachedActivities = await AsyncStorage.getItem('dashboard');
+            const parsedCachedActivities = cachedActivities ? JSON.parse(cachedActivities) : [];
+            if (!isOnline && !isWifi) {
+                //offline
+                let finalActivities = [];
+                if (parsedCachedActivities.length > 0) {
+                    finalActivities = parsedCachedActivities;
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Offline Mode',
+                        text2: 'Using cached data',
+                    });
+                } else {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Offline Mode',
+                        text2: 'No local data available',
+                    });
+                }
+                setDashboard(finalActivities)
+            } else {
+                if (user?.id) {
+                    const getDashboard = await ConstantService.getDashboard(user?.id ?? '', selectedFilter);
+                    const data = [
+                        {
+                            id: 0,
+                            title: getDashboard.data ? getDashboard.data?.belum_dikunjungi : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#dac680',
+                            members: "Outlet Belum Dikunjungi",
+                        },
+                        {
+                            id: 1,
+                            title: getDashboard.data ? getDashboard.data?.sudah_dikunjungi : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#9bcfb6',
+                            members: "Outlet Sudah Dikunjungi",
+                        },
+                        {
+                            id: 2,
+                            title: getDashboard.data ? getDashboard.data?.total_activity_outlet : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#d68d96',
+                            members: "Total Activity Outlet yang Telah Dikunjungi",
+                        },
+                        {
+                            id: 3,
+                            title: getDashboard.data ? getDashboard.data?.total_activity_survey : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#819bf3',
+                            members: "Total Activity Survey yang Telah Dikunjungi",
+                        },
+                        {
+                            id: 4,
+                            title: getDashboard.data ? getDashboard.data?.total_schedule : 'NotSynced',
+                            // title: 'NotSynced',
+                            color: '#996d99',
+                            members: "Total Outlet dalam schedule",
+                        },
+                    ];
+                    setDashboard(data);
+
+                    // Update local caches
+                    await AsyncStorage.setItem('dashboard', JSON.stringify(data));
+
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Online Mode',
+                        text2: 'Dashboard synchronized successfully',
+                    });
+
+                } else {
+                    console.warn('User ID is not available. Skipping dashboard fetch.');
+                }
+
+            }
+        } catch (error) {
+            console.log('Error fetching dashboard data:', error);
+        } finally {
+            setRefreshing(false);
         }
-    }, [isOnline, isWifi]);
+    };
 
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
 
+            const fetchData = async () => {
+                if (!isActive) return;
 
+                try {
+                    setRefreshing(true);
+                    setDashboard([]);
+                    if ((isOnline || isWifi) && !brands.length && !sio.length) {
+                        await fetchConstants();
+                    }
+                    if (user) {
+                        await fetchDashboard(selectedFilter);
+                    }
+                } catch (error) {
+                    console.error('Error fetching history:', error);
+                    if (isActive) {
+                        setError('Failed to fetch history');
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Error',
+                            text2: 'Failed to fetch history',
+                        });
+                    }
+                } finally {
+                    if (isActive) {
+                        setRefreshing(false);
+                    }
+                }
+            };
 
-    const showAlert = () => {
-        Alert.alert('Option selected')
-    }
+            fetchData();
+
+            return () => {
+                isActive = false;
+            };
+        }, [user, navigation, isOnline, isWifi])
+    );
+
 
     const fetchConstants = async () => {
-        setSyncStatus('syncing');
         try {
             // Add error handling for each API call
             try {
@@ -178,62 +335,14 @@ export default function HomeScreen() {
             }
 
             try {
-                const getSio = await ConstantService.getSio(); 
+                const getSio = await ConstantService.getSio();
                 setSio(getSio.data.data);
             } catch (err) {
                 console.error('Error fetching SIO:', err);
                 throw new Error('Failed to fetch SIO data');
             }
-
-            try {
-                const getDashboard = await ConstantService.getDashboard(user?.id ?? '');
-                const data = [
-                    {
-                        id: 0,
-                        title: getDashboard.data?.belum_dikunjungi ?? 0,
-                        color: '#f3e7be',
-                        members: "Outlet Belum Dikunjungi",
-                        image: 'https://img.icons8.com/color/70/000000/name.png',
-                    },
-                    {
-                        id: 1,
-                        title: getDashboard.data?.sudah_dikunjungi ?? 0,
-                        color: '#9bcfb6',
-                        members: "Outlet Sudah Dikunjungi", 
-                        image: 'https://img.icons8.com/office/70/000000/home-page.png',
-                    },
-                    {
-                        id: 2,
-                        title: getDashboard.data?.belum_dikunjungi ?? 0,
-                        color: '#d68d96',
-                        members: "Total Activity Outlet",
-                        image: 'https://img.icons8.com/color/70/000000/two-hearts.png',
-                    },
-                    {
-                        id: 3,
-                        title: getDashboard.data?.total_activity_survey ?? 0,
-                        color: '#819bf3',
-                        members: "Total Activity Survey",
-                        image: 'https://img.icons8.com/color/70/000000/family.png',
-                    },
-                    {
-                        id: 4,
-                        title: getDashboard.data?.total_schedule ?? 0,
-                        color: '#996d99',
-                        members: "Total Outlet dalam schedule",
-                        image: 'https://img.icons8.com/color/70/000000/groups.png',
-                    },
-                ]
-                setDashboard(data);
-            } catch (err) {
-                console.error('Error fetching dashboard:', err);
-                throw new Error('Failed to fetch dashboard data');
-            }
-
-            setSyncStatus('synced');
         } catch (error) {
             console.error('Error fetching constants:', error);
-            setSyncStatus('not synced');
             Alert.alert(
                 'Error',
                 'Failed to fetch data. Please check your connection and try again.',
@@ -242,71 +351,100 @@ export default function HomeScreen() {
         }
     }
 
-    useEffect(() => {
-        if ((isOnline || isWifi) && !brands.length && !sio.length && !dashboard.length) {
-            fetchConstants();
-        }
-    }, [isOnline, isWifi, brands, sio, dashboard]);
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchDashboard(selectedFilter);
+    };
 
 
     return (
-        <View style={styles.container}>
-            <FlatList
-                style={styles.list}
-                contentContainerStyle={styles.listContainer}
-                data={dashboard}
-                horizontal={false}
-                numColumns={2}
-                keyExtractor={(item, index) => {
-                    return index.toString()
-                }}
-                renderItem={({item, index}) => {
-                    if (index === dashboard.length - 1) {
-                        return (
-                            <>
-                                <TouchableOpacity
-                                    style={[styles.card, {flexBasis: '98%', backgroundColor: item.color}]}
-                                    onPress={() => {
-                                        {}
-                                    }}>
-                                    <Image style={styles.cardImage} source={{uri: item.image}}/>
-                                    <View style={styles.cardHeader}>
-                                        <Text style={styles.title}>{item.title}</Text>
-                                    </View>
+        <>
+            <View style={styles.row}>
+                <View style={styles.textContainer}>
+                    <Text style={styles.name}>
+                        Hi {user?.fullName} {'  '}
+                        <Ionicons name={"rocket"} size={22} color={Colors.secondaryColor}/>
+                    </Text>
+                </View>
 
-                                    <View style={styles.cardFooter}>
-                                        <Text style={styles.subTitle}>{item.members}</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </>
-                        );
+                <View style={styles.pickerContainer}>
+                    <DropDownPicker
+                        open={open}
+                        value={selectedFilter}
+                        items={items}
+                        setOpen={setOpen}
+                        setValue={setSelectedFilter}
+                        setItems={setItems}
+                        placeholder="Select Filter"
+                        style={styles.dropdown}
+                        dropDownContainerStyle={styles.dropdownList}
+                        textStyle={styles.textStyle}
+                    />
+                </View>
+            </View>
+
+
+            <View style={styles.container}>
+                <FlatList
+                    style={styles.list}
+                    contentContainerStyle={styles.listContainer}
+                    data={dashboard}
+                    horizontal={false}
+                    numColumns={2}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
                     }
-                    return (
-                        <TouchableOpacity
-                            key={item.id}
-                            style={[styles.card, {backgroundColor: item.color}]}
-                            onPress={() => {
-                                {}
-                            }}>
-                            <Image style={styles.cardImage} source={{uri: item.image}}/>
+                    keyExtractor={(item, index) => {
+                        return index.toString()
+                    }}
+                    renderItem={({item, index}) => {
+                        if (index === dashboard.length - 1) {
+                            return (
+                                <>
+                                    <TouchableOpacity
+                                        style={[styles.card, {flexBasis: '98%', backgroundColor: item.color}]}
+                                        onPress={() => {
+                                            {
+                                            }
+                                        }}>
+                                        {/*<Image style={styles.cardImage} source={{uri: item.image}}/>*/}
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.title}>{item.title}</Text>
+                                        </View>
 
-                            <View style={styles.cardHeader}>
-                                <Text style={styles.title}>{item.title}</Text>
-                            </View>
-                            <View style={styles.cardFooter}>
-                                <Text style={styles.subTitle}>{item.members}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    )
-                }}
+                                        <View style={styles.cardFooter}>
+                                            <Text style={styles.subTitle}>{item.members}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </>
+                            );
+                        }
+                        return (
+                            <TouchableOpacity
+                                key={item.id}
+                                style={[styles.card, {backgroundColor: item.color}]}
+                                onPress={() => {
+                                    {
+                                    }
+                                }}>
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.title}>{item.title}</Text>
+                                </View>
+                                <View style={styles.cardFooter}>
+                                    <Text style={styles.subTitle}>{item.members}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )
+                    }}
 
-            />
-            <TouchableOpacity style={styles.button} onPress={() => {
-                navigation.navigate('ActivityStack');
-            }}>
-                <Text style={styles.buttonText}>RUTE</Text>
-            </TouchableOpacity>
-        </View>
+                />
+                <TouchableOpacity style={styles.button} onPress={() => {
+                    navigation.navigate('ActivityStack');
+                }}>
+                    <Text style={styles.buttonText}>RUTE</Text>
+                </TouchableOpacity>
+            </View>
+        </>
     );
 }
 
@@ -426,10 +564,47 @@ const styles = StyleSheet.create({
     },
     subTitle: {
         fontSize: 12,
+        fontWeight: 'bold',
         color: '#FFFFFF',
     },
     icon: {
         height: 5,
         width: 5,
+    },
+    name: {
+        fontSize: 22,
+        fontWeight: 'bold',
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginVertical: 10,
+        paddingHorizontal: width * 0.06,
+    },
+    pickerContainer: {
+        width: 120,
+        justifyContent: 'center',
+    },
+    dropdown: {
+        backgroundColor: "#fff",
+        borderColor: "#ccc",
+        borderWidth: 1,
+        borderRadius: 8,
+        height: 40,
+        minHeight: 40,
+    },
+    dropdownList: {
+        color: "#fff",
+        backgroundColor: "#fff",
+        borderColor: "#ccc",
+    },
+    textStyle: {
+        fontSize: 15,
+        paddingVertical: 2,
+    },
+    textContainer: {
+        flexDirection: "row",
+        alignItems: "center",
     },
 });

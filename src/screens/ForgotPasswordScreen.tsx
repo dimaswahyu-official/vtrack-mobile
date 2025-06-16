@@ -26,7 +26,7 @@ export default function ForgotPassword() {
     const [email, setEmail] = useState('');
     const { setLoading } = useLoadingStore();
     const { control, handleSubmit, formState: { errors } } = useForm<FormData>();
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [theme, setTheme] = useState<'light'>('light');
     const navigation = useNavigation<NavigationProp>();  // Add the type here
 
     // Handle back press on Android
@@ -43,12 +43,12 @@ export default function ForgotPassword() {
 
     useEffect(() => {
         const currentColorScheme = Appearance.getColorScheme();
-        if (currentColorScheme === 'light' || currentColorScheme === 'dark') {
+        if (currentColorScheme === 'light') {
             setTheme(currentColorScheme);
         }
 
         const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-            if (colorScheme === 'light' || colorScheme === 'dark') {
+            if (colorScheme === 'light') {
                 setTheme(colorScheme);
             }
         });

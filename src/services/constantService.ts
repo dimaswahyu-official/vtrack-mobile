@@ -23,9 +23,13 @@ class ConstantService {
         }
     }
 
-    static async getDashboard(id: string): Promise<any> {
+    static async getDashboard(id: string, filterValue:string): Promise<any> {
         try {
-            const response = await axiosInstance.get(`/dashboard/md-dashboard?user_id=${id}`);
+            const response = await axiosInstance.get(`/dashboard/md-dashboard`, {
+                params: {
+                    user_id: id,
+                    filter: filterValue,
+                }});
             return response.data;
         } catch (error: any) {
             console.error('Get dashboard failed:', error);

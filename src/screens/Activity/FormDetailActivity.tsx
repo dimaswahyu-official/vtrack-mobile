@@ -1,12 +1,10 @@
 import {
     Alert,
-    Dimensions, FlatList,
     Image,
     Modal,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View
 } from "react-native";
@@ -25,6 +23,8 @@ import {sendOfflineData} from "../../services/sendOfflineData";
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -41,32 +41,41 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const {setLoading} = useLoadingStore();
     const statusOptions = Object.entries(NEW_SURVEY_STATUS);
     const statusOptionExist = Object.entries(EXISTING_SURVEY_STATUS);
+    const sortedStatusOptions = (statusOptions).sort(([keyA], [keyB]) => {
+        return keyA === "202" ? -1 : keyA.localeCompare(keyB);
+    });
     const defaultStatus = item.type === 1
-        ? Number(statusOptions?.[0]?.[0])
+        ? Number(sortedStatusOptions?.[0]?.[0])
         : Number(statusOptionExist?.[0]?.[0]);
     const [status, setStatus] = useState<number>(() => defaultStatus)
     const [activityDatas, setActivityDatas] = useState<any>(null);
 
 
-    useEffect(() => {
-        console.log(status);
-        const fetchActivityData = async () => {
-            try {
-                const response = await ActivityRepository.findByCallPlanScheduleId(db, item.id);
-                if (response && response.length > 0) {
-                    setActivityDatas(response[0]);
-                    setStatus(response[0].status);
-                } else {
-                    console.warn("No activity data found for the given schedule ID:", item.id);
+
+
+    useFocusEffect(
+        useCallback(() => {
+            const fetchActivityData = async () => {
+                try {
+                    const response = await ActivityRepository.findByCallPlanScheduleId(db, item.id);
+                    if (response && response.length > 0) {
+                        setActivityDatas(response[0]);
+                        setStatus(response[0].status);
+                    } else {
+                        console.warn("No activity data found for the given schedule ID:", item.id);
+                    }
+                } catch (error) {
+                    console.error("Error fetching activity data:", error);
                 }
-            } catch (error) {
-                console.error("Error fetching activity data:", error);
-            }
-        };
+            };
 
-        fetchActivityData();
+            fetchActivityData();
 
-    }, [item]);
+            return () => {
+                console.log("Cleanup when screen loses focus");
+            };
+        }, [item, navigation])
+    );
 
 
     //PopUp Notification
@@ -177,6 +186,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 // Update Flag Fulfilled
                 await ActivityRepository.update(db, {
                     fulfilled: 1,
+                    status: status,
                     call_plan_schedule_id: activity.call_plan_schedule_id
                 });
                 await sendOfflineData(activity, db)
@@ -205,10 +215,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 allowsEditing: false,
                 quality: 1,
             });
-            // if (!response.canceled) {
-            //     // Pass the photo URI to the next page
-            //     await insertActivityDB(item, response.assets[0].uri)
-            // }
 
             if (!response.canceled) {
                 // Get the file size of the original image

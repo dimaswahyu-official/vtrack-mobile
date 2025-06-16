@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Vtrack",
+    "name": "Vimeps",
     "slug": "vtrackMobile",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/nna-icon.png",
     "userInterfaceStyle": "light",
@@ -14,13 +14,17 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "This app requires access to the camera.",
-        "NSMicrophoneUsageDescription": "This app requires access to the microphone.",
-        "NSPhotoLibraryUsageDescription": "This app requires access to the photo library.",
+        "NSCameraUsageDescription": "This app requires access to the camera to take photos.",
+        "NSMicrophoneUsageDescription": "This app requires access to the microphone for recording audio.",
+        "NSPhotoLibraryUsageDescription": "This app requires access to the photo library to save and access photos.",
+        "NSLocationWhenInUseUsageDescription": "This app requires access to location when open.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app requires access to location in the background.",
         "UIBackgroundModes": [
-          "fetch"
+          "fetch",
+          "location"
         ]
-      }
+      },
+      "bundleIdentifier": "com.nna.vtrack.mobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,30 +36,25 @@
         "RECORD_AUDIO",
         "WRITE_EXTERNAL_STORAGE",
         "READ_EXTERNAL_STORAGE",
+        "ACCESS_BACKGROUND_LOCATION",
         "BACKGROUND_FETCH",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.BACKGROUND_FETCH",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_PERMISSION_GRANTED"
       ],
-      "package": "com.nna.vtrack.mobile"
-    },
-    "web": {
-      "favicon": "./assets/nna-icon.png"
+      "package": "com.nna.vtrack.mobile",
+      "versionCode": 12
     },
     "plugins": [
       [
         "expo-sqlite",
         {
           "enableFTS": true,
-          "useSQLCipher": true,
-          "android": {
-            "enableFTS": false,
-            "useSQLCipher": false
-          },
-          "ios": {
-            "customBuildFlags": [
-              "-DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_SNAPSHOT=1"
-            ]
-          }
+          "useSQLCipher": true
         }
       ],
       [
@@ -64,6 +63,26 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location.",
+          "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to use your location in the background.",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location when the app is open."
+        }
+      ],
+      [
+        "expo-background-fetch",
+        {
+          "minimumInterval": 10
+        }
+      ],
+      [
+        "expo-task-manager",
+        {
+          "isAndroidForegroundServiceEnabled": true
         }
       ]
     ],

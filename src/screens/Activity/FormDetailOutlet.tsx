@@ -8,15 +8,13 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ActivityStackParamList } from '../../navigation/ActivityNavigator';
-import { RouteProp, useNavigation } from '@react-navigation/native';
+import {CommonActions, RouteProp, useNavigation} from '@react-navigation/native';
 import ActivityStyles from '../../utils/ActivityStyles';
 import { useSQLiteContext } from 'expo-sqlite';
 import React, { useEffect, useState, useCallback } from 'react';
 import Colors from '../../utils/Colors';
 import { ActivityOutletModel } from '../../model/ActivityOutletRepository';
 import { ActivityRepository } from '../../model/ActivityRepository';
-import ActivityService from '../../services/activityService';
-import Toast from 'react-native-toast-message';
 import * as Location from 'expo-location';
 import { sendOfflineData } from '../../services/sendOfflineData';
 import {useOffline} from "../../context/OfflineProvider";
@@ -52,31 +50,29 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const { isOnline, isWifi } = useOffline();
-	const [latitude, setLatitude] = useState('');
-	const [longitude, setLongitude] = useState('');
 	const outlet = [
 		{
-			title: '<500m FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
+			title: 'JARAK LEBIH DARI FASILITAS KESEHATAN (RS, PUSKESMAS, KLINIK)',
 			label: 'range_health_facilities',
 		},
 		{
-			title: '<200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)',
+			title: 'JARAK LEBIH DARI 200m SARANA PENDIDIKAN (SEKOLAH KAMPUS PAUD DLL)',
 			label: 'range_educational_facilities',
 		},
 		{
-			title: '<200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)',
+			title: 'JARAK LEBIH DARI 200m TEMPAT BERMAIN ANAK (TAMAN ,PLAYGROUND)',
 			label: 'range_playground_facilities',
 		},
 		{
-			title: '<500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
+			title: 'JARAK LEBIH DARI 500m TEMPAT IBADAH (MESJID, MUSHOLA, PURA, VIHARA, GEREJA,PESANTREN)',
 			label: 'range_worship_facilities',
 		},
 		{
-			title: '<500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
+			title: 'JARAK LEBIH DARI 500m ANGKUTAN UMUM (HALTE, TERMINAL, AIRPORT, STASIUN)',
 			label: 'range_public_transportation_facilities',
 		},
 		{
-			title: '<500m TEMPAT KERJA (KANTOR PEMERINTAHAN)',
+			title: 'JARAK LEBIH DARI 500m TEMPAT KERJA (KANTOR PEMERINTAHAN)',
 			label: 'range_work_place',
 		},
 	];
@@ -92,7 +88,6 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 					);
 
 				if (existingFacilities.length > 0) {
-					console.log('existingFacilities', existingFacilities);
 					setOutletFacilities(existingFacilities);
 					setSelectedValues(
 						existingFacilities
@@ -207,27 +202,28 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 				throw new Error('Failed to update activity status');
 			}
 
-			if (!isOnline || !isWifi) {
+			if (!isOnline) {
+				// Exit if the device is completely offline
+				console.log('Device is offline. Skipping sync.');
 				return;
-			} else {
-				try {
-					const submitToServer = await ActivityRepository.findActivityWithDetail(
-						db,
-						activity.call_plan_schedule_id
-					);
+			}
+			if (!isWifi) {
+				// Warn if the device is using mobile data
+				console.warn('Device is using mobile data. Proceeding with sync.');
+			}
+			try {
+				// Proceed if the device is online (Wi-Fi or mobile data)
+				const submitToServer = await ActivityRepository.findActivityWithDetail(
+					db,
+					activity.call_plan_schedule_id
+				);
 
-					// if (submitToServer[0]) {
-					// 	await sendOfflineData(submitToServer[0],1, db);
-					// 	const after  = await ActivityRepository.findActivityWithDetail(
-					// 		db,
-					// 		activity.call_plan_schedule_id
-					// 	);
-					// 	console.log(JSON.stringify(after)+'check is sync is 1');
-					// }
-				} catch (err) {
-					console.error('Server sync error:', err);
-					throw new Error('Failed to sync with server');
+				if (submitToServer[0]) {
+					await sendOfflineData(submitToServer[0], db);
 				}
+			} catch (err) {
+				console.error('Server sync error:', err);
+				throw new Error('Failed to sync with server');
 			}
 		} catch (error) {
 			// Provide more detailed error messages
@@ -241,7 +237,15 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 		} finally {
 			setIsLoading(false);
 			setLoading(false);
-			navigation.replace('Activity2');
+			// navigation.replace('Activity2')
+			navigation.dispatch(
+				CommonActions.reset({
+					index: 0,
+					routes: [
+						{ name: 'Activity2' }, // Replace 'Dashboard' with the name of your dashboard screen
+					],
+				})
+			);
 		}
 	};
 

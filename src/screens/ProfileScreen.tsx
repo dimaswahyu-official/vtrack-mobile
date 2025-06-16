@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ScrollView, FlatList, Alert} from 'react-native';
 import {useThemeStore} from '../store/useThemeStore';
 import {useAuthStore} from '../store/useAuthStore';
@@ -13,6 +13,10 @@ import Toast from "react-native-toast-message";
 import useConstantStore from '../store/useConstantStore';
 import Colors from "../utils/Colors";
 import colors from "../utils/Colors";
+import {ActivityRepository} from "../model/ActivityRepository";
+import * as BackgroundFetch from "expo-background-fetch";
+import {sendOfflineData} from "../services/sendOfflineData";
+import {useSQLiteContext} from "expo-sqlite";
 
 const {width, height} = Dimensions.get('window');
 
@@ -24,7 +28,11 @@ export default function ProfileScreen() {
     const {theme, setTheme} = useThemeStore();
     const {clearAuth, user} = useAuthStore();
     const {clearConstants} = useConstantStore();
-    const defaultImage = 'http://placehold.co/100';
+    const db = useSQLiteContext();
+    const [loading, setIsLoading] = useState(false);
+    const [progress, setProgress] = useState(0); // Progress state (0-100)
+    const [syncedCount, setSyncedCount] = useState(0); // Track successfully synced activities
+    const [failedCount, setFailedCount] = useState(0); // Track failed activities
 
 
     useEffect(() => {
@@ -43,9 +51,6 @@ export default function ProfileScreen() {
         username: user?.username || '',
     };
 
-    const handleThemeToggle = () => {
-        setTheme(theme === 'light' ? 'dark' : 'light');
-    };
 
     const handleLogout = () => {
         Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
@@ -69,6 +74,49 @@ export default function ProfileScreen() {
             },
         ]);
     };
+
+    const triggerBackgroundFetch = async () => {
+        try {
+            setIsLoading(true);
+            setProgress(0); // Reset progress at the start
+            setSyncedCount(0); // Reset synced count
+            setFailedCount(0); // Reset failed count
+            const activities = await ActivityRepository.findUnsyncedActivities(db);
+            console.log(`[Sync Fetch] Found ${activities.length} unsynced activities`);
+
+            if (activities.length === 0) {
+                console.log('[Sync Fetch] No activities to sync');
+                return BackgroundFetch.BackgroundFetchResult.NoData;
+            }
+
+            for (const activity of activities) {
+                try {
+                    console.log(`[Sync Fetch] Processing activity ID: ${activity.id}`);
+                    const dataSend = await ActivityRepository.findActivityWithDetail(db, activity.call_plan_schedule_id);
+
+                    if (!dataSend || dataSend.length === 0) {
+                        console.error(`[Sync Fetch] No data found for activity ID: ${activity.id}`);
+                        setFailedCount((prev) => prev + 1);
+                        continue;
+                    }
+
+                    await sendOfflineData(dataSend[0], db);
+                    setSyncedCount((prev) => prev + 1); // Increment synced count
+                    console.log(`[Sync Fetch] Successfully synced activity ID: ${activity.id}`);
+
+                } catch (error) {
+                    console.error(`[Sync Fetch] Failed to sync activity ${activity.id}:`, error);
+                    setFailedCount((prev) => prev + 1); // Increment failed count
+                }
+            }
+        } catch (error) {
+            setIsLoading(false);
+        } finally {
+            setIsLoading(false);
+            setProgress(100);
+        }
+
+    }
 
     const toAttendanceScreen = () => {
         navigation.navigate('Attendance', {profile});
@@ -105,13 +153,20 @@ export default function ProfileScreen() {
                         }}/>
                         <View style={styles.avatarContainer}>
                             {profile.photo === '' ? (
-                                <View style={{borderRadius:75, borderColor:'white', backgroundColor:'white',padding:15, margin:10}}>
-                                    <Ionicons name="rocket" size={70} color={colors.buttonBackground} />
+                                <View style={{
+                                    borderRadius: 75,
+                                    borderColor: 'white',
+                                    backgroundColor: 'white',
+                                    padding: 15,
+                                    margin: 10
+                                }}>
+                                    <Ionicons name="rocket" size={70} color={colors.buttonBackground}/>
                                 </View>
                             ) : (
                                 <Image source={{uri: profile.photo}} style={styles.avatar}/>
                             )}
                             {/*<Image source={{uri: profile.photo}} style={styles.avatar}/>*/}
+                            <View style={{margin: height * 0.02}}></View>
                             <Text style={styles.name}>{profile.name}</Text>
                             <Text style={styles.roles}>{profile.roles}</Text>
                             <Text style={styles.email}>{profile.email}</Text>
@@ -121,7 +176,6 @@ export default function ProfileScreen() {
                             <Text style={styles.verticalText}>{profile.roles}</Text>
                         </View>
                     </View>
-
                     <View style={styles.row}>
                         <View style={[styles.row, {width: '100%'}]}>
                             <ButtonComponent
@@ -141,7 +195,40 @@ export default function ProfileScreen() {
                                 textStyle={globalStyles.buttonText}
                             />
                         </View>
+                    </View>
 
+                    {/* Progress Bar */}
+                    <View style={{ width: "90%", backgroundColor: "#e0e0e0", borderRadius: 5}}>
+                        <View
+                            style={{
+                                width: `${progress}%`,
+                                height: 20,
+                                backgroundColor: progress === 100 ? Colors.secondaryColor : Colors.buttonBackground,
+                                borderRadius: 10,
+                                alignItems:"center"
+                            }}
+                        >
+                            <Text style={{color: "white"}}>
+                                {progress}%
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Display synced and failed counts */}
+                    {loading && (
+                        <Text>
+                            Synced: {syncedCount}, Failed: {failedCount}
+                        </Text>
+                    )}
+                    <View style={styles.row}>
+                        <Ionicons
+                            name={"sync-circle"}
+                            size={52}
+                            color={Colors.secondaryColor}
+                            onPress={() => {
+                                triggerBackgroundFetch();
+                            }}
+                        />
                     </View>
                 </View>
             </View>
@@ -157,7 +244,7 @@ const styles = StyleSheet.create({
     containerCard: {
         position: 'relative',
         width: '80%',
-        height: height / 2,
+        height: height / 1.85,
         marginTop: 10,
         marginBottom: 10,
         borderRadius: 8,
@@ -171,7 +258,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 8,
     },
     logo: {
-        marginTop: height / 18,
+        marginTop: height / 25,
         alignSelf: 'center',
         position: 'absolute',
         zIndex: 15,
@@ -276,7 +363,7 @@ const styles = StyleSheet.create({
     verticalView: {
         justifyContent: 'flex-end',
         alignItems: 'flex-end',
-        paddingVertical: 2
+        marginVertical: height * -0.02
     },
     verticalText: {
         transform: [{rotate: '-90deg'}], // Rotates the text

@@ -44,7 +44,6 @@ export const ActivityBranchModel = {
 			value,
 			is_sync,
 		} = params;
-		console.log('Inserting Activity Branch with parameters:', params);
 		try {
 			const result = await db.runAsync(
 				`INSERT INTO ActivityBranch (call_plan_schedule_id, name, description, notes, value, is_sync)

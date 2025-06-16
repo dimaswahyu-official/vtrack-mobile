@@ -225,6 +225,7 @@ export const ActivityRepository = {
 		return result;
 	},
 
+
 	findActivityWithDetail: async (
 		db: SQLite.SQLiteDatabase,
 		call_plan_schedule_id: number
@@ -273,11 +274,12 @@ export const ActivityRepository = {
 		}));
 	},
 
+
+
 	deletActivityWithDetail: async (
 		db: SQLite.SQLiteDatabase,
 		call_plan_schedule_id: number
 	): Promise<void> => {
-		console.log('call_plan_schedule_id', call_plan_schedule_id);
 		await db.runAsync(
 			`DELETE FROM Activity WHERE call_plan_schedule_id = ?`,
 			[call_plan_schedule_id]
@@ -302,5 +304,7 @@ export const ActivityRepository = {
 			`DELETE FROM ActivityProgram WHERE call_plan_schedule_id = ?`,
 			[call_plan_schedule_id]
 		);
+
+		console.log(`delete data is_sync = 1 and fulfilled = 1 is DELETE by call_plan_schedule_id ${call_plan_schedule_id}`)
 	},
 };

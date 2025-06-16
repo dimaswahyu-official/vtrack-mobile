@@ -1,5 +1,9 @@
 import axiosInstance from "../config/axiosInstance";
-
+interface ResponseAbsence {
+    statusCode: number;
+    message: string;
+    data: any;
+}
 
 class AbsenService {
 
@@ -18,7 +22,7 @@ class AbsenService {
         }
     }
 
-    static async AbsenOut(formData: any): Promise<any> {
+    static async AbsenOut(formData: any): Promise<ResponseAbsence> {
         try {
             const response = await axiosInstance.put(`/absensi`, formData, {
                 headers: {
@@ -27,7 +31,7 @@ class AbsenService {
             });
             return response.data
         } catch (error: any) {
-            throw new Error(error);
+            throw new Error(error.response.data.message);
         }
     }
 
