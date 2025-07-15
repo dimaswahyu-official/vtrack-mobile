@@ -17,8 +17,7 @@
         "NSMicrophoneUsageDescription": "This app requires access to the microphone for recording audio.",
         "NSPhotoLibraryUsageDescription": "This app requires access to the photo library to save and access photos.",
         "NSLocationWhenInUseUsageDescription": "This app requires access to location when open.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app requires access to location in the background for tracking user activity and providing location-based services.",
-        "UIBackgroundModes": ["location"]
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app requires access to location in the background for tracking user activity and providing location-based services."
       },
       "bundleIdentifier": "com.nna.vtrack.mobile"
     },
@@ -63,7 +62,6 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location.",
-          "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to use your location in the background.",
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location when the app is open."
         }
       ],
