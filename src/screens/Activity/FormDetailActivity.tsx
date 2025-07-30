@@ -14,6 +14,7 @@ import {useSQLiteContext} from "expo-sqlite";
 import React, {useEffect, useRef, useState} from "react";
 import {Picker} from "@react-native-picker/picker";
 import Colors from "../../utils/Colors";
+import * as Location from 'expo-location';
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {EXISTING_SURVEY_STATUS, NEW_SURVEY_STATUS} from "../../constants/status";
@@ -25,6 +26,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import {useOffline} from "../../context/OfflineProvider";
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -44,12 +46,13 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const sortedStatusOptions = (statusOptions).sort(([keyA], [keyB]) => {
         return keyA === "202" ? -1 : keyA.localeCompare(keyB);
     });
-    const defaultStatus = item.type === 1
-        ? Number(sortedStatusOptions?.[0]?.[0])
-        : Number(statusOptionExist?.[0]?.[0]);
-    const [status, setStatus] = useState<number>(() => defaultStatus)
+    const filteredStatusOptions = (item.type === 1 ? statusOptions : statusOptionExist).filter(
+        ([key]) => Number(key) !== 200
+    );
+    const defaultStatus = Number(filteredStatusOptions?.[0]?.[0] ?? 0);
+    const [status, setStatus] = useState<number>(() => defaultStatus);
     const [activityDatas, setActivityDatas] = useState<any>(null);
-
+    const {isOnline, isWifi} = useOffline();
 
 
 
@@ -113,6 +116,27 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     };
     // insert data after fetching to sqlite
     const insertActivityDB = async (data: any, image: any) => {
+        // Add error handling for location
+        let coords;
+        if(isOnline || isWifi) {
+            try {
+                const location = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.High,
+                });
+                coords = location.coords;
+            } catch (err) {
+                console.error('Location error:', err);
+                throw new Error('Failed to get current location. Please check location permissions.');
+            }
+        }else{
+            coords = {
+                "longitude": data?.callPlanOutlet?.longitude ?? data?.callPlanSurvey?.longitude ?? '',
+                "latitude": data?.callPlanOutlet?.latitude ?? data?.callPlanSurvey?.latitude ?? '',
+            }
+        }
+
+        //handle coords
+        const { latitude, longitude } = coords;
         const activity = {
             user_id: item.user_id ?? 0,
             call_plan_id: data.call_plan_id ?? 0,
@@ -130,8 +154,8 @@ export default function FormDetailActivity({route}: FormActivityProps) {
             id_server: 0,
             photo_program: data.photo_program ?? '',
             sale_outlet_weekly: data?.sale_outlet_weekly ?? 0,
-            latitude: data.callPlanOutlet?.latitude ?? data?.callPlanSurvey?.latitude ?? '',
-            longitude: data.callPlanOutlet?.longitude ?? data?.callPlanSurvey?.longitude ?? '',
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
             survey_outlet_id: data?.callPlanSurvey?.id ?? 0,
             program_id: data?.program_id ?? 0,
         };
@@ -189,7 +213,9 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     status: status,
                     call_plan_schedule_id: activity.call_plan_schedule_id
                 });
-                await sendOfflineData(activity, db)
+                if(isOnline || isWifi) {
+                    await sendOfflineData(activity, db)
+                }
             } catch (error) {
                 console.error(error);
             } finally {
@@ -338,7 +364,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                         setStatus(Number(itemValue));
                                     }}
                                 >
-                                    {(item.type === 1 ? statusOptions : statusOptionExist).map(([key, value]) => (
+                                    {filteredStatusOptions.map(([key, value]) => (
                                         <Picker.Item key={key} label={value} value={String(key)} />
                                     ))}
                                 </Picker>

@@ -220,7 +220,7 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 
 	return (
 		<ScrollView contentContainerStyle={activityStyles.container}>
-			<Text style={activityStyles.title}>Source Of Goods (SOG)</Text>
+			<Text style={activityStyles.title}>Source of Growth (SOG)</Text>
 			{activitySog?.map((sog, index) => (
 				<View
 					key={index}

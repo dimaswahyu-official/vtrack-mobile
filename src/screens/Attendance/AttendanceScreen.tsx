@@ -25,6 +25,7 @@ import AbsenService from "../../services/absenService";
 import useAbsenToday from "../../store/useAbsenToday";
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
+import {timezones} from "../../constants/timezone";
 
 const {width, height} = Dimensions.get("window");
 
@@ -48,13 +49,12 @@ export default function AttendanceScreen({
     const {isOnline, isWifi} = useOffline();
     const {setLoading} = useLoadingStore();
     const {profile} = route.params;
+    const regionUpper = (user?.region || '').toUpperCase();
     const [name, setName] = useState(profile.name);
     const [email, setEmail] = useState(profile.email);
     const [photo, setPhoto] = useState<any | null>(null);
     const [photoExist, setPhotoExist] = useState(profile.photo);
     const [isDisabled, setIsDisabled] = useState(true);
-    const date = moment().format("l");
-    const time = moment().format("LT");
     const [displayCurrentAddress, setDisplayCurrentAddress] = useState(
         "Location Loading....."
     );
@@ -63,7 +63,57 @@ export default function AttendanceScreen({
     );
     const [latitude, setLatitude] = useState("");
     const [longitude, setLongitude] = useState("");
+    const [timeZoneArea, setTimeZoneArea] = useState('');
     const [locationServicesEnabled, setLocationServicesEnabled] = useState(false);
+    const [serverTime, setServerTime] = useState<string | null>(null);
+    const [dateServerTime, setDateServerTime] = useState("");
+    const [error, setError] = useState<string | null>(null);
+
+    function timeToISOString(time: string): string {
+        const [hour, minute, second] = time.split(':').map(Number);
+        const now = new Date();
+
+        // Create a date object with today's date and given time in local time
+        const localDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            hour,
+            minute,
+            second
+        );
+
+        return localDate.toISOString();
+    }
+
+
+    useEffect(() => {
+        for (const zone of timezones) {
+            if (zone.provinces.includes(regionUpper)) {
+                setTimeZoneArea(zone.timezone_area);
+                break;
+            }
+        }
+    }, [regionUpper]);
+
+    useEffect(() => {
+        if(!timeZoneArea){
+            return
+        }
+
+        const fetchTime = async () => {
+            try {
+                const response = await AbsenService.getTimezone({timezone:timeZoneArea}); // assumes API accepts timezoneArea
+                setServerTime(response.data.time); // adjust this based on your API response structure
+                setDateServerTime(response.data.date); // adjust this based on your API response structure
+            } catch (err) {
+                console.error('Error fetching server time:', err);
+                setError('Failed to fetch server time');
+            }
+        };
+
+        fetchTime();
+    }, [timeZoneArea]);
 
     useEffect(() => {
         const checkTodayAttendance = async () => {
@@ -75,7 +125,6 @@ export default function AttendanceScreen({
 
                 const response = await AbsenService.findToday(user.id);
                 const checkAbsenToday = response.data;
-                console.log("checkAbsenToday", checkAbsenToday);
                 if (checkAbsenToday) {
                     setAbsenToday({
                         id: checkAbsenToday.id,
@@ -228,10 +277,10 @@ export default function AttendanceScreen({
 
             let response;
             if (flag === 0) {
-                formData.append("clockIn", dateNow.toISOString());
+                formData.append("clockIn", timeToISOString(serverTime ?? ''));
                 response = await AbsenService.AbsenIn(formData);
             } else {
-                formData.append("clockOut", dateNow.toISOString());
+                formData.append("clockOut", timeToISOString(serverTime ?? ''));
                 response = await AbsenService.AbsenOut(formData);
             }
             if (response.statusCode === 200) {
@@ -394,11 +443,12 @@ export default function AttendanceScreen({
                 <View style={styles.cardContainer}>
                     <View style={styles.card}>
                         <Image
-                            source={{uri: absenToday?.photoIn}}
+                            source={{uri: absenToday?.photoOut ? absenToday?.photoOut : absenToday?.photoIn}}
                             style={styles.coverPhoto}
                         />
+                        <Text style={styles.coordsText}>{timeZoneArea}</Text>
                         <Text style={styles.dateTime}>
-                            {date} at {time}
+                            {serverTime} {dateServerTime}
                         </Text>
                         <View style={styles.locationContainer}>
                             <Text style={styles.locationText}>{displayCurrentAddress}</Text>
@@ -408,7 +458,7 @@ export default function AttendanceScreen({
                             <Text style={styles.locationText}>{absenToday?.remarks}</Text>
                             <Text style={styles.locationText}>{absenToday?.status}</Text>
                         </View>
-                        {(absenToday?.clockIn || absenToday == null) && time < "17" ? (
+                        {(absenToday?.clockIn || absenToday == null) && serverTime && parseInt(serverTime) < 16 ? (
                             <View style={styles.buttonContainer}>
                                 <TouchableOpacity
                                     onPress={() => {

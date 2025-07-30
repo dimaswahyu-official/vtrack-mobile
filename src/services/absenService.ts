@@ -45,9 +45,9 @@ class AbsenService {
     }
 
 
-    static async syncAbsen(data: any): Promise<any> {
+    static async getTimezone(data: any): Promise<any> {
         try {
-            const response = await axiosInstance.post(`/absensi`, data);
+            const response = await axiosInstance.post(`/absensi/today-timezone`, data);
             return response.data
         } catch (error: any) {
             throw new Error(error);
