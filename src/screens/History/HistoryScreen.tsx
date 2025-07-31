@@ -15,7 +15,7 @@ import {RouteProp, useFocusEffect, useNavigation} from "@react-navigation/native
 import {StackNavigationProp} from "@react-navigation/stack";
 import {useSQLiteContext} from "expo-sqlite";
 import {useOffline} from "../../context/OfflineProvider";
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useState} from "react";
 import {useAuthStore} from "../../store/useAuthStore";
 import Toast from "react-native-toast-message";
 import ActivityService from "../../services/activityService";
@@ -23,8 +23,8 @@ import {formatDate} from "../../utils/DateHelper";
 import {getStatusLabel} from "../../constants/status";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Colors from "../../utils/Colors";
-import {useLoadingStore} from "../../store/useLoadingStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 const {width, height} = Dimensions.get('window');
 
@@ -110,10 +110,10 @@ export default function HistoryScreen({route}: FormActivityProps) {
     const [error, setError] = useState<string | null>(null);
     const {user} = useAuthStore();
     const userId = user?.id || '';
-    const {setLoading} = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
 
     const fetchHistory = async () => {
-        setLoading(true);
+        showLoadingDialog('Loading History...');
         setRefreshing(true);
         try {
 
@@ -121,17 +121,17 @@ export default function HistoryScreen({route}: FormActivityProps) {
             const cachedActivities = await AsyncStorage.getItem('history');
             const parsedCachedActivities = cachedActivities ? JSON.parse(cachedActivities) : [];
 
-            if(!isOnline && !isWifi){
+            if (!isOnline && !isWifi) {
                 //offline
                 let finalActivities = [];
-                if(parsedCachedActivities.length > 0){
+                if (parsedCachedActivities.length > 0) {
                     finalActivities = parsedCachedActivities;
                     Toast.show({
                         type: 'info',
                         text1: 'Offline Mode',
                         text2: 'Using cached data',
                     });
-                }else{
+                } else {
                     Toast.show({
                         type: 'error',
                         text1: 'Offline Mode',
@@ -139,7 +139,7 @@ export default function HistoryScreen({route}: FormActivityProps) {
                     });
                 }
                 setActivities(finalActivities)
-            }else{
+            } else {
                 //online
                 // Fetch History data from API
                 const response = await ActivityService.getHistorySchedule(userId);
@@ -157,10 +157,10 @@ export default function HistoryScreen({route}: FormActivityProps) {
 
             }
         } catch (e: any) {
-            setLoading(false);
+            hideLoadingDialog()
             setError(e.message);
         } finally {
-            setLoading(false);
+            hideLoadingDialog()
             setRefreshing(false);
         }
     };

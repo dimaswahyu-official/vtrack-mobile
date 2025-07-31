@@ -4,24 +4,32 @@ import MainNavigator from './navigation/MainNavigator';
 import AuthNavigator from './navigation/AuthNavigator';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { StatusBar } from 'react-native';
-import { useLoadingStore } from './store/useLoadingStore';
 import { useThemeStore } from './store/useThemeStore';
 import ThemeProvider from './context/ThemeProvider';
+import {useLoadingDialogStore} from "./store/useLoadingStore";
 
 const AppNavigator = () => {
     const { isAuthenticated } = useAuthStore();
-    const { isLoading, setLoading } = useLoadingStore();
     const { theme } = useThemeStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
+
 
     useEffect(() => {
         const initializeAuthState = async () => {
-            setLoading(true);
-            await loadAuthState(useAuthStore.setState);
-            setLoading(false);
+            try{
+                showLoadingDialog("loading...");
+                await loadAuthState(useAuthStore.setState);
+            }catch (error) {
+                console.error('Error initializing auth state:', error);
+                hideLoadingDialog();
+            }finally {
+                hideLoadingDialog();
+            }
+
         };
 
         initializeAuthState();
-    }, [setLoading]);
+    }, []);
     return (
         <ThemeProvider>
             <StatusBar

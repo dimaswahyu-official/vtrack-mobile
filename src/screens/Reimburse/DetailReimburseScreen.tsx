@@ -1,17 +1,5 @@
-import {
-    Alert,
-    Dimensions,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from "react-native";
+import {Alert, Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import Colors from "../../utils/Colors";
 import React, {useEffect, useState} from "react";
 import * as ImagePicker from "expo-image-picker";
@@ -19,11 +7,10 @@ import {useAuthStore} from "../../store/useAuthStore";
 import ReimburseService from "../../services/reimburseService";
 import Toast from "react-native-toast-message";
 import {MaterialIcons} from "@expo/vector-icons";
-import activityStyles from "../../utils/ActivityStyles";
 import ActivityStyles from "../../utils/ActivityStyles";
-import {useLoadingStore} from "../../store/useLoadingStore";
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 const {width, height} = Dimensions.get("window");
 
@@ -43,7 +30,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
     const {user} = useAuthStore();
     const userId = user?.id || '';
     const {bbmItem} = route.params || {};
-    const { setLoading } = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
     const activityStyles = ActivityStyles();
     const [result, setResult] = useState(0);
     const [input1, setInput1] = useState(0);
@@ -69,13 +56,12 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
     }, [bbmItem]);
 
     useEffect(() => {
-        setResult(input2-input1)
+        setResult(input2 - input1)
     }, [input2]);
 
 
-
     const handleSave = async () => {
-        setLoading(true)
+        showLoadingDialog('Submitting Reimburse...');
         try {
             //handle if BBM Reimburse first time
             if (Object.keys(bbmItem).length === 0) {
@@ -83,7 +69,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                 const formData = new FormData();
                 formData.append('user_id', userId);
                 formData.append('date_in', dateNow.toISOString() ?? '');
-                formData.append('kilometer_in', String(input1) );
+                formData.append('kilometer_in', String(input1));
                 formData.append('description', '');
                 // If there is a photo, handle the file
                 if (photoIn) {
@@ -112,7 +98,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                 const formData = new FormData();
                 formData.append('id', bbmItem.id ?? 0);
                 formData.append('date_out', dateNow.toISOString() ?? '');
-                formData.append('kilometer_out', String(input2) );
+                formData.append('kilometer_out', String(input2));
                 formData.append('description', '');
                 // If there is a photo, handle the file
                 if (photoOut) {
@@ -140,9 +126,10 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                 }
 
             }
-        } catch (error : any) {
+        } catch (error: any) {
             // Handle errors
-            const { data } = error.response || {};
+            hideLoadingDialog()
+            const {data} = error.response || {};
             if (data?.statusCode === 404) {
                 Toast.show({
                     type: 'error',
@@ -154,13 +141,13 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                 console.error(error.response);
             }
         } finally {
-            setLoading(false)
+            hideLoadingDialog()
         }
     }
 
     const PhotoKilometerIn = async () => {
-        try{
-            setLoading(true)
+        try {
+            showLoadingDialog("loading...");
             // Request camera permissions
             const permissionResult =
                 await ImagePicker.requestCameraPermissionsAsync();
@@ -182,7 +169,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
 
             if (!result.canceled) {
                 // Get the file size of the original image
-                const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, { size: true });
+                const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, {size: true});
                 if (!fileInfo.exists) {
                     Alert.alert('Error', 'File does not exist.');
                     return;
@@ -198,12 +185,12 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     // Use the correct manipulateAsync method
                     const manipResult = await ImageManipulator.manipulateAsync(
                         result.assets[0].uri,
-                        [{ resize: { width: 800 } }], // Resize the image to a width of 800px
-                        { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+                        [{resize: {width: 800}}], // Resize the image to a width of 800px
+                        {compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG}
                     );
 
                     // Check the new file size
-                    const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+                    const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, {size: true});
                     if (!newFileInfo.exists) {
                         Alert.alert('Error', 'Compressed file does not exist.');
                         return;
@@ -224,16 +211,16 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     setPhotoIn(compressedImage);
                 }
             }
-        }catch(error){
-
-        }finally{
-            setLoading(false)
+        } catch (error) {
+            hideLoadingDialog()
+        } finally {
+            hideLoadingDialog()
         }
     };
 
     const PhotoKilometerOut = async () => {
-        try{
-            setLoading(true)
+        try {
+            showLoadingDialog('Loading...');
             // Request camera permissions
             const permissionResult =
                 await ImagePicker.requestCameraPermissionsAsync();
@@ -251,7 +238,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
             });
             if (!result.canceled) {
                 // Get the file size of the original image
-                const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, { size: true });
+                const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri, {size: true});
                 if (!fileInfo.exists) {
                     Alert.alert('Error', 'File does not exist.');
                     return;
@@ -267,12 +254,12 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     // Use the correct manipulateAsync method
                     const manipResult = await ImageManipulator.manipulateAsync(
                         result.assets[0].uri,
-                        [{ resize: { width: 800 } }], // Resize the image to a width of 800px
-                        { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+                        [{resize: {width: 800}}], // Resize the image to a width of 800px
+                        {compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG}
                     );
 
                     // Check the new file size
-                    const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+                    const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, {size: true});
                     if (!newFileInfo.exists) {
                         Alert.alert('Error', 'Compressed file does not exist.');
                         return;
@@ -286,7 +273,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     // Update the compressed image URI
                     compressedImage = manipResult.uri;
                 }
-                console.log(fileSizeInMB,' size in MB');
+                console.log(fileSizeInMB, ' size in MB');
 
                 if (fileSizeInMB >= 1) {
                     Alert.alert('Warning', 'Unable to compress the image below 2 MB.');
@@ -294,10 +281,10 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     setPhotoOut(compressedImage);
                 }
             }
-        }catch(error){
-
-        }finally {
-            setLoading(false)
+        } catch (error) {
+            hideLoadingDialog()
+        } finally {
+            hideLoadingDialog()
         }
     };
 
@@ -329,31 +316,31 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                             }}
                             style={styles.image}
                         />
-                        { Object.keys(bbmItem).length === 0  ? <TouchableOpacity
-                            style={activityStyles.photoButton}
-                            onPress={() =>
-                                PhotoKilometerIn()
-                            }>
-                            <MaterialIcons
-                                name="camera-alt"
-                                size={24}
-                                color="#fff"
-                            />
-                            <Text
-                                style={[
-                                    activityStyles.label,
-                                    {color: 'white'},
-                                ]}>
-                                take a new photo
-                            </Text>
-                        </TouchableOpacity>
-                        : null
+                        {Object.keys(bbmItem).length === 0 ? <TouchableOpacity
+                                style={activityStyles.photoButton}
+                                onPress={() =>
+                                    PhotoKilometerIn()
+                                }>
+                                <MaterialIcons
+                                    name="camera-alt"
+                                    size={24}
+                                    color="#fff"
+                                />
+                                <Text
+                                    style={[
+                                        activityStyles.label,
+                                        {color: 'white'},
+                                    ]}>
+                                    take a new photo
+                                </Text>
+                            </TouchableOpacity>
+                            : null
                         }
 
 
                     </View>
                 </View>
-                { Object.keys(bbmItem).length === 0 ? null : (<>
+                {Object.keys(bbmItem).length === 0 ? null : (<>
                         {/*KM AKHIR*/}
                         <View style={styles.card}>
                             <View style={styles.row}>
@@ -374,7 +361,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                     }}
                                     style={styles.image}
                                 />
-                                { bbmItem.photo_out === '' ? (
+                                {bbmItem.photo_out === '' ? (
                                     <>
                                         <TouchableOpacity
                                             style={activityStyles.photoButton}
@@ -399,15 +386,15 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
 
                             </View>
                         </View>
-                            <View style={styles.card}>
-                                <Text style={styles.label}>Jumlah Kilometer Yang Ditempuh</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={photoOut ==='' ? '' :  result.toString()}
-                                    editable={false}
-                                    keyboardType="numeric"
-                                />
-                            </View>
+                        <View style={styles.card}>
+                            <Text style={styles.label}>Jumlah Kilometer Yang Ditempuh</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={photoOut === '' ? '' : result.toString()}
+                                editable={false}
+                                keyboardType="numeric"
+                            />
+                        </View>
                     </>
                 )}
 
@@ -417,14 +404,13 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                     }}>
                         <Text style={styles.buttonText}>Back</Text>
                     </TouchableOpacity>
-                </View> :  <View>
+                </View> : <View>
                     <TouchableOpacity style={styles.button} onPress={() => {
                         handleSave()
                     }}>
                         <Text style={styles.buttonText}>SUBMIT</Text>
                     </TouchableOpacity>
                 </View>}
-
 
 
             </View>

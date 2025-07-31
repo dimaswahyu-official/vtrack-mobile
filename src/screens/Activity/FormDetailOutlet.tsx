@@ -18,7 +18,7 @@ import { ActivityRepository } from '../../model/ActivityRepository';
 import * as Location from 'expo-location';
 import { sendOfflineData } from '../../services/sendOfflineData';
 import {useOffline} from "../../context/OfflineProvider";
-import {useLoadingStore} from "../../store/useLoadingStore";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 
 type NavigationProp = StackNavigationProp<
@@ -44,7 +44,7 @@ const activityStyles = ActivityStyles();
 export default function FormDetailOutlet({ route }: FormActivityProps) {
 	const db = useSQLiteContext();
 	const { item, activity } = route.params || {};
-	const { setLoading } = useLoadingStore();
+	const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
 	const navigation = useNavigation<NavigationProp>();
 	const [outletFacilities, setOutletFacilities] = useState<Outlet[]>([]);
 	const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -144,7 +144,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 
 	const submitOutlet = async () => {
 		if (isLoading) return;
-		setLoading(true)
+		showLoadingDialog('Submitting...');
 		setIsLoading(true);
 		try {
 			const updatedFacilities = outletFacilities.map((facility) => ({
@@ -244,7 +244,7 @@ export default function FormDetailOutlet({ route }: FormActivityProps) {
 			);
 		} finally {
 			setIsLoading(false);
-			setLoading(false);
+			hideLoadingDialog()
 			// navigation.replace('Activity2')
 			navigation.dispatch(
 				CommonActions.reset({

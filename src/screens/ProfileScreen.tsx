@@ -8,7 +8,6 @@ import {useNavigation} from '@react-navigation/native';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {StackNavigationProp} from "@react-navigation/stack";
 import {ProfileStackParamList} from "../navigation/ProfileNavigator";
-import {useLoadingStore} from "../store/useLoadingStore";
 import Toast from "react-native-toast-message";
 import useConstantStore from '../store/useConstantStore';
 import Colors from "../utils/Colors";
@@ -17,14 +16,14 @@ import {ActivityRepository} from "../model/ActivityRepository";
 import * as BackgroundFetch from "expo-background-fetch";
 import {sendOfflineData} from "../services/sendOfflineData";
 import {useSQLiteContext} from "expo-sqlite";
+import {useLoadingDialogStore} from "../store/useLoadingStore";
 
 const {width, height} = Dimensions.get('window');
 
 type NavigationProp = StackNavigationProp<ProfileStackParamList, 'Profile'>;
 export default function ProfileScreen() {
     const navigation = useNavigation<NavigationProp>();
-
-    const {setLoading} = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
     const {theme, setTheme} = useThemeStore();
     const {clearAuth, user} = useAuthStore();
     const {clearConstants} = useConstantStore();
@@ -34,14 +33,6 @@ export default function ProfileScreen() {
     const [syncedCount, setSyncedCount] = useState(0); // Track successfully synced activities
     const [failedCount, setFailedCount] = useState(0); // Track failed activities
 
-
-    useEffect(() => {
-        if (!user) {
-            setLoading(true);
-        } else {
-            setLoading(false);
-        }
-    }, [user, setLoading]);
 
     const profile = {
         name: user?.fullName || '',
@@ -61,7 +52,7 @@ export default function ProfileScreen() {
             {
                 text: "Logout",
                 onPress: () => {
-                    setLoading(true);
+                    showLoadingDialog("loading...");
                     clearAuth();
                     clearConstants();
                     Toast.show({
@@ -69,7 +60,7 @@ export default function ProfileScreen() {
                         text1: "Success",
                         text2: "Logout Successful",
                     });
-                    setTimeout(() => setLoading(false), 1000);
+                    setTimeout(() => hideLoadingDialog(), 1000);
                 },
             },
         ]);

@@ -16,11 +16,11 @@ import GlobalStyles from "../../utils/GlobalStyles";
 import Colors from "../../utils/Colors";
 import UserProfileService from "../../services/userProfileService";
 import {useAuthStore} from "../../store/useAuthStore";
-import {useLoadingStore} from "../../store/useLoadingStore";
 import Toast from "react-native-toast-message";
 import {useOffline} from "../../context/OfflineProvider";
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 type RootStackParamList = {
     Profile: undefined;
@@ -35,7 +35,7 @@ type UpdateProfileScreenProps = NativeStackScreenProps<
 export default function UpdateProfileForm({route, navigation}: UpdateProfileScreenProps) {
     const { theme } = useThemeStore();
     const { isOnline, isWifi } = useOffline();
-    const { setLoading } = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
     const { user } = useAuthStore();
     const { profile } = route.params;
     const [name, setName] = useState(profile.name);
@@ -44,13 +44,6 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
     const [photoExist, setPhotoExist] = useState(profile.photo);
     const [isDisabled, setIsDisabled] = useState(true);
 
-    useEffect(() => {
-        if (!user) {
-            setLoading(true);
-        } else {
-            setLoading(false);
-        }
-    }, [user, setLoading]);
     // Check for changes whenever input values change
     useEffect(() => {
         const hasChanges =
@@ -59,7 +52,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
     }, [name, email, photoExist, profile]);
 
     const handleSave = async () => {
-        setLoading(true);
+        showLoadingDialog("loading...");
         try {
             const id = user?.id || '';
             const roles = user?.roles || '';
@@ -111,6 +104,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
             }
         } catch (error: any) {
             // Handle errors
+            hideLoadingDialog()
             const { data } = error.response || {};
             if (data?.statusCode === 404) {
                 Toast.show({
@@ -123,7 +117,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
                 console.error(error.response);
             }
         } finally {
-            setLoading(false);
+            hideLoadingDialog()
         }
     };
 
