@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Appearance, Dimensions, BackHandler } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {Appearance, BackHandler, Dimensions, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import Toast from 'react-native-toast-message';
-import { useForm, Controller } from 'react-hook-form';
+import {Controller, useForm} from 'react-hook-form';
 import GlobalStyles from "../utils/GlobalStyles";
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from "@react-navigation/stack";
+import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from "@react-navigation/stack";
 import authService from "../services/authService";
-import {useLoadingStore} from "../store/useLoadingStore"; // Import navigation
+import {useLoadingDialogStore} from "../store/useLoadingStore";
 
 type FormData = {
     email: string;
@@ -20,12 +20,12 @@ type RootStackParamList = {
 type NavigationProp = StackNavigationProp<RootStackParamList, 'ForgotPassword'>;
 
 // Get screen dimensions
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
-    const { setLoading } = useLoadingStore();
-    const { control, handleSubmit, formState: { errors } } = useForm<FormData>();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
+    const {control, handleSubmit, formState: {errors}} = useForm<FormData>();
     const [theme, setTheme] = useState<'light'>('light');
     const navigation = useNavigation<NavigationProp>();  // Add the type here
 
@@ -47,7 +47,7 @@ export default function ForgotPassword() {
             setTheme(currentColorScheme);
         }
 
-        const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+        const subscription = Appearance.addChangeListener(({colorScheme}) => {
             if (colorScheme === 'light') {
                 setTheme(colorScheme);
             }
@@ -64,28 +64,29 @@ export default function ForgotPassword() {
         return emailRegex.test(email);
     };
 
-    const onSubmit = async (data:any) => {
+    const onSubmit = async (data: any) => {
         try {
-            setLoading(true);
+            showLoadingDialog("loading...");
             // Simulate API call to send reset link
             // await new Promise(resolve => setTimeout(resolve, 2000));
-           await authService.forgotPassword(data.email).then(response => {
-               if (response.statusCode === 200) {
-                   Toast.show({
-                       type: 'success',
-                       text1: 'Email Sent',
-                       text2: 'A password reset link has been sent to your email.',
-                   });
-               }
-           })
+            await authService.forgotPassword(data.email).then(response => {
+                if (response.statusCode === 200) {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Email Sent',
+                        text2: 'A password reset link has been sent to your email.',
+                    });
+                }
+            })
         } catch (error) {
+            hideLoadingDialog();
             Toast.show({
                 type: 'error',
                 text1: 'Error',
                 text2: 'Failed to send email. Please try again later.',
             });
         } finally {
-            setLoading(false);
+            hideLoadingDialog()
             navigation.replace('Login')
         }
     };
@@ -107,7 +108,7 @@ export default function ForgotPassword() {
                         message: 'Enter a valid email address',
                     },
                 }}
-                render={({ field: { onChange, onBlur, value } }) => (
+                render={({field: {onChange, onBlur, value}}) => (
                     <TextInput
                         placeholder="Email"
                         style={styles.input}

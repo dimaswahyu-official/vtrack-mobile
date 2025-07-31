@@ -1,7 +1,7 @@
 // app/auth/login.tsx
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, TextInput, View, Image, TouchableOpacity, Dimensions} from 'react-native';
-import {useForm, Controller} from 'react-hook-form';
+import {Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
+import {Controller, useForm} from 'react-hook-form';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from "react-native-toast-message";
 import GlobalStyles from "../utils/GlobalStyles";
@@ -12,11 +12,9 @@ import {loadAuthState, useAuthStore} from "../store/useAuthStore";
 import {useThemeStore} from "../store/useThemeStore";
 import AuthServices from "../services/authService";
 import {AuthStackParamList} from "../navigation/AuthNavigator";
-import {useLoadingStore} from "../store/useLoadingStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Application from "expo-application";
-import * as Device from "expo-device";
 import Colors from "../utils/Colors";
+import {useLoadingDialogStore} from "../store/useLoadingStore";
 
 type FormData = {
     email: string;
@@ -30,7 +28,7 @@ export default function LoginScreen() {
     const [passwordVisible, setPasswordVisible] = useState(false);
     const {control, handleSubmit, formState: {errors}, setValue} = useForm<FormData>();
     const {theme} = useThemeStore();
-    const {setLoading} = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -40,9 +38,16 @@ export default function LoginScreen() {
 
     useEffect(() => {
         const initializeAuthState = async () => {
-            setLoading(true);
-            await loadAuthState(useAuthStore.setState);
-            setLoading(false);
+            try {
+                showLoadingDialog("loading...");
+                await loadAuthState(useAuthStore.setState);
+            } catch (error) {
+                console.error('Error initializing auth state:', error);
+                hideLoadingDialog();
+            } finally {
+                hideLoadingDialog();
+            }
+
         };
         const loadCredentials = async () => {
             try {
@@ -62,10 +67,7 @@ export default function LoginScreen() {
 
         initializeAuthState();
         loadCredentials();
-    }, [setLoading]);
-
-    console.log(`User:${user}`, `isAuthenticated:${isAuthenticated}`, `accessToken:${accessToken}`)
-
+    }, []);
     // useEffect(() => {
     //     const id = Application.getAndroidId();
     //     setDeviceId(id);
@@ -87,7 +89,7 @@ export default function LoginScreen() {
         const {email, password} = data;
         if (email && password) {
             try {
-                setLoading(true);
+                showLoadingDialog("loading...");
                 const response = await AuthServices.login(email, password);
                 if (response.statusCode === 200) {
                     if (rememberMe) {
@@ -104,7 +106,7 @@ export default function LoginScreen() {
                     setToken(response.data.accessToken);
                     setUser({
                         id: response.data.user.id,
-                        region : response.data.user.region,
+                        region: response.data.user.region,
                         email: response.data.user.email,
                         fullName: response.data.user.fullname,
                         photo: response.data.user.photo,
@@ -133,8 +135,9 @@ export default function LoginScreen() {
                         text2: `${data.message}`,
                     });
                 }
+                hideLoadingDialog();
             } finally {
-                setLoading(false);
+                hideLoadingDialog()
             }
         }
     };
@@ -145,8 +148,8 @@ export default function LoginScreen() {
         headerImage: {
             width: width * 0.7, // Use percentage of device width
             height: height * 0.2, // Use percentage of device height
-            resizeMode: 'contain',
-            marginBottom: 10,
+            borderRadius: 10,
+            marginBottom: 20
         },
         forgotPassword: {
             color: Colors.buttonBackground,
@@ -175,7 +178,10 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
-            <Image source={require('../../assets/logo-nna.png')} style={signInStyles.headerImage}/>
+
+            <Image source={require('../../assets/nna-icon.png')}
+                   style={[signInStyles.headerImage, {borderRadius: 16}]}/>
+
             {/*<View>*/}
             {/*    <Text>Device ID: {deviceId}</Text>*/}
             {/*    {Object.entries(deviceInfo).map(([key, value]) => (*/}
@@ -281,6 +287,15 @@ export default function LoginScreen() {
             <TouchableOpacity onPress={handleForgotPassword}>
                 <Text style={signInStyles.forgotPassword}>Forgot Password?</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => {
+                showLoadingDialog('Loading...');
+                setTimeout(() => {
+                    hideLoadingDialog();
+                }, 2000);
+            }}>
+                <Text style={signInStyles.forgotPassword}>Trigger Loading</Text>
+            </TouchableOpacity>
+
         </View>
     );
 }

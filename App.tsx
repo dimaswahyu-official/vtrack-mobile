@@ -4,15 +4,14 @@ import AppNavigator from './src/AppNavigator';
 import OfflineIndicator from './src/components/OfflineIndicator';
 import Toast from 'react-native-toast-message';
 import Spinner from 'react-native-loading-spinner-overlay';
-import { useLoadingStore } from './src/store/useLoadingStore';
 import { defaultDatabaseDirectory, SQLiteProvider } from 'expo-sqlite';
-import {Alert, Platform} from 'react-native';
+import {Alert, Platform, SafeAreaView} from 'react-native';
 import { Paths } from 'expo-file-system/next';
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
+import LoadingDialog from "./src/components/LoadingDialog";
 
 const MainApp = () => {
-	const { isLoading } = useLoadingStore();
 
 	const dbDirectory = useMemo(() => {
 		if (Platform.OS === 'ios') {
@@ -46,22 +45,18 @@ const MainApp = () => {
 	}, []);
 
 	return (
-		<>
+		<SafeAreaView style={{ flex: 1 }}>
 			<SQLiteProvider
 				databaseName="VTrackOffline.db"
 				assetSource={{ assetId: require('./assets/VTrackOffline.db') }}
 				directory={dbDirectory}>
 				<AppNavigator />
 				<OfflineIndicator />
-				<Spinner
-					visible={isLoading}
-					color="tomato"
-					size="large"
-					overlayColor="rgba(0, 0, 0, 0.1)"
-				/>
+				<LoadingDialog />
+				{/*{isLoading && <Spinner color="tomato" size="large" overlayColor="rgba(0, 0, 0, 0.1)" />}*/}
 				<Toast />
 			</SQLiteProvider>
-		</>
+		</SafeAreaView>
 	);
 };
 

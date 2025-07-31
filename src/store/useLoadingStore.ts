@@ -1,12 +1,15 @@
-// src/store/useLoadingStore.ts
 import { create } from 'zustand';
 
-interface LoadingState {
-    isLoading: boolean;
-    setLoading: (loading: boolean) => void;
+interface LoadingDialogState {
+    visible: boolean;
+    message: string;
+    showLoadingDialog: (message: string) => void;
+    hideLoadingDialog: () => void;
 }
 
-export const useLoadingStore = create<LoadingState>((set) => ({
-    isLoading: true,
-    setLoading: (loading: boolean) => set({ isLoading: loading }),
+export const useLoadingDialogStore = create<LoadingDialogState>((set) => ({
+    visible: false,
+    message: '',
+    showLoadingDialog: (message) => set({ visible: true, message }),
+    hideLoadingDialog: () => set({ visible: false, message: '' }),
 }));

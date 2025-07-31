@@ -21,7 +21,7 @@ import { ActivityProgramModel } from '../../model/ActivityProgramRepository';
 import { ActivityRepository } from '../../model/ActivityRepository';
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
-import {useLoadingStore} from "../../store/useLoadingStore";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 type NavigationProp = StackNavigationProp<
 	ActivityStackParamList,
@@ -42,7 +42,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 	const { item, activity } = route.params || {};
 	const navigation = useNavigation<NavigationProp>();
 	const activityStyles = ActivityStyles();
-	const {setLoading} = useLoadingStore();
+	const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
 	const defaultImage = 'https://via.placeholder.com/100';
 	type ActivityProgram = {
 		photo_program?: string;
@@ -133,7 +133,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 			</View>
 		);
 	};
-	
+
 	const validatePhotos = (program: any) => {
 		if (!program[0]?.photo) {
 			return {
@@ -159,7 +159,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 
 	const handleTakePhoto = async () => {
 		try{
-			setLoading(true)
+			showLoadingDialog('Processing...');
 			// Request camera permissions
 			const permissionResult =
 				await ImagePicker.requestCameraPermissionsAsync();
@@ -233,7 +233,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 			console.error('Error handling activity:', error);
 			Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
 		}finally {
-			setLoading(false)
+			hideLoadingDialog()
 		}
 
 
@@ -267,7 +267,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 
 	const handleTakePhotoCompetitor = async (index: number) => {
 		try{
-			setLoading(true)
+			showLoadingDialog('Processing...');
 			// Request camera permissions
 			const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 			if (!permissionResult.granted) {
@@ -345,7 +345,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 			console.error('Error handling activity:', error);
 			Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
 		}finally {
-			setLoading(false)
+			hideLoadingDialog()
 		}
 
 	};

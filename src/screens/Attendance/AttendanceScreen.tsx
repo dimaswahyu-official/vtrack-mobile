@@ -15,7 +15,6 @@ import {Ionicons} from "@expo/vector-icons";
 import {useThemeStore} from "../../store/useThemeStore";
 import Colors from "../../utils/Colors";
 import {useAuthStore} from "../../store/useAuthStore";
-import {useLoadingStore} from "../../store/useLoadingStore";
 import Toast from "react-native-toast-message";
 import {useOffline} from "../../context/OfflineProvider";
 import useConstantStore from "../../store/useConstantStore";
@@ -26,6 +25,7 @@ import useAbsenToday from "../../store/useAbsenToday";
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
 import {timezones} from "../../constants/timezone";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 const {width, height} = Dimensions.get("window");
 
@@ -47,7 +47,7 @@ export default function AttendanceScreen({
     const {clearConstants} = useConstantStore();
     const {absenToday, setAbsenToday, clearAbsenToday} = useAbsenToday();
     const {isOnline, isWifi} = useOffline();
-    const {setLoading} = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
     const {profile} = route.params;
     const regionUpper = (user?.region || '').toUpperCase();
     const [name, setName] = useState(profile.name);
@@ -119,7 +119,8 @@ export default function AttendanceScreen({
         const checkTodayAttendance = async () => {
             try {
                 if (!user) {
-                    setLoading(true);
+                    showLoadingDialog("Loading User...");
+                    hideLoadingDialog();
                     return;
                 }
 
@@ -155,15 +156,14 @@ export default function AttendanceScreen({
                     text1: 'Error',
                     text2: 'Failed to check today\'s attendance'
                 });
+                hideLoadingDialog()
             } finally {
-                setLoading(false);
+                hideLoadingDialog();
             }
         };
 
         checkTodayAttendance();
-
-        console.log("absenToday", absenToday);
-    }, [user, setLoading]);
+    }, [user]);
 
     useEffect(() => {
         const hasChanges =
@@ -248,7 +248,7 @@ export default function AttendanceScreen({
     };
 
     const handleAttendance = async (photoAsset: any, flag: number) => {
-        setLoading(true);
+        showLoadingDialog("Loading Attendance...");
         try {
             const userId = user?.id;
             if (!userId) {
@@ -329,7 +329,7 @@ export default function AttendanceScreen({
                 visibilityTime: 7000,
             });
         } finally {
-            setLoading(false);
+          hideLoadingDialog()
         }
     };
 
@@ -342,7 +342,7 @@ export default function AttendanceScreen({
             {
                 text: "Logout",
                 onPress: () => {
-                    setLoading(true);
+                    showLoadingDialog("Logout");
                     clearAuth();
                     clearConstants();
                     Toast.show({
@@ -350,7 +350,7 @@ export default function AttendanceScreen({
                         text1: "Success",
                         text2: "Logout Successful",
                     });
-                    setTimeout(() => setLoading(false), 1000);
+                    setTimeout(() => hideLoadingDialog(), 1000);
                 },
             },
         ]);

@@ -21,8 +21,8 @@ import {ActivitySioModel} from '../../model/ActivitySioRepository';
 import {useSQLiteContext} from 'expo-sqlite';
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
-import {useLoadingStore} from "../../store/useLoadingStore";
 import {ActivityRepository} from "../../model/ActivityRepository";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 type NavigationProp = StackNavigationProp<
     ActivityStackParamList,
@@ -38,7 +38,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
     const {item, activity} = route.params || {};
     const navigation = useNavigation<NavigationProp>();
     const activityStyles = ActivityStyles();
-    const {setLoading} = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
     const defaultImage = 'https://via.placeholder.com/100';
 
     const [activitySio, setActivitySio] = useState<
@@ -254,7 +254,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
     const handleTakePhoto = async (index: number) => {
         try {
-            setLoading(true)
+            showLoadingDialog("Loading...") // Show loading dialog
             // Request camera permissions
             const permissionResult =
                 await ImagePicker.requestCameraPermissionsAsync();
@@ -329,7 +329,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
             console.error('Error handling activity:', error);
             Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
-            setLoading(false)
+           hideLoadingDialog()
         }
 
     };
@@ -342,7 +342,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
     const handleTakePhotoBefore = async (index: number) => {
         try {
-            setLoading(true)
+            showLoadingDialog("Loading...")
             // Request camera permissions
             const permissionResult =
                 await ImagePicker.requestCameraPermissionsAsync();
@@ -416,7 +416,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
             console.error('Error handling activity:', error);
             Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
-            setLoading(false)
+            hideLoadingDialog()
         }
 
     };
@@ -429,7 +429,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
     const photoSurveyFirst = async () => {
         try {
-            setLoading(true)
+        showLoadingDialog("Loading...")
             // Request camera permissions
             const permissionResult =
                 await ImagePicker.requestCameraPermissionsAsync();
@@ -498,7 +498,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
             console.error('Error handling activity:', error);
             Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
-            setLoading(false)
+            hideLoadingDialog()
         }
 
     };
@@ -511,7 +511,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
 
     const photoSurveySecond = async () => {
         try {
-            setLoading(true)
+          showLoadingDialog("Loading...")
             // Request camera permissions
             const permissionResult =
                 await ImagePicker.requestCameraPermissionsAsync();
@@ -580,7 +580,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
             console.error('Error handling activity:', error);
             Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
         } finally {
-            setLoading(false)
+           hideLoadingDialog()
         }
 
     };

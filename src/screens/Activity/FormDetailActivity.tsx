@@ -1,32 +1,21 @@
-import {
-    Alert,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from "react-native";
-import {RouteProp, useNavigation} from "@react-navigation/native";
+import {Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {RouteProp, useFocusEffect, useNavigation} from "@react-navigation/native";
 import {ActivityStackParamList} from "../../navigation/ActivityNavigator";
 import {useSQLiteContext} from "expo-sqlite";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useState} from "react";
 import {Picker} from "@react-native-picker/picker";
 import Colors from "../../utils/Colors";
 import * as Location from 'expo-location';
 import {StackNavigationProp} from "@react-navigation/stack";
 import ActivityStyles from "../../utils/ActivityStyles";
 import {EXISTING_SURVEY_STATUS, NEW_SURVEY_STATUS} from "../../constants/status";
-import { ActivityRepository } from "../../model/ActivityRepository";
-import {useLoadingStore} from "../../store/useLoadingStore";
+import {ActivityRepository} from "../../model/ActivityRepository";
 import {sendOfflineData} from "../../services/sendOfflineData";
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 import {useOffline} from "../../context/OfflineProvider";
+import {useLoadingDialogStore} from "../../store/useLoadingStore";
 
 type NavigationProp = StackNavigationProp<ActivityStackParamList, 'FormDetailActivity'>;
 type FormActivityRouteProp = RouteProp<ActivityStackParamList, 'FormDetailActivity'>;
@@ -40,7 +29,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const [visible, setVisible] = useState(false);
     const activityStyles = ActivityStyles();
     const defaultImage = 'https://via.placeholder.com/100';
-    const {setLoading} = useLoadingStore();
+    const {showLoadingDialog, hideLoadingDialog} = useLoadingDialogStore();
     const statusOptions = Object.entries(NEW_SURVEY_STATUS);
     const statusOptionExist = Object.entries(EXISTING_SURVEY_STATUS);
     const sortedStatusOptions = (statusOptions).sort(([keyA], [keyB]) => {
@@ -53,7 +42,6 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const [status, setStatus] = useState<number>(() => defaultStatus);
     const [activityDatas, setActivityDatas] = useState<any>(null);
     const {isOnline, isWifi} = useOffline();
-
 
 
     useFocusEffect(
@@ -118,7 +106,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const insertActivityDB = async (data: any, image: any) => {
         // Add error handling for location
         let coords;
-        if(isOnline || isWifi) {
+        if (isOnline || isWifi) {
             try {
                 const location = await Location.getCurrentPositionAsync({
                     accuracy: Location.Accuracy.High,
@@ -128,7 +116,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 console.error('Location error:', err);
                 throw new Error('Failed to get current location. Please check location permissions.');
             }
-        }else{
+        } else {
             coords = {
                 "longitude": data?.callPlanOutlet?.longitude ?? data?.callPlanSurvey?.longitude ?? '',
                 "latitude": data?.callPlanOutlet?.latitude ?? data?.callPlanSurvey?.latitude ?? '',
@@ -136,7 +124,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         }
 
         //handle coords
-        const { latitude, longitude } = coords;
+        const {latitude, longitude} = coords;
         const activity = {
             user_id: item.user_id ?? 0,
             call_plan_id: data.call_plan_id ?? 0,
@@ -206,20 +194,20 @@ export default function FormDetailActivity({route}: FormActivityProps) {
     const handleNavigation = async (status: number, activity: any) => {
         if (status !== 100 && status !== 202) {
             try {
-                setLoading(true);
+                showLoadingDialog("Loading...");
                 // Update Flag Fulfilled
                 await ActivityRepository.update(db, {
                     fulfilled: 1,
                     status: status,
                     call_plan_schedule_id: activity.call_plan_schedule_id
                 });
-                if(isOnline || isWifi) {
+                if (isOnline || isWifi) {
                     await sendOfflineData(activity, db)
                 }
             } catch (error) {
-                console.error(error);
+                hideLoadingDialog()
             } finally {
-                setLoading(false);
+                hideLoadingDialog()
             }
             navigation.replace('Activity2');
         } else {
@@ -229,7 +217,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
 
     const handleTakePhoto = async () => {
         try {
-            setLoading(true);
+            showLoadingDialog("Loading...");
             // Request camera permissions
             const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
             if (!permissionResult.granted) {
@@ -244,7 +232,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
 
             if (!response.canceled) {
                 // Get the file size of the original image
-                const fileInfo = await FileSystem.getInfoAsync(response.assets[0].uri, { size: true });
+                const fileInfo = await FileSystem.getInfoAsync(response.assets[0].uri, {size: true});
                 if (!fileInfo.exists) {
                     Alert.alert('Error', 'File does not exist.');
                     return;
@@ -260,12 +248,12 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     // Use the correct manipulateAsync method
                     const manipResult = await ImageManipulator.manipulateAsync(
                         response.assets[0].uri,
-                        [{ resize: { width: 800 } }], // Resize the image to a width of 800px
-                        { compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG }
+                        [{resize: {width: 800}}], // Resize the image to a width of 800px
+                        {compress: compressQuality, format: ImageManipulator.SaveFormat.JPEG}
                     );
 
                     // Check the new file size
-                    const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, { size: true });
+                    const newFileInfo = await FileSystem.getInfoAsync(manipResult.uri, {size: true});
                     if (!newFileInfo.exists) {
                         Alert.alert('Error', 'Compressed file does not exist.');
                         return;
@@ -286,11 +274,11 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                     await insertActivityDB(item, compressedImage)
                 }
             }
-        }catch (error) {
+        } catch (error) {
             console.error('Error handling activity:', error);
             Alert.alert('Error', error instanceof Error ? error.message : 'An unknown error occurred');
-        }finally {
-            setLoading(false);
+        } finally {
+            hideLoadingDialog()
         }
 
 
@@ -300,7 +288,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
         <ScrollView contentContainerStyle={activityStyles.container}>
             {/* Full-Width Image */}
             <Image
-                source={{uri: item.callPlanOutlet? item.callPlanOutlet.photos[0] : item.callPlanSurvey.photos[0] || defaultImage}} // Replace with your image URL
+                source={{uri: item.callPlanOutlet ? item.callPlanOutlet.photos[0] : item.callPlanSurvey.photos[0] || defaultImage}} // Replace with your image URL
                 style={activityStyles.image}
                 resizeMode="cover"
             />
@@ -365,7 +353,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                                     }}
                                 >
                                     {filteredStatusOptions.map(([key, value]) => (
-                                        <Picker.Item key={key} label={value} value={String(key)} />
+                                        <Picker.Item key={key} label={value} value={String(key)}/>
                                     ))}
                                 </Picker>
                             </View>
@@ -374,10 +362,17 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                 </View>
             </View>
             {(!(status === activityDatas?.status) || activityDatas?.status === 100 || activityDatas?.status === 202) && (
-                <TouchableOpacity disabled={status==0} style={activityStyles.button} onPress={() => {
-                    (status === 100 || status === 202) && activityDatas ? navigation.navigate('FormDetailSio', { item, activity: activityDatas }) : setVisible(true);
+                <TouchableOpacity disabled={status == 0} style={activityStyles.button} onPress={() => {
+                    (status === 100 || status === 202) && activityDatas ? navigation.navigate('FormDetailSio', {
+                        item,
+                        activity: activityDatas
+                    }) : setVisible(true);
                 }}>
-                    <Text style={{color: Colors.buttonText, fontWeight: 'bold', fontSize: 20}}>{status === activityDatas?.status && (status === 100 || status === 202) ? 'NEXT' : 'CHECKIN'}</Text>
+                    <Text style={{
+                        color: Colors.buttonText,
+                        fontWeight: 'bold',
+                        fontSize: 20
+                    }}>{status === activityDatas?.status && (status === 100 || status === 202) ? 'NEXT' : 'CHECKIN'}</Text>
                 </TouchableOpacity>
             )}
             {PopupCard()}
