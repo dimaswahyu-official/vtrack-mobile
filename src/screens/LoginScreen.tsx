@@ -287,15 +287,6 @@ export default function LoginScreen() {
             <TouchableOpacity onPress={handleForgotPassword}>
                 <Text style={signInStyles.forgotPassword}>Forgot Password?</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {
-                showLoadingDialog('Loading...');
-                setTimeout(() => {
-                    hideLoadingDialog();
-                }, 2000);
-            }}>
-                <Text style={signInStyles.forgotPassword}>Trigger Loading</Text>
-            </TouchableOpacity>
-
         </View>
     );
 }
