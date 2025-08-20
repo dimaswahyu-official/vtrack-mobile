@@ -1,5 +1,5 @@
 import React, {ReactNode, useEffect} from 'react';
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { useThemeStore } from '../store/useThemeStore'; // Assuming you're using zustand or another store for theme management
 import { Appearance } from 'react-native';
 
@@ -14,16 +14,16 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         initializeTheme();
 
         const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-            if (colorScheme === 'light' || colorScheme === 'dark') {
-                setTheme(colorScheme);
+            if (colorScheme === 'light') {
+                setTheme('light');
             }
         });
 
         return () => subscription.remove();
     }, [initializeTheme, setTheme]);
 
-    const navTheme = theme === 'dark' ? DarkTheme : DefaultTheme;
-    navTheme.colors.background = theme === 'dark' ? '#000' : '#fff';
+    const navTheme = DefaultTheme;
+    navTheme.colors.background = '#fff';
 
     return (
         <NavigationContainer theme={navTheme}>

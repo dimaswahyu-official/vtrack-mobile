@@ -347,6 +347,7 @@ export default function FormDetailActivity({route}: FormActivityProps) {
                             <Text style={[activityStyles.label, {marginBottom: 8}]}>Status Outlet</Text>
                             <View style={activityStyles.pickerContainer}>
                                 <Picker
+                                    style={{color:'#333'}}
                                     selectedValue={String(status)}
                                     onValueChange={(itemValue) => {
                                         setStatus(Number(itemValue));

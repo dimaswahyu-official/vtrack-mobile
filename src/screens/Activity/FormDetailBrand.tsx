@@ -267,6 +267,7 @@ export default function FormDetailBrand({ route }: FormActivityProps) {
 							<TextInput
 								style={[styles.input, { flex: 1 }]}
 								placeholder="0"
+								placeholderTextColor={'#333'}
 								value={saleOutletWeekly.toString()}
 								keyboardType="numeric"
 								onChangeText={(text) => {

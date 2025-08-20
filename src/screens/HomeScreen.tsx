@@ -376,6 +376,7 @@ export default function HomeScreen() {
                         setValue={setSelectedFilter}
                         setItems={setItems}
                         placeholder="Select Filter"
+                        placeholderStyle={{color: '#333'}}
                         style={styles.dropdown}
                         dropDownContainerStyle={styles.dropdownList}
                         textStyle={styles.textStyle}

@@ -771,6 +771,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                     <TextInput
                         style={[activityStyles.input, {flex: 1}]}
                         placeholder="Notes"
+                        placeholderTextColor={'#333'}
                         value={activitySurvey?.notes_survey}
                         onChangeText={(text) => {
                             const newActivitySurvey = {...activitySurvey};
@@ -928,6 +929,7 @@ export default function FormDetailSio({route}: FormActivityProps) {
                                         <TextInput
                                             style={[activityStyles.input, {flex: 1}]}
                                             placeholder="SIO Notes"
+                                            placeholderTextColor={'#333'}
                                             value={sio.notes}
                                             onChangeText={(text) => {
                                                 const newActivitySio = [...activitySio];

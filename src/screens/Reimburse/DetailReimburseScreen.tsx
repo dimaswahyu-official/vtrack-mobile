@@ -303,6 +303,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                         <TextInput
                             style={styles.input}
                             placeholder="Masukan Kilometer Awal"
+                            placeholderTextColor={'#333'}
                             value={input1.toString() ?? ''}
                             editable={!bbmItem.kilometer_in}
                             keyboardType={'numeric'}
@@ -348,6 +349,7 @@ export default function ReimburseDetailsScreen({route, navigation}: ReimburseDet
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Masukan Kilometer Akhir"
+                                    placeholderTextColor={'#333'}
                                     value={input2.toString() ?? ''}
                                     editable={!bbmItem.kilometer_out}
                                     keyboardType={'numeric'}

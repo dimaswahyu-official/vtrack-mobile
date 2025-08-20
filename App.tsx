@@ -10,6 +10,7 @@ import { Paths } from 'expo-file-system/next';
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import LoadingDialog from "./src/components/LoadingDialog";
+import GlobalDialog from "./src/components/GlobalDialog";
 
 const MainApp = () => {
 
@@ -52,6 +53,7 @@ const MainApp = () => {
 				directory={dbDirectory}>
 				<AppNavigator />
 				<OfflineIndicator />
+				<GlobalDialog />
 				<LoadingDialog />
 				{/*{isLoading && <Spinner color="tomato" size="large" overlayColor="rgba(0, 0, 0, 0.1)" />}*/}
 				<Toast />

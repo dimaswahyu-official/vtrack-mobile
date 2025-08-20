@@ -5,7 +5,7 @@ import Colors from './Colors';
 const { width, height } = Dimensions.get('window');
 
 // Create a function to return styles based on the theme and dimensions
-const GlobalStyles = (theme: 'light' | 'dark') => {
+const GlobalStyles = (theme: 'light') => {
     const currentColors = Colors[theme];
 
     return StyleSheet.create({

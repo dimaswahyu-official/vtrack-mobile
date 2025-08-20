@@ -277,6 +277,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
                 editable={false}
                 onChangeText={setName}
                 placeholder="Name"
+                placeholderTextColor={'#333'}
             />
             <TextInput
                 style={globalStyles.input}
@@ -284,6 +285,7 @@ export default function UpdateProfileForm({route, navigation}: UpdateProfileScre
                 onChangeText={setEmail}
                 editable={false}
                 placeholder="Email"
+                placeholderTextColor={'#333'}
                 keyboardType="email-address"
             />
             <TouchableOpacity

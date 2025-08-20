@@ -515,6 +515,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 							<TextInput
 								style={[activityStyles.input, { flex: 1 }]}
 								placeholder="Nama Program"
+								placeholderTextColor={'#333'}
 								value={program?.name || ''}
 								onChangeText={(text) => {
 									const newActivityCompetitor = [
@@ -534,6 +535,7 @@ export default function FormDetailProgram({ route }: FormActivityProps) {
 							<TextInput
 								style={[activityStyles.input, { flex: 1 }]}
 								placeholder="Deskripsi Program"
+								placeholderTextColor={'#333'}
 								value={program?.description || ''}
 								onChangeText={(text) => {
 									const newActivityCompetitor = [

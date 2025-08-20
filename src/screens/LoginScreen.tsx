@@ -205,6 +205,7 @@ export default function LoginScreen() {
                 render={({field: {onChange, onBlur, value}}) => (
                     <TextInput
                         placeholder="Email"
+                        placeholderTextColor={'#333'}
                         value={value || email}
                         onBlur={onBlur}
                         onChangeText={(text) => {
@@ -226,6 +227,7 @@ export default function LoginScreen() {
                     render={({field: {onChange, onBlur, value}}) => (
                         <TextInput
                             placeholder="Password"
+                            placeholderTextColor={'#333'}
                             secureTextEntry={!passwordVisible}
                             value={value}
                             onBlur={onBlur}

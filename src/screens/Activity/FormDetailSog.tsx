@@ -66,7 +66,7 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 				setIsLoading(true);
 				const brandSource =
 					item.callPlanOutlet?.brand || item.callPlanSurvey?.brand;
-				
+
 				if (!brandSource) {
 					throw new Error('Brand source not found');
 				}
@@ -124,7 +124,7 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 					if (!sog.name || sog.value < 0) {
 						throw new Error('Invalid SOG data');
 					}
-					
+
 					if (sog.id) {
 						await ActivitySogModel.update(db, sog);
 					} else {
@@ -147,9 +147,9 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 	const goToOutlet = async () => {
 		try {
 			if (isLoading) return;
-			
+
 			await insertSogToSqlite(activitySog);
-			
+
 			// Validate all required data is present
 			const isValid = activitySog.every(sog => sog.value >= 0);
 			if (!isValid) {
@@ -249,12 +249,13 @@ export default function FormDetailSog({ route }: FormActivityProps) {
 									<TextInput
 										style={[activityStyles.input, { flex: 1 }]}
 										placeholder="Stock (/Bungkus)"
+										placeholderTextColor={'#333'}
 										value={sog.value.toString()}
 										keyboardType="numeric"
 										onChangeText={(text) => {
 											const value = Number(text);
 											if (isNaN(value) || value < 0) return;
-											
+
 											setActivitySog(prev => {
 												const newSog = [...prev];
 												newSog[index] = { ...newSog[index], value };
